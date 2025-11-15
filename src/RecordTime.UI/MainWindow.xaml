@@ -1,0 +1,135 @@
+<Window
+    x:Class="RecordTime.UI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="RecordTime">
+
+    <Grid>
+        <NavigationView
+            x:Name="NavView"
+            IsBackButtonVisible="Collapsed"
+            PaneDisplayMode="Left"
+            IsSettingsVisible="True"
+            IsPaneToggleButtonVisible="True">
+
+            <NavigationView.MenuItems>
+                <NavigationViewItem Icon="Home" Content="概览" Tag="overview"/>
+                <NavigationViewItem Icon="Library" Content="应用" Tag="apps"/>
+                <NavigationViewItem Icon="Document" Content="报告" Tag="reports"/>
+                <NavigationViewItem Icon="LightningBolt" Content="AI分析" Tag="ai"/>
+            </NavigationView.MenuItems>
+
+            <NavigationView.Content>
+                <Frame x:Name="ContentFrame" Padding="24">
+                    <Grid>
+                        <StackPanel Spacing="16" MaxWidth="800">
+                            <!-- 欢迎卡片 -->
+                            <Grid
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                CornerRadius="8"
+                                Padding="24">
+                                <StackPanel Spacing="12">
+                                    <TextBlock
+                                        Text="RecordTime"
+                                        Style="{StaticResource TitleTextBlockStyle}"/>
+                                    <TextBlock
+                                        Text="时间追踪工具 - Windows版"
+                                        Style="{StaticResource BodyTextBlockStyle}"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 今日统计 -->
+                            <Grid
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                CornerRadius="8"
+                                Padding="24">
+                                <StackPanel Spacing="16">
+                                    <TextBlock
+                                        Text="今日使用时长"
+                                        Style="{StaticResource SubtitleTextBlockStyle}"/>
+
+                                    <Grid ColumnSpacing="16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- 总时长 -->
+                                        <Border
+                                            Grid.Column="0"
+                                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                            CornerRadius="6"
+                                            Padding="16">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock
+                                                    Text="总时长"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock
+                                                    Text="0小时"
+                                                    Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- 视频时长 -->
+                                        <Border
+                                            Grid.Column="1"
+                                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                            CornerRadius="6"
+                                            Padding="16">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock
+                                                    Text="视频娱乐"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock
+                                                    Text="0小时"
+                                                    Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- 工作时长 -->
+                                        <Border
+                                            Grid.Column="2"
+                                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                            CornerRadius="6"
+                                            Padding="16">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock
+                                                    Text="工作学习"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                <TextBlock
+                                                    Text="0小时"
+                                                    Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 操作按钮 -->
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button
+                                    Content="开始监控"
+                                    Style="{StaticResource AccentButtonStyle}"/>
+                                <Button
+                                    Content="查看详情"/>
+                            </StackPanel>
+
+                            <!-- 状态提示 -->
+                            <InfoBar
+                                Title="欢迎使用RecordTime"
+                                Message="点击'开始监控'按钮开始记录应用使用时长。您的数据将安全地存储在本地，不会上传到云端。"
+                                Severity="Informational"
+                                IsOpen="True"
+                                IsClosable="False"/>
+                        </StackPanel>
+                    </Grid>
+                </Frame>
+            </NavigationView.Content>
+        </NavigationView>
+    </Grid>
+</Window>

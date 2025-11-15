@@ -1,0 +1,358 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="RecordTime.Avalonia.App"
+             xmlns:local="using:RecordTime.Avalonia"
+             RequestedThemeVariant="Light">
+             <!-- Apple-inspired design system (colors, typography, spacing) -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Apple Design System -->
+        <Style>
+            <!-- Color Resources - Apple Style -->
+            <Style.Resources>
+                <!-- Neutral Base Colors -->
+                <Color x:Key="BaseGrey">#F5F5F7</Color>
+                <Color x:Key="SurfaceGrey">#FFFFFF</Color>
+                <Color x:Key="HoverGrey">#ECEFF4</Color>
+
+                <!-- System Accent Colors - Apple Official Palette -->
+                <Color x:Key="AccentBlue">#0071E3</Color>
+                <Color x:Key="AccentGreen">#30D158</Color>
+                <Color x:Key="AccentOrange">#FF9500</Color>
+                <Color x:Key="AccentRed">#FF3B30</Color>
+                <Color x:Key="AccentPurple">#BF5AF2</Color>
+                <Color x:Key="AccentPurpleDark">#7C3AED</Color>
+
+                <!-- Dark Background for Hero Sections -->
+                <Color x:Key="HeroBlack">#000000</Color>
+
+                <!-- Text Colors (Apple Typography Hierarchy) -->
+                <Color x:Key="TextPrimary">#1D1D1F</Color>
+                <Color x:Key="TextSecondary">#3A3A3C</Color>
+                <Color x:Key="TextTertiary">#8E8E93</Color>
+
+                <!-- Border & Divider -->
+                <Color x:Key="BorderLight">#E5E5EA</Color>
+                <Color x:Key="DividerColor">#D1D1D6</Color>
+
+                <!-- Brushes -->
+                <SolidColorBrush x:Key="WindowBackground" Color="{StaticResource BaseGrey}"/>
+                <SolidColorBrush x:Key="CardBackground" Color="{StaticResource SurfaceGrey}"/>
+                <SolidColorBrush x:Key="HoverBackground" Color="{StaticResource HoverGrey}"/>
+
+                <SolidColorBrush x:Key="PrimaryText" Color="{StaticResource TextPrimary}"/>
+                <SolidColorBrush x:Key="SecondaryText" Color="{StaticResource TextSecondary}"/>
+                <SolidColorBrush x:Key="TertiaryText" Color="{StaticResource TextTertiary}"/>
+
+                <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderLight}"/>
+                <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource DividerColor}"/>
+
+                <!-- System Accent Brushes -->
+                <SolidColorBrush x:Key="SystemBlue" Color="{StaticResource AccentBlue}"/>
+                <SolidColorBrush x:Key="SystemGreen" Color="{StaticResource AccentGreen}"/>
+                <SolidColorBrush x:Key="SystemOrange" Color="{StaticResource AccentOrange}"/>
+                <SolidColorBrush x:Key="SystemRed" Color="{StaticResource AccentRed}"/>
+
+                <!-- Subtle Widget Gradient -->
+                <LinearGradientBrush x:Key="WidgetTint" StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#FDFCFE" Offset="0"/>
+                    <GradientStop Color="#F2F3F7" Offset="1"/>
+                </LinearGradientBrush>
+
+                <!-- Primary Gradient (Desaturated for Apple style) -->
+                <LinearGradientBrush x:Key="PrimaryGradient" StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="{StaticResource AccentPurple}" Offset="0"/>
+                    <GradientStop Color="{StaticResource AccentPurpleDark}" Offset="1"/>
+                </LinearGradientBrush>
+            </Style.Resources>
+        </Style>
+
+        <!-- Window Style -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{StaticResource WindowBackground}"/>
+            <Setter Property="FontFamily" Value="-apple-system, SF Pro Display, Segoe UI, PingFang SC, Microsoft YaHei"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        </Style>
+
+        <!-- Widget Card Style (Apple-inspired with layered shadow) -->
+        <Style Selector="Border.widget-card">
+            <Setter Property="Background" Value="{StaticResource WidgetTint}"/>
+            <Setter Property="CornerRadius" Value="22"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="BorderBrush">
+                <Setter.Value>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#33FFFFFF" Offset="0"/>
+                        <GradientStop Color="#0D000000" Offset="1"/>
+                    </LinearGradientBrush>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BoxShadow" Value="0 25 55 0 #13000000, 0 1 0 0 #33FFFFFF"/>
+            <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.14"/>
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut"/>
+                        <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.18"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.widget-card:pointerover">
+            <Setter Property="Opacity" Value="0.97"/>
+            <Setter Property="BoxShadow" Value="0 35 65 0 #1A000000, 0 1 0 0 #55FFFFFF"/>
+            <Setter Property="RenderTransform">
+                <Setter.Value>
+                    <ScaleTransform ScaleX="1.015" ScaleY="1.015"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Standard Card Style (Softer shadow) -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{StaticResource CardBackground}"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="BoxShadow" Value="0 8 24 0 #0A000000"/>
+            <Setter Property="BorderBrush" Value="#18000000"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.15"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.card:pointerover">
+            <Setter Property="BoxShadow" Value="0 12 32 0 #0F000000"/>
+        </Style>
+
+        <!-- Gradient Accent Card (for emphasis) -->
+        <Style Selector="Border.gradient-card">
+            <Setter Property="Background" Value="{StaticResource PrimaryGradient}"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="BoxShadow" Value="0 12 40 0 #30A5B4FC"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.18"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.gradient-card:pointerover">
+            <Setter Property="BoxShadow" Value="0 16 50 0 #40A5B4FC"/>
+        </Style>
+
+        <!-- Button Styles (Apple-inspired) -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource SystemBlue}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="18,11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.12"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Opacity" Value="0.88"/>
+        </Style>
+
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter">
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="14,9"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.secondary:pointerover">
+            <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
+        </Style>
+
+        <Style Selector="Button.secondary:pressed">
+            <Setter Property="Background" Value="{StaticResource BorderBrush}"/>
+        </Style>
+
+        <!-- Sidebar Button Style -->
+        <Style Selector="Button.sidebar-item">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource SecondaryText}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                        <BrushTransition Property="Foreground" Duration="0:0:0.12"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.sidebar-item:pointerover">
+            <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        </Style>
+
+        <!-- Typography Styles (SF Pro inspired) -->
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="34"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+            <Setter Property="LetterSpacing" Value="-0.5"/>
+        </Style>
+
+        <Style Selector="TextBlock.subtitle">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        </Style>
+
+        <Style Selector="TextBlock.heading">
+            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        </Style>
+
+        <Style Selector="TextBlock.body">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+        </Style>
+
+        <Style Selector="TextBlock.caption">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource TertiaryText}"/>
+        </Style>
+
+        <Style Selector="TextBlock.number-large">
+            <Setter Property="FontSize" Value="40"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="LetterSpacing" Value="-1"/>
+        </Style>
+
+        <Style Selector="TextBlock.number-widget">
+            <Setter Property="FontSize" Value="34"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryText}"/>
+            <Setter Property="LetterSpacing" Value="-0.5"/>
+        </Style>
+
+        <!-- ListBox Item Style -->
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.12"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
+        </Style>
+
+        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource SystemBlue}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- Separator Style -->
+        <Style Selector="Separator">
+            <Setter Property="Background" Value="{StaticResource DividerBrush}"/>
+            <Setter Property="Height" Value="0.5"/>
+            <Setter Property="Margin" Value="0,12"/>
+        </Style>
+
+        <!-- TextBox Style -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{StaticResource CardBackground}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Transitions">
+                <Setter.Value>
+                    <Transitions>
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                    </Transitions>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style Selector="TextBox:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource SystemBlue}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
+        <!-- ComboBox Style -->
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="{StaticResource CardBackground}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="12,9"/>
+            <Setter Property="FontSize" Value="15"/>
+        </Style>
+
+        <Style Selector="ComboBox:focus">
+            <Setter Property="BorderBrush" Value="{StaticResource SystemBlue}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+
+        <Style Selector="ComboBox:pointerover /template/ Border#Background">
+            <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
+        </Style>
+    </Application.Styles>
+</Application>

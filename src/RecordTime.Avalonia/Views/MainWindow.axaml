@@ -1,0 +1,344 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+        xmlns:local="using:RecordTime.Avalonia.Views"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="RecordTime.Avalonia.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="RecordTime - 时间追踪工具"
+        WindowStartupLocation="CenterScreen"
+        Width="1000"
+        Height="700"
+        MinWidth="900"
+        MinHeight="650">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <!-- Main Content Area with Apple-style generous spacing -->
+    <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Sidebar Navigation (Apple macOS Style) -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource CardBackground}"
+                    BorderBrush="{StaticResource DividerBrush}"
+                    BorderThickness="0,0,0.5,0"
+                    Padding="16,32,16,24">
+                <StackPanel Spacing="6">
+                    <!-- App Title -->
+                    <TextBlock Text="RecordTime"
+                              Classes="heading"
+                              Margin="8,0,0,24"
+                              Foreground="{StaticResource PrimaryText}"/>
+
+                    <!-- Navigation Items -->
+                    <Button Classes="sidebar-item"
+                           Content="📊 仪表盘"
+                           Command="{Binding NavigateToDashboardCommand}"
+                           HorizontalAlignment="Stretch"/>
+
+                    <Button Classes="sidebar-item"
+                           Content="📱 应用统计"
+                           Command="{Binding NavigateToAppStatsCommand}"
+                           HorizontalAlignment="Stretch"/>
+
+                    <Button Classes="sidebar-item"
+                           Content="📈 报告"
+                           Command="{Binding NavigateToReportsCommand}"
+                           HorizontalAlignment="Stretch"/>
+
+                    <Separator Margin="0,20"
+                              Background="{StaticResource DividerBrush}"
+                              Height="0.5"/>
+
+                    <Button Classes="sidebar-item"
+                           Content="⚙️ 设置"
+                           Command="{Binding NavigateToSettingsCommand}"
+                           HorizontalAlignment="Stretch"/>
+
+                    <Button Classes="sidebar-item"
+                           Content="ℹ️ 关于"
+                           Command="{Binding NavigateToAboutCommand}"
+                           HorizontalAlignment="Stretch"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Main Content Area with Page Switching -->
+            <ContentControl Grid.Column="1" Content="{Binding CurrentPageViewModel}">
+                <ContentControl.DataTemplates>
+                    <!-- AppStatsViewModel -> AppStatsView -->
+                    <DataTemplate DataType="vm:AppStatsViewModel">
+                        <local:AppStatsView/>
+                    </DataTemplate>
+                    <!-- ReportViewModel -> ReportView -->
+                    <DataTemplate DataType="vm:ReportViewModel">
+                        <local:ReportView/>
+                    </DataTemplate>
+                    <!-- SettingsViewModel -> SettingsView -->
+                    <DataTemplate DataType="vm:SettingsViewModel">
+                        <local:SettingsView/>
+                    </DataTemplate>
+                    <!-- AboutViewModel -> AboutView -->
+                    <DataTemplate DataType="vm:AboutViewModel">
+                        <local:AboutView/>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+
+            <!-- Dashboard Content (shown when CurrentPageViewModel is null) -->
+            <ScrollViewer Grid.Column="1"
+                         HorizontalScrollBarVisibility="Auto"
+                         VerticalScrollBarVisibility="Auto"
+                         IsVisible="{Binding ShowDashboard}">
+                <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
+                    <!-- Page Title with Apple-style large heading -->
+                    <TextBlock Text="今日概览"
+                              Classes="title"
+                              Margin="0,0,0,16"/>
+
+                    <!-- Date Navigator with Apple-style spacing -->
+                    <Border Classes="card"
+                           Padding="20,16">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                             VerticalAlignment="Center">
+                            <!-- Previous Day Button -->
+                            <Button Grid.Column="0"
+                                   Classes="secondary"
+                                   Content="← 前一天"
+                                   Command="{Binding PreviousDayCommand}"
+                                   VerticalAlignment="Center"/>
+
+                            <!-- Current Date Display -->
+                            <StackPanel Grid.Column="1"
+                                       Orientation="Horizontal"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Spacing="8">
+                                <TextBlock Text="📅"
+                                          FontSize="20"
+                                          VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SelectedDateText}"
+                                          Classes="heading"
+                                          VerticalAlignment="Center"/>
+                                <Button Content="今天"
+                                       Classes="secondary"
+                                       Command="{Binding TodayCommand}"
+                                       Padding="8,4"
+                                       FontSize="12"/>
+                            </StackPanel>
+
+                            <!-- Next Day Button -->
+                            <Button Grid.Column="2"
+                                   Classes="secondary"
+                                   Content="后一天 →"
+                                   Command="{Binding NextDayCommand}"
+                                   VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Summary Cards Grid (Apple Widget Style with generous spacing) -->
+                    <Grid ColumnDefinitions="*,24,*,24,*,24,*"
+                         RowDefinitions="Auto"
+                         Margin="0,8,0,0">
+                        <!-- Card 1: Total Time -->
+                        <Border Grid.Column="0"
+                               Classes="widget-card">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="⏱️"
+                                          FontSize="28"
+                                          Opacity="0.9"/>
+                                <TextBlock Text="{Binding TotalDuration}"
+                                          Classes="number-widget"
+                                          Margin="0,4,0,0"/>
+                                <TextBlock Text="总活动时长"
+                                          Classes="caption"
+                                          Opacity="0.85"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 2: Session Count -->
+                        <Border Grid.Column="2"
+                               Classes="widget-card">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="📝"
+                                          FontSize="28"
+                                          Opacity="0.9"/>
+                                <TextBlock Text="{Binding SessionCount}"
+                                          Classes="number-widget"
+                                          Margin="0,4,0,0"/>
+                                <TextBlock Text="会话数量"
+                                          Classes="caption"
+                                          Opacity="0.85"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 3: App Types -->
+                        <Border Grid.Column="4"
+                               Classes="widget-card">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="📱"
+                                          FontSize="28"
+                                          Opacity="0.9"/>
+                                <TextBlock Text="{Binding AppTypeCount}"
+                                          Classes="number-widget"
+                                          Margin="0,4,0,0"/>
+                                <TextBlock Text="应用类型"
+                                          Classes="caption"
+                                          Opacity="0.85"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Card 4: Activity Types -->
+                        <Border Grid.Column="6"
+                               Classes="widget-card">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="🎯"
+                                          FontSize="28"
+                                          Opacity="0.9"/>
+                                <TextBlock Text="{Binding ActivityTypeCount}"
+                                          Classes="number-widget"
+                                          Margin="0,4,0,0"/>
+                                <TextBlock Text="活动种类"
+                                          Classes="caption"
+                                          Opacity="0.85"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Monitoring Status Card with enhanced spacing -->
+                    <Border Classes="card"
+                           Padding="24,20">
+                        <Grid ColumnDefinitions="Auto,*,Auto"
+                             RowDefinitions="Auto">
+                            <StackPanel Grid.Column="0"
+                                       Spacing="6"
+                                       VerticalAlignment="Center">
+                                <TextBlock Text="监控状态"
+                                          Classes="heading"/>
+                                <TextBlock Text="{Binding MonitoringStatusText}"
+                                          Classes="caption"
+                                          Opacity="0.85"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="2"
+                                   Classes="primary"
+                                   Content="{Binding StartButtonText}"
+                                   Command="{Binding ToggleMonitoringCommand}"
+                                   MinWidth="120"
+                                   VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Top Applications -->
+                    <Border Classes="card"
+                           Padding="24,20,24,24">
+                        <StackPanel Spacing="20">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                          Text="TOP 10 应用"
+                                          Classes="heading"/>
+                                <TextBlock Grid.Column="1"
+                                          Text="{Binding TopApps.Count, StringFormat='当前显示: {0} 个'}"
+                                          Classes="caption"
+                                          Foreground="{StaticResource SecondaryText}"
+                                          VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- App List - ListBox 自带滚动条，确保能滚完所有 10 个 -->
+                            <ListBox ItemsSource="{Binding TopApps}"
+                                     Height="420"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.Styles>
+                                    <Style Selector="ListBoxItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Margin" Value="0,2"/>
+                                        <Setter Property="Focusable" Value="False"/>
+                                    </Style>
+                                </ListBox.Styles>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="8,6"
+                                               Background="Transparent"
+                                               CornerRadius="6">
+                                            <Border.Styles>
+                                                <Style Selector="Border:pointerover">
+                                                    <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
+                                                </Style>
+                                            </Border.Styles>
+                                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                                                <!-- Rank -->
+                                                <TextBlock Grid.Column="0"
+                                                          Text="{Binding RankText}"
+                                                          Classes="body"
+                                                          FontWeight="SemiBold"
+                                                          Foreground="{StaticResource PrimaryGradient}"
+                                                          Width="40"/>
+
+                                                <!-- App Icon -->
+                                                <Image Grid.Column="1"
+                                                      Source="{Binding Icon}"
+                                                      Width="24"
+                                                      Height="24"
+                                                      Margin="0,0,8,0"
+                                                      VerticalAlignment="Center"/>
+
+                                                <!-- App Name -->
+                                                <TextBlock Grid.Column="2"
+                                                          Text="{Binding AppName}"
+                                                          Classes="body"
+                                                          VerticalAlignment="Center"/>
+
+                                                <!-- Duration -->
+                                                <TextBlock Grid.Column="3"
+                                                          Text="{Binding DurationText}"
+                                                          Classes="body"
+                                                          VerticalAlignment="Center"
+                                                          Margin="16,0"
+                                                          Width="80"
+                                                          TextAlignment="Right"/>
+
+                                                <!-- Session Count -->
+                                                <TextBlock Grid.Column="4"
+                                                          Text="{Binding SessionCountText}"
+                                                          Classes="caption"
+                                                          VerticalAlignment="Center"
+                                                          Width="60"
+                                                          TextAlignment="Right"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Empty State -->
+                            <TextBlock Text="今天还没有数据记录"
+                                      Classes="caption"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,40,0,40"
+                                      Opacity="0.7"
+                                      FontSize="14"
+                                      IsVisible="{Binding !TopApps.Count}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 底部占位元素,确保滚动空间充足 -->
+                    <Border Height="1" Background="Transparent"/>
+                </StackPanel>
+            </ScrollViewer>
+    </Grid>
+</Window>
+

@@ -1,0 +1,28 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- macOS风格配色 -->
+    <SolidColorBrush x:Key="MacOSAccentColor" Color="#007AFF"/>
+    <SolidColorBrush x:Key="MacOSBackgroundColor" Color="#F5F5F7"/>
+    <SolidColorBrush x:Key="MacOSCardColor" Color="#FFFFFF"/>
+
+    <!-- 按钮样式 -->
+    <Style x:Key="MacOSButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource MacOSAccentColor}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <!-- 卡片样式 -->
+    <Style x:Key="MacOSCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource MacOSCardColor}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#E5E5E5"/>
+    </Style>
+
+</ResourceDictionary>

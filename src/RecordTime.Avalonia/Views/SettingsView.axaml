@@ -1,0 +1,201 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="RecordTime.Avalonia.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24" MaxWidth="900" Margin="48,40,48,80">
+            <!-- Page Title -->
+            <TextBlock Text="⚙️ 设置"
+                      Classes="title"
+                      Margin="0,0,0,16"/>
+
+            <!-- Status Bar -->
+            <Border Padding="12"
+                   Background="{StaticResource HoverBackground}"
+                   CornerRadius="8">
+                <TextBlock Text="{Binding StatusText}"
+                          Classes="body"
+                          TextAlignment="Center"/>
+            </Border>
+
+            <!-- General Settings -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="常规设置"
+                              Classes="heading"/>
+
+                    <!-- Auto Start -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="开机自动启动"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="程序将在 Windows 启动时自动运行"
+                                      Classes="caption"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding AutoStart}"
+                                     Command="{Binding ToggleAutoStartCommand}"
+                                     VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Minimize to Tray -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="最小化到系统托盘"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="关闭窗口时最小化到系统托盘而非退出"
+                                      Classes="caption"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding MinimizeToTray}"
+                                     VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Notifications -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="显示通知"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="显示活动追踪和统计通知"
+                                      Classes="caption"/>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding ShowNotifications}"
+                                     VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Idle Timeout -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="空闲超时时间"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="无操作多久后视为空闲（分钟）"
+                                      Classes="caption"/>
+                        </StackPanel>
+                        <NumericUpDown Grid.Column="1"
+                                      Value="{Binding IdleTimeoutMinutes}"
+                                      Minimum="1"
+                                      Maximum="60"
+                                      Increment="1"
+                                      Width="120"
+                                      VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Database Management -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="数据管理"
+                              Classes="heading"/>
+
+                    <!-- Database Info -->
+                    <Border Padding="12"
+                           Background="{StaticResource HoverBackground}"
+                           CornerRadius="8">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <TextBlock Grid.Column="0"
+                                          Text="数据库路径："
+                                          Classes="caption"
+                                          Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="1"
+                                          Text="{Binding DatabasePath}"
+                                          Classes="caption"
+                                          TextTrimming="CharacterEllipsis"/>
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,Auto,*">
+                                <TextBlock Grid.Column="0"
+                                          Text="数据库大小："
+                                          Classes="caption"
+                                          Margin="0,0,8,0"/>
+                                <TextBlock Grid.Column="1"
+                                          Text="{Binding DatabaseSize}"
+                                          Classes="caption"
+                                          Margin="0,0,16,0"/>
+                                <TextBlock Grid.Column="2"
+                                          Text="{Binding TotalSessions, StringFormat='共 {0} 条记录'}"
+                                          Classes="caption"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Database Actions -->
+                    <UniformGrid Columns="3" ColumnSpacing="12">
+                        <Button Content="打开数据库文件夹"
+                               Classes="secondary"
+                               Command="{Binding OpenDatabaseFolderCommand}"/>
+                        <Button Content="备份数据库"
+                               Classes="secondary"
+                               Command="{Binding BackupDatabaseCommand}"/>
+                        <Button Content="清除旧数据"
+                               Classes="secondary"
+                               Command="{Binding ClearOldDataCommand}"/>
+                    </UniformGrid>
+
+                    <TextBlock Text="💡 提示：清除旧数据将删除 30 天前的所有记录"
+                              Classes="caption"
+                              TextWrapping="Wrap"
+                              Foreground="{StaticResource SecondaryText}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Advanced -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="高级设置"
+                              Classes="heading"/>
+
+                    <Button Content="打开日志文件夹"
+                           Classes="secondary"
+                           Command="{Binding OpenLogsFolderCommand}"
+                           HorizontalAlignment="Left"/>
+
+                    <TextBlock Text="日志文件可用于故障排查和问题诊断"
+                              Classes="caption"
+                              TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- About -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="ℹ️ 关于 RecordTime"
+                              Classes="heading"/>
+
+                    <TextBlock Text="版本：1.0.0"
+                              Classes="body"/>
+
+                    <TextBlock Text="RecordTime 是一款 Windows 桌面时间追踪工具"
+                              Classes="body"
+                              TextWrapping="Wrap"/>
+
+                    <TextBlock Text="功能：实时监控、数据统计、HTML 报告、AI 分析"
+                              Classes="body"
+                              TextWrapping="Wrap"/>
+
+                    <TextBlock Text="© 2025 RecordTime. All rights reserved."
+                              Classes="caption"
+                              Margin="0,8,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部占位元素,确保滚动空间充足 -->
+            <Border Height="1" Background="Transparent"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

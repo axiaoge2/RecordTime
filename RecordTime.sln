@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordTime.Avalonia", "src\RecordTime.Avalonia\RecordTime.Avalonia.csproj", "{D4E5F6A7-B8C9-4D5E-0F1A-2B3C4D5E6F7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordTime.Core", "src\RecordTime.Core\RecordTime.Core.csproj", "{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordTime.Data", "src\RecordTime.Data\RecordTime.Data.csproj", "{C3D4E5F6-A7B8-4C5D-0E1F-2A3B4C5D6E7F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3240F6C8-5F75-4B24-8E89-B48620F2AB10}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecordTime.Console", "src\RecordTime.Console\RecordTime.Console.csproj", "{1E9C6EE4-057A-41A8-AA45-66EB3B76B05B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D4E5F6A7-B8C9-4D5E-0F1A-2B3C4D5E6F7A}.Debug|x64.ActiveCfg = Debug|x64
+		{D4E5F6A7-B8C9-4D5E-0F1A-2B3C4D5E6F7A}.Debug|x64.Build.0 = Debug|x64
+		{D4E5F6A7-B8C9-4D5E-0F1A-2B3C4D5E6F7A}.Release|x64.ActiveCfg = Release|x64
+		{D4E5F6A7-B8C9-4D5E-0F1A-2B3C4D5E6F7A}.Release|x64.Build.0 = Release|x64
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Debug|x64.ActiveCfg = Debug|x64
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Debug|x64.Build.0 = Debug|x64
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Release|x64.ActiveCfg = Release|x64
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E}.Release|x64.Build.0 = Release|x64
+		{C3D4E5F6-A7B8-4C5D-0E1F-2A3B4C5D6E7F}.Debug|x64.ActiveCfg = Debug|x64
+		{C3D4E5F6-A7B8-4C5D-0E1F-2A3B4C5D6E7F}.Debug|x64.Build.0 = Debug|x64
+		{C3D4E5F6-A7B8-4C5D-0E1F-2A3B4C5D6E7F}.Release|x64.ActiveCfg = Release|x64
+		{C3D4E5F6-A7B8-4C5D-0E1F-2A3B4C5D6E7F}.Release|x64.Build.0 = Release|x64
+		{1E9C6EE4-057A-41A8-AA45-66EB3B76B05B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1E9C6EE4-057A-41A8-AA45-66EB3B76B05B}.Debug|x64.Build.0 = Debug|Any CPU
+		{1E9C6EE4-057A-41A8-AA45-66EB3B76B05B}.Release|x64.ActiveCfg = Release|Any CPU
+		{1E9C6EE4-057A-41A8-AA45-66EB3B76B05B}.Release|x64.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D4E5F6A7-B8C9-4D5E-0F1A-2B3C4D5E6F7A} = {3240F6C8-5F75-4B24-8E89-B48620F2AB10}
+		{B2C3D4E5-F6A7-4B5C-9D0E-1F2A3B4C5D6E} = {3240F6C8-5F75-4B24-8E89-B48620F2AB10}
+		{C3D4E5F6-A7B8-4C5D-0E1F-2A3B4C5D6E7F} = {3240F6C8-5F75-4B24-8E89-B48620F2AB10}
+		{1E9C6EE4-057A-41A8-AA45-66EB3B76B05B} = {3240F6C8-5F75-4B24-8E89-B48620F2AB10}
+	EndGlobalSection
+EndGlobal

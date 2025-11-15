@@ -1,0 +1,246 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="RecordTime.Avalonia.Views.ReportView"
+             x:DataType="vm:ReportViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
+            <!-- Page Title -->
+            <TextBlock Text="报告生成"
+                      Classes="title"
+                      Margin="0,0,0,16"/>
+
+            <!-- Date Range Selection -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="📅 选择日期范围"
+                              Classes="heading"/>
+
+                    <!-- Quick Date Range Buttons -->
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,*">
+                        <Button Grid.Column="0"
+                               Content="最近一周"
+                               Classes="secondary"
+                               Command="{Binding SetLastWeekCommand}"
+                               Margin="0,0,8,0"/>
+                        <Button Grid.Column="1"
+                               Content="最近一月"
+                               Classes="secondary"
+                               Command="{Binding SetLastMonthCommand}"
+                               Margin="0,0,8,0"/>
+                        <Button Grid.Column="2"
+                               Content="最近三月"
+                               Classes="secondary"
+                               Command="{Binding SetLastThreeMonthsCommand}"/>
+                    </Grid>
+
+                    <!-- Date Display -->
+                    <Border Padding="16"
+                           Background="{StaticResource HoverBackground}"
+                           CornerRadius="12">
+                        <Grid ColumnDefinitions="*,Auto,*">
+                            <!-- Start Date -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="开始日期"
+                                          Classes="caption"
+                                          Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding StartDateText}"
+                                          Classes="body"
+                                          FontWeight="SemiBold"/>
+                            </StackPanel>
+
+                            <!-- Arrow -->
+                            <TextBlock Grid.Column="1"
+                                      Text="→"
+                                      FontSize="20"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0"/>
+
+                            <!-- End Date -->
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="结束日期"
+                                          Classes="caption"
+                                          Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding EndDateText}"
+                                          Classes="body"
+                                          FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Report Summary (Preview) -->
+            <Border Classes="widget-card">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="📊 报告预览"
+                              Classes="heading"/>
+
+                    <Grid ColumnDefinitions="*,20,*,20,*"
+                         RowDefinitions="Auto">
+                        <!-- Total Days -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding TotalDays}"
+                                      Classes="number-widget"
+                                      HorizontalAlignment="Center"
+                                      FontSize="28"/>
+                            <TextBlock Text="统计天数"
+                                      Classes="caption"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <!-- Total Sessions -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{Binding TotalSessions}"
+                                      Classes="number-widget"
+                                      HorizontalAlignment="Center"
+                                      FontSize="28"/>
+                            <TextBlock Text="会话总数"
+                                      Classes="caption"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <!-- Total Apps -->
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="{Binding TotalApps}"
+                                      Classes="number-widget"
+                                      HorizontalAlignment="Center"
+                                      FontSize="28"/>
+                            <TextBlock Text="应用总数"
+                                      Classes="caption"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Generate Report Section -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="📝 生成报告"
+                              Classes="heading"/>
+
+                    <!-- Status Text -->
+                    <Border Padding="16"
+                           Background="{StaticResource HoverBackground}"
+                           CornerRadius="12">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{Binding StatusText}"
+                                      Classes="body"
+                                      TextAlignment="Center"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding StatusDetail}"
+                                      Classes="caption"
+                                      TextAlignment="Center"
+                                      IsVisible="{Binding StatusDetail}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Generate Button -->
+                    <Button Content="🚀 生成 HTML 报告"
+                           Classes="primary"
+                           Command="{Binding GenerateReportCommand}"
+                           IsEnabled="{Binding !IsGenerating}"
+                           HorizontalAlignment="Stretch"
+                           Height="44"
+                           FontSize="16"
+                           Margin="0,8,0,0"/>
+
+                    <!-- Action Buttons -->
+                    <Grid ColumnDefinitions="*,12,*">
+                        <Button Grid.Column="0"
+                               Content="📄 打开报告"
+                               Classes="secondary"
+                               Command="{Binding OpenReportCommand}"
+                               IsEnabled="{Binding LastReportPath}"
+                               HorizontalAlignment="Stretch"
+                               Height="40"/>
+
+                        <Button Grid.Column="2"
+                               Content="📁 打开文件夹"
+                               Classes="secondary"
+                               Command="{Binding OpenReportsFolderCommand}"
+                               HorizontalAlignment="Stretch"
+                               Height="40"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Report Info -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="ℹ️ 报告说明"
+                              Classes="heading"/>
+
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Column="0"
+                                      Text="✓"
+                                      Classes="body"
+                                      Foreground="{StaticResource SystemGreen}"
+                                      FontWeight="Bold"
+                                      Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="包含详细的时间使用统计和可视化图表"
+                                      Classes="body"
+                                      TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Column="0"
+                                      Text="✓"
+                                      Classes="body"
+                                      Foreground="{StaticResource SystemGreen}"
+                                      FontWeight="Bold"
+                                      Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="报告保存在应用程序目录下的 Reports 文件夹"
+                                      Classes="body"
+                                      TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Column="0"
+                                      Text="✓"
+                                      Classes="body"
+                                      Foreground="{StaticResource SystemGreen}"
+                                      FontWeight="Bold"
+                                      Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="可在任何现代浏览器中打开查看"
+                                      Classes="body"
+                                      TextWrapping="Wrap"/>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Column="0"
+                                      Text="✓"
+                                      Classes="body"
+                                      Foreground="{StaticResource SystemGreen}"
+                                      FontWeight="Bold"
+                                      Margin="0,0,8,0"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="包含应用使用统计、分类统计、时间线和 AI 分析建议"
+                                      Classes="body"
+                                      TextWrapping="Wrap"/>
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部占位元素,确保滚动空间充足 -->
+            <Border Height="1" Background="Transparent"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

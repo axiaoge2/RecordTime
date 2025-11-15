@@ -1,0 +1,126 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="RecordTime.Avalonia.Views.AboutView"
+             x:DataType="vm:AboutViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24" MaxWidth="900" Margin="48,40,48,80">
+            <!-- Page Title -->
+            <TextBlock Text="ℹ️ 关于 RecordTime"
+                      Classes="title"
+                      Margin="0,0,0,16"/>
+
+            <!-- App Icon and Name -->
+            <Border Classes="card"
+                   Padding="32,40">
+                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                    <TextBlock Text="⏱️"
+                              FontSize="64"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding AppName}"
+                              Classes="title"
+                              HorizontalAlignment="Center"
+                              FontSize="32"/>
+                    <TextBlock Text="{Binding Version, StringFormat='版本 {0}'}"
+                              Classes="heading"
+                              HorizontalAlignment="Center"
+                              Foreground="{StaticResource SecondaryText}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Description -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="📝 应用简介"
+                              Classes="heading"/>
+                    <TextBlock Text="{Binding Description}"
+                              Classes="body"
+                              TextWrapping="Wrap"
+                              LineHeight="24"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Features -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="✨ 主要功能"
+                              Classes="heading"/>
+
+                    <ItemsControl ItemsSource="{Binding Features}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                          Classes="body"
+                                          Margin="0,4"
+                                          TextWrapping="Wrap"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Technology Stack -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="🛠️ 技术栈"
+                              Classes="heading"/>
+                    <TextBlock Text="{Binding TechStack}"
+                              Classes="body"
+                              TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Links -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="🔗 链接"
+                              Classes="heading"/>
+
+                    <Grid ColumnDefinitions="*,12,*">
+                        <Button Grid.Column="0"
+                               Content="📦 GitHub 仓库"
+                               Classes="secondary"
+                               Command="{Binding OpenGitHubCommand}"
+                               HorizontalAlignment="Stretch"
+                               Height="44"/>
+
+                        <Button Grid.Column="2"
+                               Content="📄 开源许可"
+                               Classes="secondary"
+                               Command="{Binding OpenLicenseCommand}"
+                               HorizontalAlignment="Stretch"
+                               Height="44"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Copyright -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding Copyright}"
+                              Classes="body"
+                              HorizontalAlignment="Center"
+                              Foreground="{StaticResource SecondaryText}"/>
+                    <TextBlock Text="Made with ❤️ for productivity"
+                              Classes="caption"
+                              HorizontalAlignment="Center"
+                              Foreground="{StaticResource SecondaryText}"
+                              FontStyle="Italic"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部占位元素,确保滚动空间充足 -->
+            <Border Height="1" Background="Transparent"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

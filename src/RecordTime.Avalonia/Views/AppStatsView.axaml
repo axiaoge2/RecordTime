@@ -1,0 +1,224 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="900"
+             d:DesignHeight="700"
+             x:Class="RecordTime.Avalonia.Views.AppStatsView"
+             x:DataType="vm:AppStatsViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
+            <!-- Title -->
+            <TextBlock Text="应用统计"
+                      Classes="title"
+                      Margin="0,0,0,16"/>
+
+            <!-- Date Range Selector -->
+            <Border Classes="card"
+                   Padding="24,20">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="时间范围"
+                              Classes="heading"/>
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
+                        <Button Grid.Column="0"
+                               Classes="secondary"
+                               Content="今日"
+                               Command="{Binding SetTodayCommand}"
+                               Margin="0,0,8,0"/>
+                        <Button Grid.Column="1"
+                               Classes="secondary"
+                               Content="昨日"
+                               Command="{Binding SetYesterdayCommand}"
+                               Margin="0,0,8,0"/>
+                        <Button Grid.Column="2"
+                               Classes="secondary"
+                               Content="本周"
+                               Command="{Binding SetThisWeekCommand}"
+                               Margin="0,0,8,0"/>
+                        <Button Grid.Column="3"
+                               Classes="secondary"
+                               Content="本月"
+                               Command="{Binding SetThisMonthCommand}"
+                               Margin="0,0,8,0"/>
+                        <TextBlock Grid.Column="4"
+                                  Text="{Binding DateRangeText}"
+                                  Classes="body"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Foreground="{StaticResource SecondaryText}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Summary cards -->
+            <WrapPanel>
+                <Border Classes="widget-card"
+                       MinWidth="240"
+                       Margin="0,0,16,16">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="⏱️"
+                                  FontSize="28"
+                                  Opacity="0.9"/>
+                        <TextBlock Text="{Binding TotalDuration}"
+                                  Classes="number-widget"
+                                  Margin="0,4,0,0"/>
+                        <TextBlock Text="总使用时长"
+                                  Classes="caption"
+                                  Opacity="0.85"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="widget-card"
+                       MinWidth="240"
+                       Margin="0,0,16,16">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="📱"
+                                  FontSize="28"
+                                  Opacity="0.9"/>
+                        <TextBlock Text="{Binding TotalSessions}"
+                                  Classes="number-widget"
+                                  Margin="0,4,0,0"/>
+                        <TextBlock Text="当前显示应用"
+                                  Classes="caption"
+                                  Opacity="0.85"/>
+                        <TextBlock Text="{Binding TotalAppCount, StringFormat='全部共 {0} 个'}"
+                                  Classes="caption"
+                                  Opacity="0.65"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <!-- Search + filters -->
+            <Border Classes="card"
+                   Padding="24,20">
+                <WrapPanel>
+                    <TextBox Width="260"
+                             MinWidth="220"
+                             Margin="0,0,12,12"
+                             Text="{Binding SearchText}"
+                             Watermark="🔍 搜索应用名称..."
+                             VerticalAlignment="Center"/>
+
+                    <ComboBox Width="220"
+                             ItemsSource="{Binding Categories}"
+                             SelectedItem="{Binding SelectedCategory}"
+                             PlaceholderText="选择分类"
+                             Margin="0,0,12,12"
+                             VerticalAlignment="Center"/>
+
+                    <Button Classes="secondary"
+                           Content="清除筛选"
+                           Command="{Binding ClearFilterCommand}"
+                           Margin="0,0,12,12"
+                           VerticalAlignment="Center"/>
+                </WrapPanel>
+            </Border>
+
+            <!-- App detail list -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="应用详细列表"
+                              Classes="heading"/>
+
+                    <Border Padding="12,8"
+                           Background="{StaticResource HoverBackground}"
+                           CornerRadius="8"
+                           MinWidth="900">
+                        <Grid ColumnDefinitions="*,140,90,140,120,170">
+                            <TextBlock Grid.Column="0"
+                                      Text="应用名称"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="分类"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Grid.Column="2"
+                                      Text="占比"
+                                      Classes="body"
+                                      FontWeight="SemiBold"
+                                      TextAlignment="Right"/>
+                            <TextBlock Grid.Column="3"
+                                      Text="使用时长"
+                                      Classes="body"
+                                      FontWeight="SemiBold"
+                                      TextAlignment="Right"/>
+                            <TextBlock Grid.Column="4"
+                                      Text="使用次数"
+                                      Classes="body"
+                                      FontWeight="SemiBold"
+                                      TextAlignment="Center"/>
+                            <TextBlock Grid.Column="5"
+                                      Text="最后使用"
+                                      Classes="body"
+                                      FontWeight="SemiBold"
+                                      TextAlignment="Right"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- 应用列表 - 使用外层ScrollViewer滚动,无高度限制 -->
+                    <ItemsControl ItemsSource="{Binding Apps}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="12,10"
+                                       CornerRadius="8"
+                                       Background="Transparent"
+                                       MinWidth="900">
+                                    <Border.Styles>
+                                        <Style Selector="Border:pointerover">
+                                            <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
+                                        </Style>
+                                    </Border.Styles>
+                                    <Grid ColumnDefinitions="*,140,90,140,120,170">
+                                        <TextBlock Grid.Column="0"
+                                                  Text="{Binding AppName}"
+                                                  Classes="body"
+                                                  TextWrapping="Wrap"
+                                                  ToolTip.Tip="{Binding AppName}"/>
+                                        <TextBlock Grid.Column="1"
+                                                  Text="{Binding Category}"
+                                                  Classes="caption"/>
+                                        <TextBlock Grid.Column="2"
+                                                  Text="{Binding PercentageText}"
+                                                  Classes="body"
+                                                  FontWeight="SemiBold"
+                                                  Foreground="{StaticResource PrimaryGradient}"
+                                                  TextAlignment="Right"/>
+                                        <TextBlock Grid.Column="3"
+                                                  Text="{Binding DurationText}"
+                                                  Classes="body"
+                                                  TextAlignment="Right"/>
+                                        <TextBlock Grid.Column="4"
+                                                  Text="{Binding SessionCountText}"
+                                                  Classes="caption"
+                                                  TextAlignment="Center"/>
+                                        <TextBlock Grid.Column="5"
+                                                  Text="{Binding LastUsedText}"
+                                                  Classes="caption"
+                                                  TextAlignment="Right"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="今天还没有应用使用记录"
+                              Classes="caption"
+                              HorizontalAlignment="Center"
+                              Margin="0,40,0,40"
+                              Opacity="0.7"
+                              FontSize="14"
+                              IsVisible="{Binding HasNoApps}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 底部占位元素,确保滚动空间充足 -->
+            <Border Height="1" Background="Transparent"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
