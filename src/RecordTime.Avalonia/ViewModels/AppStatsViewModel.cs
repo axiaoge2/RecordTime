@@ -1,3 +1,4 @@
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -48,6 +49,9 @@ public partial class AppStatsViewModel : ViewModelBase
 
     // 分类列表
     public ObservableCollection<string> Categories { get; } = new();
+
+    // 图标提取服务
+    private readonly IIconExtractor _iconExtractor = new IconExtractor();
 
     public AppStatsViewModel()
     {
@@ -145,7 +149,7 @@ public partial class AppStatsViewModel : ViewModelBase
             var minutes = (snapshot.TotalSeconds % 3600) / 60;
             var durationText = $"{hours:D2}h {minutes:D2}m";
 
-            // 转换为 AppDetailItem
+            // 转换为 AppDetailItem 并提取图标
             var appItems = snapshot.AllApps.Select(a => new AppDetailItem
             {
                 AppName = a.AppName,
@@ -155,7 +159,8 @@ public partial class AppStatsViewModel : ViewModelBase
                 SessionCount = a.SessionCount,
                 FirstUsed = a.FirstUsed,
                 LastUsed = a.LastUsed,
-                TotalPercentage = a.TotalPercentage
+                TotalPercentage = a.TotalPercentage,
+                Icon = _iconExtractor.ExtractIcon(a.ProcessName, a.Category)
             }).ToList();
 
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -249,6 +254,9 @@ public partial class AppDetailItem : ObservableObject
 
     [ObservableProperty]
     private double _totalPercentage;
+
+    [ObservableProperty]
+    private Bitmap? _icon;
 
     public string DurationText => $"{(int)TotalDuration.TotalHours:D2}:{TotalDuration.Minutes:D2}:{TotalDuration.Seconds:D2}";
     public string SessionCountText => $"{SessionCount} 次";

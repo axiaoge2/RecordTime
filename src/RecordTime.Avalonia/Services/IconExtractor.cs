@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using Avalonia.Media.Imaging;
+using Microsoft.Win32;
 
 namespace RecordTime.Avalonia.Services;
 
@@ -19,6 +21,14 @@ public interface IIconExtractor
     /// <param name="processName">进程名称（不含.exe）</param>
     /// <returns>Avalonia Bitmap，失败返回 null</returns>
     global::Avalonia.Media.Imaging.Bitmap? ExtractIcon(string processName);
+
+    /// <summary>
+    /// 从进程名提取应用图标，支持分类默认图标
+    /// </summary>
+    /// <param name="processName">进程名称（不含.exe）</param>
+    /// <param name="category">应用分类（用于选择默认图标）</param>
+    /// <returns>Avalonia Bitmap，失败返回分类默认图标</returns>
+    global::Avalonia.Media.Imaging.Bitmap? ExtractIcon(string processName, string category);
 
     /// <summary>
     /// 清除缓存的图标
@@ -41,6 +51,9 @@ public class IconExtractor : IIconExtractor
     // 默认图标（当提取失败时使用）
     private global::Avalonia.Media.Imaging.Bitmap? _defaultIcon;
 
+    // 分类默认图标缓存
+    private readonly Dictionary<string, global::Avalonia.Media.Imaging.Bitmap?> _categoryIconCache = new();
+
     public IconExtractor()
     {
         // 设置缓存目录
@@ -56,12 +69,20 @@ public class IconExtractor : IIconExtractor
     /// </summary>
     public global::Avalonia.Media.Imaging.Bitmap? ExtractIcon(string processName)
     {
+        return ExtractIcon(processName, "其他");
+    }
+
+    /// <summary>
+    /// 从进程名提取图标，支持分类默认图标
+    /// </summary>
+    public global::Avalonia.Media.Imaging.Bitmap? ExtractIcon(string processName, string category)
+    {
         if (string.IsNullOrWhiteSpace(processName))
-            return GetDefaultIcon();
+            return GetCategoryDefaultIcon(category);
 
         // 1. 检查内存缓存
         if (_iconCache.TryGetValue(processName, out var cachedIcon))
-            return cachedIcon;
+            return cachedIcon ?? GetCategoryDefaultIcon(category);
 
         // 2. 检查磁盘缓存
         var diskCachePath = Path.Combine(_cacheDirectory, $"{processName}.png");
@@ -99,7 +120,7 @@ public class IconExtractor : IIconExtractor
             }
         }
 
-        return extractedIcon ?? GetDefaultIcon();
+        return extractedIcon ?? GetCategoryDefaultIcon(category);
     }
 
     /// <summary>
@@ -111,26 +132,43 @@ public class IconExtractor : IIconExtractor
         {
             System.Diagnostics.Debug.WriteLine($"[IconExtractor] 尝试提取图标: {processName}");
 
+            // 0. 优先: 尝试从运行中的进程获取路径 (最可靠的方法)
+            var runningProcessPath = TryGetPathFromRunningProcess(processName);
+            if (!string.IsNullOrEmpty(runningProcessPath))
+            {
+                System.Diagnostics.Debug.WriteLine($"[IconExtractor]   ✓ 从运行进程找到: {runningProcessPath}");
+                var icon = ExtractIconFromFile(runningProcessPath);
+                if (icon != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[IconExtractor]   ✓ 成功从运行进程提取图标!");
+                    return icon;
+                }
+            }
+
             // 构建搜索路径列表
             var searchPaths = new List<string>();
 
-            // 1. System32
+            // 1. 从 Windows Registry 查询安装路径
+            var registryPaths = GetPathsFromRegistry(processName);
+            searchPaths.AddRange(registryPaths);
+
+            // 2. System32
             searchPaths.Add(Path.Combine(Environment.SystemDirectory, $"{processName}.exe"));
 
-            // 2. Program Files 标准路径
+            // 3. Program Files 标准路径
             searchPaths.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                 processName, $"{processName}.exe"));
             searchPaths.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
                 processName, $"{processName}.exe"));
 
-            // 3. 当前用户的 AppData\Local
+            // 4. 当前用户的 AppData\Local
             searchPaths.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 processName, $"{processName}.exe"));
 
-            // 4. 常见应用的特殊路径
+            // 5. 常见应用的特殊路径
             AddCommonAppPaths(processName, searchPaths);
 
-            // 5. Windows Apps (UWP应用)
+            // 6. Windows Apps (UWP应用)
             var windowsAppsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                 "WindowsApps");
             if (Directory.Exists(windowsAppsPath))
@@ -166,7 +204,7 @@ public class IconExtractor : IIconExtractor
                 }
             }
 
-            // 6. 尝试在 PATH 环境变量中查找
+            // 7. 尝试在 PATH 环境变量中查找
             var pathEnv = Environment.GetEnvironmentVariable("PATH");
             if (!string.IsNullOrEmpty(pathEnv))
             {
@@ -196,6 +234,135 @@ public class IconExtractor : IIconExtractor
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 尝试从运行中的进程获取可执行文件路径
+    /// </summary>
+    private string? TryGetPathFromRunningProcess(string processName)
+    {
+        try
+        {
+            var processes = Process.GetProcessesByName(processName);
+            if (processes.Length > 0)
+            {
+                try
+                {
+                    var mainModule = processes[0].MainModule;
+                    if (mainModule != null && !string.IsNullOrEmpty(mainModule.FileName))
+                    {
+                        return mainModule.FileName;
+                    }
+                }
+                catch (System.ComponentModel.Win32Exception)
+                {
+                    // 无权限访问进程模块 (常见于系统进程)
+                }
+                catch (InvalidOperationException)
+                {
+                    // 进程已退出
+                }
+                finally
+                {
+                    // 释放进程资源
+                    foreach (var p in processes)
+                    {
+                        p.Dispose();
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // 忽略所有错误
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 从 Windows Registry 查询应用安装路径
+    /// </summary>
+    private List<string> GetPathsFromRegistry(string processName)
+    {
+        var paths = new List<string>();
+
+        try
+        {
+            // 搜索 Uninstall 注册表键
+            var uninstallKeys = new[]
+            {
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+                @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall"
+            };
+
+            var registryRoots = new[] { Registry.LocalMachine, Registry.CurrentUser };
+
+            foreach (var root in registryRoots)
+            {
+                foreach (var uninstallKeyPath in uninstallKeys)
+                {
+                    try
+                    {
+                        using var uninstallKey = root.OpenSubKey(uninstallKeyPath);
+                        if (uninstallKey == null) continue;
+
+                        foreach (var subKeyName in uninstallKey.GetSubKeyNames())
+                        {
+                            try
+                            {
+                                using var appKey = uninstallKey.OpenSubKey(subKeyName);
+                                if (appKey == null) continue;
+
+                                var displayName = appKey.GetValue("DisplayName") as string;
+                                var installLocation = appKey.GetValue("InstallLocation") as string;
+                                var displayIcon = appKey.GetValue("DisplayIcon") as string;
+
+                                // 检查是否匹配进程名
+                                if (displayName != null &&
+                                    (displayName.Contains(processName, StringComparison.OrdinalIgnoreCase) ||
+                                     subKeyName.Contains(processName, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    // 尝试从 DisplayIcon 获取路径
+                                    if (!string.IsNullOrEmpty(displayIcon))
+                                    {
+                                        // DisplayIcon 可能包含图标索引，如 "C:\path\app.exe,0"
+                                        var iconPath = displayIcon.Split(',')[0].Trim('"');
+                                        if (File.Exists(iconPath))
+                                        {
+                                            paths.Add(iconPath);
+                                            System.Diagnostics.Debug.WriteLine($"[IconExtractor]   Registry DisplayIcon: {iconPath}");
+                                        }
+                                    }
+
+                                    // 尝试从 InstallLocation 构建路径
+                                    if (!string.IsNullOrEmpty(installLocation))
+                                    {
+                                        var exePath = Path.Combine(installLocation, $"{processName}.exe");
+                                        paths.Add(exePath);
+                                        System.Diagnostics.Debug.WriteLine($"[IconExtractor]   Registry InstallLocation: {exePath}");
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // 忽略单个子键的错误
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // 忽略注册表访问错误
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[IconExtractor]   Registry查询失败: {ex.Message}");
+        }
+
+        return paths;
     }
 
     /// <summary>
@@ -389,6 +556,74 @@ public class IconExtractor : IIconExtractor
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// 根据分类获取默认图标
+    /// </summary>
+    private global::Avalonia.Media.Imaging.Bitmap? GetCategoryDefaultIcon(string category)
+    {
+        if (string.IsNullOrEmpty(category))
+            return GetDefaultIcon();
+
+        // 检查缓存
+        if (_categoryIconCache.TryGetValue(category, out var cachedIcon))
+            return cachedIcon;
+
+        try
+        {
+            // 根据分类选择颜色
+            var (primaryColor, secondaryColor, symbol) = GetCategoryColors(category);
+
+            // 创建图标
+            using var bitmap = new System.Drawing.Bitmap(32, 32);
+            using var graphics = Graphics.FromImage(bitmap);
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            // 填充渐变背景
+            using var brush = new System.Drawing.Drawing2D.LinearGradientBrush(
+                new Rectangle(0, 0, 32, 32),
+                primaryColor,
+                secondaryColor,
+                45f
+            );
+            graphics.FillRectangle(brush, 0, 0, 32, 32);
+
+            // 添加符号文字
+            using var font = new Font("Segoe UI", 16, FontStyle.Bold);
+            using var textBrush = new SolidBrush(Color.White);
+            var textSize = graphics.MeasureString(symbol, font);
+            var x = (32 - textSize.Width) / 2;
+            var y = (32 - textSize.Height) / 2;
+            graphics.DrawString(symbol, font, textBrush, x, y);
+
+            var icon = ConvertToAvaloniaBitmap(bitmap);
+            _categoryIconCache[category] = icon;
+            return icon;
+        }
+        catch
+        {
+            return GetDefaultIcon();
+        }
+    }
+
+    /// <summary>
+    /// 根据分类获取颜色方案
+    /// </summary>
+    private (Color primary, Color secondary, string symbol) GetCategoryColors(string category)
+    {
+        return category switch
+        {
+            "开发工具" => (Color.FromArgb(59, 130, 246), Color.FromArgb(37, 99, 235), "<>"),     // 蓝色
+            "办公软件" => (Color.FromArgb(34, 197, 94), Color.FromArgb(22, 163, 74), "W"),       // 绿色
+            "视频娱乐" => (Color.FromArgb(239, 68, 68), Color.FromArgb(220, 38, 38), "▶"),      // 红色
+            "社交通讯" => (Color.FromArgb(168, 85, 247), Color.FromArgb(147, 51, 234), "@"),    // 紫色
+            "浏览器" => (Color.FromArgb(251, 146, 60), Color.FromArgb(249, 115, 22), "W"),       // 橙色
+            "系统工具" => (Color.FromArgb(107, 114, 128), Color.FromArgb(75, 85, 99), "⚙"),    // 灰色
+            "游戏" => (Color.FromArgb(236, 72, 153), Color.FromArgb(219, 39, 119), "♦"),        // 粉色
+            "文件管理" => (Color.FromArgb(245, 158, 11), Color.FromArgb(217, 119, 6), "📁"),    // 黄色
+            _ => (Color.FromArgb(102, 126, 234), Color.FromArgb(118, 75, 162), "?")              // 默认紫蓝色
+        };
     }
 
     /// <summary>
