@@ -42,6 +42,17 @@ public class SessionRepository : ISessionRepository, IDisposable
         }
     }
 
+    // Phase 1 Task 1.2: 更新会话心跳时间
+    public async Task UpdateSessionHeartbeatAsync(int sessionId, DateTime heartbeatTime)
+    {
+        var session = await _context.Sessions.FindAsync(sessionId);
+        if (session != null)
+        {
+            session.LastHeartbeat = heartbeatTime;
+            await _context.SaveChangesAsync();
+        }
+    }
+
     public async Task<AppSession?> GetSessionByIdAsync(int sessionId)
     {
         return await _context.Sessions.FindAsync(sessionId);

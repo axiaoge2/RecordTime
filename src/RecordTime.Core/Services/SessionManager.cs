@@ -20,6 +20,10 @@ public class SessionManager : IDisposable
     private readonly SemaphoreSlim _sessionLock = new(1, 1);
     private bool _isRunning;
 
+    // Phase 1 Task 1.2: 会话心跳机制
+    private System.Threading.Timer? _heartbeatTimer;
+    private readonly int _heartbeatIntervalSeconds = 30; // 每30秒更新一次心跳
+
     public event EventHandler<AppSession>? SessionStarted;
     public event EventHandler<AppSession>? SessionEnded;
 
@@ -178,19 +182,24 @@ public class SessionManager : IDisposable
         // 获取友好的显示名称
         var friendlyName = AppNameResolver.GetFriendlyName(window.ProcessName);
 
+        var now = DateTime.Now;
         var session = new AppSession
         {
             ProcessName = window.ProcessName,
             DisplayName = friendlyName,
             ActivityType = activityType,
             Category = category,
-            StartTime = DateTime.Now,
+            StartTime = now,
             Confidence = CalculateConfidence(activityType),
-            WindowTitleHash = HashWindowTitle(window.WindowTitle)
+            WindowTitleHash = HashWindowTitle(window.WindowTitle),
+            LastHeartbeat = now // Phase 1 Task 1.2: 初始化心跳时间
         };
 
         _currentSessionId = await repository.AddSessionAsync(session);
         session.Id = _currentSessionId.Value;
+
+        // Phase 1 Task 1.2: 启动心跳定时器
+        StartHeartbeatTimer();
 
         SessionStarted?.Invoke(this, session);
 
@@ -212,6 +221,9 @@ public class SessionManager : IDisposable
     {
         if (_currentSessionId == null)
             return;
+
+        // Phase 1 Task 1.2: 停止心跳定时器
+        StopHeartbeatTimer();
 
         using var repository = _repositoryFactory();
 
@@ -240,6 +252,52 @@ public class SessionManager : IDisposable
         };
     }
 
+    // Phase 1 Task 1.2: 心跳定时器管理
+    private void StartHeartbeatTimer()
+    {
+        // 先停止旧的定时器（如果存在）
+        StopHeartbeatTimer();
+
+        // 创建新的定时器，每30秒触发一次
+        _heartbeatTimer = new System.Threading.Timer(
+            callback: async _ => await UpdateSessionHeartbeatAsync(),
+            state: null,
+            dueTime: TimeSpan.FromSeconds(_heartbeatIntervalSeconds),
+            period: TimeSpan.FromSeconds(_heartbeatIntervalSeconds)
+        );
+
+        Log.Debug("心跳定时器已启动，间隔 {Interval} 秒", _heartbeatIntervalSeconds);
+    }
+
+    private void StopHeartbeatTimer()
+    {
+        if (_heartbeatTimer != null)
+        {
+            _heartbeatTimer.Dispose();
+            _heartbeatTimer = null;
+            Log.Debug("心跳定时器已停止");
+        }
+    }
+
+    private async Task UpdateSessionHeartbeatAsync()
+    {
+        // 如果没有活动会话，不执行更新
+        if (_currentSessionId == null)
+            return;
+
+        try
+        {
+            using var repository = _repositoryFactory();
+            await repository.UpdateSessionHeartbeatAsync(_currentSessionId.Value, DateTime.Now);
+            Log.Debug("会话心跳已更新: SessionId={SessionId}", _currentSessionId);
+        }
+        catch (Exception ex)
+        {
+            // 心跳更新失败不应影响主流程
+            Log.Error(ex, "更新会话心跳时发生错误: SessionId={SessionId}", _currentSessionId);
+        }
+    }
+
     private bool _disposed = false;
 
     public void Dispose()
@@ -256,6 +314,9 @@ public class SessionManager : IDisposable
         {
             // 同步清理
             _isRunning = false;
+
+            // Phase 1 Task 1.2: 停止心跳定时器
+            StopHeartbeatTimer();
 
             // 尝试获取锁,但设置超时避免死锁
             var lockAcquired = _sessionLock.Wait(TimeSpan.FromSeconds(5));
