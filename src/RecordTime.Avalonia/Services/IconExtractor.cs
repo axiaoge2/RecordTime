@@ -437,6 +437,42 @@ public class IconExtractor : IIconExtractor
             case "windowsterminal":
                 // Windows Terminal 通常在 WindowsApps 中，但也可能在其他位置
                 searchPaths.Add(Path.Combine(localAppData, "Microsoft", "WindowsApps", "wt.exe"));
+                // Windows Terminal 的实际exe路径
+                searchPaths.Add(Path.Combine(programFiles, "WindowsApps", "Microsoft.WindowsTerminal_1.18.3181.0_x64__8wekyb3d8bbwe", "WindowsTerminal.exe"));
+                searchPaths.Add(Path.Combine(programFiles, "WindowsApps", "Microsoft.WindowsTerminal_1.19.10302.0_x64__8wekyb3d8bbwe", "WindowsTerminal.exe"));
+                searchPaths.Add(Path.Combine(programFiles, "WindowsApps", "Microsoft.WindowsTerminal_1.20.11781.0_x64__8wekyb3d8bbwe", "WindowsTerminal.exe"));
+                break;
+
+            case "potplayer":
+            case "potplayermini64":
+            case "potplayermini":
+                // PotPlayer 常见安装路径
+                searchPaths.Add(Path.Combine(programFiles, "DAUM", "PotPlayer", "PotPlayerMini64.exe"));
+                searchPaths.Add(Path.Combine(programFilesX86, "DAUM", "PotPlayer", "PotPlayerMini.exe"));
+                searchPaths.Add(Path.Combine(programFiles, "PotPlayer", "PotPlayerMini64.exe"));
+                searchPaths.Add("C:\\PotPlayer\\PotPlayerMini64.exe");
+                searchPaths.Add("D:\\PotPlayer\\PotPlayerMini64.exe");
+                searchPaths.Add("E:\\PotPlayer\\PotPlayerMini64.exe");
+                break;
+
+            case "baidunetdiskunite":
+            case "baidunetdisk":
+                // 百度网盘路径
+                searchPaths.Add(Path.Combine(programFiles, "BaiduNetdisk", "BaiduNetdisk.exe"));
+                searchPaths.Add(Path.Combine(programFilesX86, "BaiduNetdisk", "BaiduNetdisk.exe"));
+                searchPaths.Add(Path.Combine(localAppData, "Programs", "BaiduNetdisk", "BaiduNetdisk.exe"));
+                searchPaths.Add("C:\\Program Files\\BaiduNetdisk\\BaiduNetdisk.exe");
+                searchPaths.Add("D:\\BaiduNetdisk\\BaiduNetdisk.exe");
+                break;
+
+            case "yy":
+                // YY语音路径
+                searchPaths.Add(Path.Combine(programFiles, "YY", "YY.exe"));
+                searchPaths.Add(Path.Combine(programFilesX86, "YY", "YY.exe"));
+                searchPaths.Add(Path.Combine(programFiles, "duowan", "YY", "YY.exe"));
+                searchPaths.Add(Path.Combine(programFilesX86, "duowan", "YY", "YY.exe"));
+                searchPaths.Add("C:\\Program Files (x86)\\YY\\YY.exe");
+                searchPaths.Add("D:\\YY\\YY.exe");
                 break;
 
             case "notepad++":
