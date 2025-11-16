@@ -40,10 +40,16 @@ public class RecordTimeDbContext : DbContext
             entity.Property(e => e.Category).HasMaxLength(50);
             entity.Property(e => e.ActivityType).HasConversion<string>();
 
-            // 索引
-            entity.HasIndex(e => e.StartTime);
-            entity.HasIndex(e => e.ProcessName);
-            entity.HasIndex(e => e.ActivityType);
+            // Phase 1 Task 1.3: 优化索引
+            // 单列索引
+            entity.HasIndex(e => e.StartTime).HasDatabaseName("IX_Sessions_StartTime");
+            entity.HasIndex(e => e.EndTime).HasDatabaseName("IX_Sessions_EndTime");
+            entity.HasIndex(e => e.ProcessName).HasDatabaseName("IX_Sessions_ProcessName");
+            entity.HasIndex(e => e.ActivityType).HasDatabaseName("IX_Sessions_ActivityType");
+            entity.HasIndex(e => e.LastHeartbeat).HasDatabaseName("IX_Sessions_LastHeartbeat");
+
+            // 复合索引 - 优化日期范围查询
+            entity.HasIndex(e => new { e.StartTime, e.EndTime }).HasDatabaseName("IX_Sessions_StartTime_EndTime");
         });
     }
 }

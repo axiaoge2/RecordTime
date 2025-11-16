@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecordTime.Data;
 
@@ -10,9 +11,11 @@ using RecordTime.Data;
 namespace RecordTime.Data.Migrations
 {
     [DbContext(typeof(RecordTimeDbContext))]
-    partial class RecordTimeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251116141312_OptimizeDatabaseIndexes")]
+    partial class OptimizeDatabaseIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.20");
