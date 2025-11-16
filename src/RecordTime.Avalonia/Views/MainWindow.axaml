@@ -146,7 +146,7 @@
                     </Border>
 
                     <!-- Summary Cards Grid (Apple Widget Style with generous spacing) -->
-                    <Grid ColumnDefinitions="*,24,*,24,*,24,*"
+                    <Grid ColumnDefinitions="*,24,*"
                          RowDefinitions="Auto"
                          Margin="0,8,0,0">
                         <!-- Card 1: Total Time -->
@@ -180,39 +180,44 @@
                                           Opacity="0.85"/>
                             </StackPanel>
                         </Border>
-
-                        <!-- Card 3: App Types -->
-                        <Border Grid.Column="4"
-                               Classes="widget-card">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="📱"
-                                          FontSize="28"
-                                          Opacity="0.9"/>
-                                <TextBlock Text="{Binding AppTypeCount}"
-                                          Classes="number-widget"
-                                          Margin="0,4,0,0"/>
-                                <TextBlock Text="应用类型"
-                                          Classes="caption"
-                                          Opacity="0.85"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Card 4: Activity Types -->
-                        <Border Grid.Column="6"
-                               Classes="widget-card">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="🎯"
-                                          FontSize="28"
-                                          Opacity="0.9"/>
-                                <TextBlock Text="{Binding ActivityTypeCount}"
-                                          Classes="number-widget"
-                                          Margin="0,4,0,0"/>
-                                <TextBlock Text="活动种类"
-                                          Classes="caption"
-                                          Opacity="0.85"/>
-                            </StackPanel>
-                        </Border>
                     </Grid>
+
+                    <!-- App Type Distribution - Large Donut Chart -->
+                    <Border Classes="card"
+                           Padding="32,28,32,32">
+                        <Grid RowDefinitions="Auto,*">
+                            <!-- Header -->
+                            <TextBlock Grid.Row="0"
+                                      Text="📱 应用类型分布"
+                                      Classes="heading"
+                                      Margin="0,0,0,20"/>
+
+                            <!-- Donut Chart with Center Text -->
+                            <Grid Grid.Row="1"
+                                 Height="280">
+                                <!-- Donut Chart -->
+                                <lvc:PieChart Series="{Binding AppTypePieChartSeries}"
+                                            LegendPosition="Hidden"
+                                            TooltipPosition="Top"/>
+
+                                <!-- Center Text Overlay -->
+                                <StackPanel VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"
+                                          Spacing="4">
+                                    <TextBlock Text="{Binding TopCategoryName}"
+                                              Classes="heading"
+                                              FontSize="18"
+                                              HorizontalAlignment="Center"
+                                              Foreground="{StaticResource PrimaryText}"/>
+                                    <TextBlock Text="{Binding TopCategoryDuration}"
+                                              Classes="number-widget"
+                                              FontSize="28"
+                                              HorizontalAlignment="Center"
+                                              Foreground="{StaticResource PrimaryGradient}"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
 
                     <!-- Monitoring Status Card with enhanced spacing -->
                     <Border Classes="card"

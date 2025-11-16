@@ -80,6 +80,18 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private Axis[] _barChartXAxes = Array.Empty<Axis>();
 
+    // 应用类型饼图数据 - 用于大型圆环图
+    [ObservableProperty]
+    private ISeries[] _appTypePieChartSeries = Array.Empty<ISeries>();
+
+    // 圆环图中心显示的类型名称（使用最多的类型）
+    [ObservableProperty]
+    private string _topCategoryName = "暂无数据";
+
+    // 圆环图中心显示的类型时长
+    [ObservableProperty]
+    private string _topCategoryDuration = "--";
+
     // 当前页面内容
     [ObservableProperty]
     private ViewModelBase? _currentPageViewModel;
@@ -363,6 +375,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 PieChartSeries = Array.Empty<ISeries>();
                 BarChartSeries = Array.Empty<ISeries>();
                 BarChartXAxes = Array.Empty<Axis>();
+                AppTypePieChartSeries = Array.Empty<ISeries>();
+                TopCategoryName = "暂无数据";
+                TopCategoryDuration = "--";
                 _lastDataFingerprint = string.Empty; // 重置指纹
                 return;
             }
@@ -500,6 +515,56 @@ public partial class MainWindowViewModel : ViewModelBase
                     BarChartSeries = Array.Empty<ISeries>();
                     BarChartXAxes = Array.Empty<Axis>();
                 }
+
+                // 更新应用类型圆环图数据 - TOP 5 应用分类
+                var appTypeGroups = snapshot.AllApps
+                    .GroupBy(a => a.Category)
+                    .Select(g => new
+                    {
+                        Category = g.Key,
+                        TotalMinutes = g.Sum(a => a.TotalDuration.TotalMinutes)
+                    })
+                    .OrderByDescending(x => x.TotalMinutes)
+                    .Take(5)
+                    .ToList();
+
+                if (appTypeGroups.Count > 0)
+                {
+                    // 使用更大更鲜艳的颜色配置（适合大型圆环图）
+                    var donutColors = new[]
+                    {
+                        new SKColor(102, 126, 234),   // #667eea - 主色调
+                        new SKColor(237, 100, 166),   // #ed64a6 - 粉色
+                        new SKColor(255, 154, 0),     // #ff9a00 - 橙色
+                        new SKColor(52, 199, 89),     // #34c759 - 绿色
+                        new SKColor(118, 75, 162)     // #764ba2 - 紫色
+                    };
+
+                    AppTypePieChartSeries = appTypeGroups.Select((group, index) => new PieSeries<double>
+                    {
+                        Values = new[] { group.TotalMinutes },
+                        Name = group.Category,
+                        Fill = new SolidColorPaint(donutColors[index % donutColors.Length])
+                        {
+                            Color = donutColors[index % donutColors.Length]
+                        },
+                        InnerRadius = 80,  // 设置内半径创建圆环效果
+                        HoverPushout = 8  // 悬停时突出距离
+                    }).Cast<ISeries>().ToArray();
+
+                    // 设置圆环图中心显示（最多使用的类型）
+                    var topCategory = appTypeGroups.First();
+                    TopCategoryName = topCategory.Category;
+                    var hours = (int)(topCategory.TotalMinutes / 60);
+                    var minutes = (int)(topCategory.TotalMinutes % 60);
+                    TopCategoryDuration = hours > 0 ? $"{hours}h {minutes}m" : $"{minutes}m";
+                }
+                else
+                {
+                    AppTypePieChartSeries = Array.Empty<ISeries>();
+                    TopCategoryName = "暂无数据";
+                    TopCategoryDuration = "--";
+                }
             });
         }
         catch (Exception ex)
@@ -515,7 +580,26 @@ public partial class MainWindowViewModel : ViewModelBase
     public void Dispose()
     {
         _updateTimer?.Dispose();
-        _sessionManager?.Dispose();
+
+        // ✅ 修复: 先异步停止 SessionManager,确保当前会话被正确结束
+        // 这样可以避免应用退出时会话 EndTime 为 null 导致时长异常的问题
+        if (_sessionManager != null)
+        {
+            try
+            {
+                _sessionManager.StopAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Dispose 时停止 SessionManager 失败: {ex.Message}");
+            }
+            finally
+            {
+                _sessionManager.Dispose();
+                _sessionManager = null;
+            }
+        }
+
         (_inputMonitor as IDisposable)?.Dispose();
         _loadDataLock.Dispose();
     }
