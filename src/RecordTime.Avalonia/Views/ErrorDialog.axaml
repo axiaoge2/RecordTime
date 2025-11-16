@@ -1,0 +1,109 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="RecordTime.Avalonia.Views.ErrorDialog"
+        Title="错误"
+        Width="500"
+        Height="250"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#FFFFFF">
+
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏 -->
+        <Border Grid.Row="0"
+                Background="#F5F5F7"
+                Padding="20,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 错误图标 -->
+                <Border Grid.Column="0"
+                        Width="40"
+                        Height="40"
+                        CornerRadius="20"
+                        Background="#FFEBEE"
+                        Margin="0,0,15,0">
+                    <TextBlock Text="⚠️"
+                               FontSize="24"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+                </Border>
+
+                <!-- 标题文本 -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="#1D1D1F"/>
+                    <TextBlock x:Name="SubtitleText"
+                               FontSize="12"
+                               Foreground="#86868B"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 消息内容 -->
+        <ScrollViewer Grid.Row="1"
+                      Padding="20">
+            <TextBlock x:Name="MessageText"
+                       TextWrapping="Wrap"
+                       FontSize="14"
+                       Foreground="#1D1D1F"
+                       LineHeight="22"/>
+        </ScrollViewer>
+
+        <!-- 按钮区域 -->
+        <Border Grid.Row="2"
+                Background="#F5F5F7"
+                Padding="20,15"
+                BorderBrush="#E5E5EA"
+                BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="10">
+                <!-- 查看日志按钮 (可选) -->
+                <Button x:Name="ViewLogsButton"
+                        Content="查看日志"
+                        Padding="20,8"
+                        Background="#E5E5EA"
+                        Foreground="#1D1D1F"
+                        BorderThickness="0"
+                        CornerRadius="8"
+                        IsVisible="False"
+                        Click="OnViewLogsClick">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#D1D1D6"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+
+                <!-- 确定按钮 -->
+                <Button x:Name="OkButton"
+                        Content="确定"
+                        Padding="20,8"
+                        Background="#007AFF"
+                        Foreground="White"
+                        BorderThickness="0"
+                        CornerRadius="8"
+                        Click="OnOkClick">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#0051D5"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
