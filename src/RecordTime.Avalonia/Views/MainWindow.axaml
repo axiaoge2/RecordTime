@@ -159,9 +159,19 @@
                                 <TextBlock Text="{Binding TotalDuration}"
                                           Classes="number-widget"
                                           Margin="0,4,0,0"/>
-                                <TextBlock Text="总活动时长"
-                                          Classes="caption"
-                                          Opacity="0.85"/>
+                                <TextBlock Classes="caption" Opacity="0.85">
+                                    <Run Text="总活动时长"/>
+                                    <Run Text=" ("/>
+                                    <Run Text="{Binding DataStatusHint}"/>
+                                    <Run Text=")"/>
+                                </TextBlock>
+                                <TextBlock Classes="caption"
+                                          Opacity="0.65"
+                                          FontSize="11"
+                                          Margin="0,2,0,0">
+                                    <Run Text="更新于 "/>
+                                    <Run Text="{Binding DataUpdateTime}"/>
+                                </TextBlock>
                             </StackPanel>
                         </Border>
 
@@ -222,19 +232,35 @@
                     <!-- Monitoring Status Card with enhanced spacing -->
                     <Border Classes="card"
                            Padding="24,20">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
+                        <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                              RowDefinitions="Auto">
                             <StackPanel Grid.Column="0"
-                                       Spacing="6"
+                                       Spacing="8"
                                        VerticalAlignment="Center">
                                 <TextBlock Text="监控状态"
                                           Classes="heading"/>
-                                <TextBlock Text="{Binding MonitoringStatusText}"
-                                          Classes="caption"
-                                          Opacity="0.85"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <!-- 监控运行中指示器 -->
+                                    <Border Width="8" Height="8" CornerRadius="4"
+                                           Background="#34C759"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding IsMonitoring}"/>
+                                    <!-- 监控未启动指示器 -->
+                                    <Border Width="8" Height="8" CornerRadius="4"
+                                           Background="#FF9500"
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !IsMonitoring}"/>
+                                    <TextBlock Classes="caption" Opacity="0.85">
+                                        <Run Text="{Binding MonitoringStatusText}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                                <TextBlock Classes="caption" Opacity="0.65" FontSize="12" IsVisible="{Binding !IsMonitoring}">
+                                    <Run Text="⚠️ "/>
+                                    <Run Text="{Binding DataStatusHint}"/>
+                                </TextBlock>
                             </StackPanel>
 
-                            <Button Grid.Column="2"
+                            <Button Grid.Column="3"
                                    Classes="primary"
                                    Content="{Binding StartButtonText}"
                                    Command="{Binding ToggleMonitoringCommand}"
@@ -329,14 +355,60 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
 
-                            <!-- Empty State -->
-                            <TextBlock Text="今天还没有数据记录"
-                                      Classes="caption"
-                                      HorizontalAlignment="Center"
-                                      Margin="0,40,0,40"
-                                      Opacity="0.7"
-                                      FontSize="14"
-                                      IsVisible="{Binding !TopApps.Count}"/>
+                            <!-- Empty State - Welcome Guide -->
+                            <Border IsVisible="{Binding ShowEmptyState}"
+                                   Padding="32"
+                                   Margin="0,20,0,20">
+                                <StackPanel Spacing="20" HorizontalAlignment="Center" MaxWidth="400">
+                                    <!-- Icon -->
+                                    <TextBlock Text="📊"
+                                              FontSize="56"
+                                              HorizontalAlignment="Center"
+                                              Opacity="0.9"/>
+
+                                    <!-- Title -->
+                                    <TextBlock Text="开始追踪您的时间"
+                                              Classes="heading"
+                                              FontSize="20"
+                                              HorizontalAlignment="Center"
+                                              TextAlignment="Center"/>
+
+                                    <!-- Description -->
+                                    <TextBlock TextWrapping="Wrap"
+                                              TextAlignment="Center"
+                                              Classes="caption"
+                                              Opacity="0.75"
+                                              LineHeight="22">
+                                        <Run Text="点击下方的"/><Run Text="启动监控" FontWeight="SemiBold"/><Run Text="按钮，RecordTime 将开始自动记录您的应用使用情况。"/>
+                                    </TextBlock>
+
+                                    <!-- Features -->
+                                    <StackPanel Spacing="12" Margin="0,8,0,0">
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
+                                            <TextBlock Text="自动追踪应用使用时长" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
+                                            <TextBlock Text="智能识别活动类型（视频、游戏等）" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
+                                            <TextBlock Text="数据本地存储，保护您的隐私" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Hint -->
+                                    <TextBlock Text="💡 提示：监控在后台运行，不会影响您的正常使用"
+                                              Classes="caption"
+                                              FontSize="11"
+                                              Opacity="0.65"
+                                              HorizontalAlignment="Center"
+                                              TextAlignment="Center"
+                                              TextWrapping="Wrap"
+                                              Margin="0,8,0,0"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
 
