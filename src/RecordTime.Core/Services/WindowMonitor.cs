@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Diagnostics;
 using RecordTime.Core.Models;
+using Serilog;
 
 namespace RecordTime.Core.Services;
 
@@ -12,11 +13,18 @@ public class WindowMonitor : IWindowMonitor
 {
     private Timer? _monitorTimer;
     private WindowInfo? _lastWindow;
-
-    // 性能优化: 2秒检查一次足够,500ms 太频繁
-    private const int MONITOR_INTERVAL_MS = 2000; // 2秒检查一次
+    private readonly int _monitorIntervalMs;
 
     public event EventHandler<WindowInfo>? WindowFocusChanged;
+
+    public WindowMonitor() : this(2000) // 默认 2 秒
+    {
+    }
+
+    public WindowMonitor(int monitorIntervalMs)
+    {
+        _monitorIntervalMs = monitorIntervalMs;
+    }
 
     #region Win32 API
 
@@ -54,7 +62,8 @@ public class WindowMonitor : IWindowMonitor
         if (_monitorTimer != null)
             return;
 
-        _monitorTimer = new Timer(MonitorCallback, null, 0, MONITOR_INTERVAL_MS);
+        _monitorTimer = new Timer(MonitorCallback, null, 0, _monitorIntervalMs);
+        Log.Debug("WindowMonitor 已启动，轮询间隔: {IntervalMs}ms", _monitorIntervalMs);
     }
 
     public void Stop()
@@ -80,11 +89,11 @@ public class WindowMonitor : IWindowMonitor
 
             if (currentWindow == null)
             {
-                Debug.WriteLine("⚠️ WindowMonitor: 当前窗口为空");
+                Log.Debug("WindowMonitor: 当前窗口为空");
                 return;
             }
 
-            Debug.WriteLine($"🔍 WindowMonitor: 检测到窗口 - {currentWindow.ProcessName} | {currentWindow.WindowTitle}");
+            Log.Verbose("检测到窗口: {ProcessName} | {WindowTitle}", currentWindow.ProcessName, currentWindow.WindowTitle);
 
             // 检查窗口是否变化 - 只要进程名不同就触发
             bool isWindowChanged = _lastWindow == null ||
@@ -92,19 +101,18 @@ public class WindowMonitor : IWindowMonitor
 
             if (isWindowChanged)
             {
-                Debug.WriteLine($"🔄 WindowMonitor: 窗口已变化,触发事件 - {currentWindow.ProcessName}");
+                Log.Debug("窗口已变化,触发事件: {ProcessName}", currentWindow.ProcessName);
                 _lastWindow = currentWindow;
                 WindowFocusChanged?.Invoke(this, currentWindow);
             }
             else
             {
-                Debug.WriteLine($"⏸️ WindowMonitor: 窗口未变化,跳过 - {currentWindow.ProcessName}");
+                Log.Verbose("窗口未变化,跳过: {ProcessName}", currentWindow.ProcessName);
             }
         }
         catch (Exception ex)
         {
-            // 日志记录
-            Debug.WriteLine($"❌ WindowMonitor error: {ex.Message}");
+            Log.Error(ex, "WindowMonitor 监控过程中发生错误");
         }
     }
 
@@ -112,7 +120,7 @@ public class WindowMonitor : IWindowMonitor
     {
         if (!IsWindowVisible(hwnd))
         {
-            Debug.WriteLine("⚠️ WindowInfo: 窗口不可见");
+            Log.Verbose("窗口不可见,跳过");
             return null;
         }
 
@@ -139,12 +147,12 @@ public class WindowMonitor : IWindowMonitor
             // 如果窗口标题为空但有进程名,也接受
             if (string.IsNullOrEmpty(windowTitle))
             {
-                Debug.WriteLine($"⚠️ WindowInfo: 窗口标题为空,但进程名为 {processName}");
+                Log.Verbose("窗口标题为空,但进程名为: {ProcessName}", processName);
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"❌ WindowInfo: 无法访问进程信息 - {ex.Message}");
+            Log.Warning(ex, "无法访问进程信息,可能是权限问题: ProcessId={ProcessId}", processId);
             // 无法访问进程信息,可能是权限问题
             return null;
         }
@@ -152,7 +160,7 @@ public class WindowMonitor : IWindowMonitor
         // 如果既没有标题也没有进程名,则忽略
         if (string.IsNullOrEmpty(windowTitle) && string.IsNullOrEmpty(processName))
         {
-            Debug.WriteLine("⚠️ WindowInfo: 窗口标题和进程名都为空,忽略");
+            Log.Verbose("窗口标题和进程名都为空,忽略");
             return null;
         }
 

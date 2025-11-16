@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using RecordTime.Core.Services;
 using RecordTime.Core.Models;
+using RecordTime.Core.Exceptions;
 using RecordTime.Data;
 using RecordTime.Data.Repositories;
 using RecordTime.Avalonia.Services;
@@ -15,6 +16,7 @@ using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
+using Serilog;
 
 namespace RecordTime.Avalonia.ViewModels;
 
@@ -55,6 +57,16 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _startButtonText = "启动监控";
+
+    // 数据状态提示
+    [ObservableProperty]
+    private string _dataStatusHint = "显示历史数据";
+
+    [ObservableProperty]
+    private string _dataUpdateTime = "--";
+
+    [ObservableProperty]
+    private bool _showEmptyState = false;
 
     // 日期选择
     [ObservableProperty]
@@ -106,8 +118,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
+        // 加载配置
+        var config = ConfigurationService.Instance.Current;
+
         // 创建监控服务
-        _windowMonitor = new WindowMonitor();
+        _windowMonitor = new WindowMonitor(config.Monitoring.WindowPollIntervalMs);
         _inputMonitor = new InputMonitor();
         _mediaDetector = new MediaDetector();
         _activityDetector = new ActivityDetector();
@@ -196,6 +211,9 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         try
         {
+            // 加载配置
+            var config = ConfigurationService.Instance.Current;
+
             // 创建 SessionManager
             _sessionManager = new SessionManager(
                 _windowMonitor,
@@ -206,7 +224,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 {
                     var dbContext = new RecordTimeDbContext();
                     return new SessionRepository(dbContext, ownsContext: true);
-                }
+                },
+                config.Monitoring.IdleTimeoutSeconds
             );
 
             // 订阅事件
@@ -216,7 +235,8 @@ public partial class MainWindowViewModel : ViewModelBase
             // 启动监控
             _sessionManager.Start();
 
-            // 启动定时刷新（每 1 秒，只在监控运行且查看今日数据时自动刷新）
+            // 启动定时刷新（只在监控运行且查看今日数据时自动刷新）
+            var refreshIntervalMs = config.Monitoring.DataRefreshIntervalMs;
             _updateTimer = new System.Threading.Timer(
                 async _ =>
                 {
@@ -230,6 +250,11 @@ public partial class MainWindowViewModel : ViewModelBase
                                 await LoadDataForDateAsync(SelectedDate);
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            // 定时器中的异常不应中断监控，只记录日志
+                            Log.Error(ex, "定时刷新数据时发生错误");
+                        }
                         finally
                         {
                             System.Threading.Interlocked.Exchange(ref _timerExecuting, 0);
@@ -237,20 +262,30 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
                 },
                 null,
-                TimeSpan.FromSeconds(1),
-                TimeSpan.FromSeconds(1)
+                TimeSpan.FromMilliseconds(refreshIntervalMs),
+                TimeSpan.FromMilliseconds(refreshIntervalMs)
             );
 
             IsMonitoring = true;
-            MonitoringStatusText = "监控运行中 - 正在实时追踪您的活动";
+            MonitoringStatusText = "实时监控中";
+            DataStatusHint = "实时数据";
             StartButtonText = "停止监控";
+
+            Log.Information("监控已成功启动");
 
             // 立即刷新数据
             await LoadDataForDateAsync(SelectedDate);
         }
         catch (Exception ex)
         {
-            MonitoringStatusText = $"启动失败: {ex.Message}";
+            Log.Error(ex, "启动监控失败");
+
+            // 显示用户友好的错误消息
+            MonitoringStatusText = "启动监控失败";
+
+            // 通过全局异常处理器显示错误对话框
+            GlobalExceptionHandler.Instance.HandleException(
+                MonitoringException.StartupFailed("SessionManager", ex));
         }
     }
 
@@ -272,7 +307,8 @@ public partial class MainWindowViewModel : ViewModelBase
             }
 
             IsMonitoring = false;
-            MonitoringStatusText = "监控已停止";
+            MonitoringStatusText = "监控未启动";
+            DataStatusHint = "显示历史数据";
             StartButtonText = "启动监控";
 
             // 最后刷新一次数据
@@ -286,24 +322,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void OnSessionStarted(object? sender, AppSession session)
     {
-        System.Diagnostics.Debug.WriteLine($"🟢 会话开始: {session.DisplayName} (ProcessName: {session.ProcessName})");
+        Log.Debug("会话开始: {DisplayName} (ProcessName: {ProcessName})", session.DisplayName, session.ProcessName);
 
         // 会话开始时刷新数据（只在查看今日数据时）
         if (SelectedDate.Date == DateTime.Today)
         {
-            System.Diagnostics.Debug.WriteLine("触发数据刷新...");
+            Log.Debug("触发数据刷新...");
             _ = LoadDataForDateAsync(SelectedDate);
         }
     }
 
     private void OnSessionEnded(object? sender, AppSession session)
     {
-        System.Diagnostics.Debug.WriteLine($"🔴 会话结束: {session.DisplayName} (ID: {session.Id}, Duration: {session.DurationSeconds}s)");
+        Log.Debug("会话结束: {DisplayName} (ID: {SessionId}, Duration: {DurationSeconds}s)", session.DisplayName, session.Id, session.DurationSeconds);
 
         // 会话结束时刷新数据（只在查看今日数据时）
         if (SelectedDate.Date == DateTime.Today)
         {
-            System.Diagnostics.Debug.WriteLine("触发数据刷新...");
+            Log.Debug("触发数据刷新...");
             _ = LoadDataForDateAsync(SelectedDate);
         }
     }
@@ -314,14 +350,70 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             await using var dbContext = new RecordTimeDbContext();
 
-            // 自动应用所有待执行的 Migrations
-            await dbContext.Database.MigrateAsync();
+            // 检查数据库是否存在
+            var canConnect = await dbContext.Database.CanConnectAsync();
 
-            System.Diagnostics.Debug.WriteLine("✅ 数据库 Migrations 应用成功");
+            if (!canConnect)
+            {
+                // 数据库不存在，创建并应用 Migrations
+                Log.Information("数据库不存在，正在创建...");
+                await dbContext.Database.MigrateAsync();
+                Log.Information("数据库创建成功");
+            }
+            else
+            {
+                // 数据库已存在，检查是否有待应用的 Migrations
+                var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
+
+                if (pendingMigrations.Any())
+                {
+                    Log.Information("检测到 {Count} 个待应用的 Migrations，正在应用...", pendingMigrations.Count());
+
+                    try
+                    {
+                        await dbContext.Database.MigrateAsync();
+                        Log.Information("Migrations 应用成功");
+                    }
+                    catch (Microsoft.Data.Sqlite.SqliteException sqliteEx) when (sqliteEx.SqliteErrorCode == 1)
+                    {
+                        // SQLite Error 1: table already exists
+                        // 这种情况发生在数据库已存在但没有 Migrations 历史记录时
+                        Log.Warning("数据库表已存在但缺少 Migrations 历史记录，尝试同步状态...");
+
+                        // 获取所有 Migrations
+                        var allMigrations = dbContext.Database.GetMigrations();
+
+                        // 手动插入 Migration 历史记录（标记为已应用）
+                        foreach (var migration in allMigrations)
+                        {
+                            var sql = $"INSERT OR IGNORE INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES ('{migration}', '7.0.0')";
+                            await dbContext.Database.ExecuteSqlRawAsync(sql);
+                        }
+
+                        Log.Information("Migrations 历史记录已同步");
+                    }
+                }
+                else
+                {
+                    Log.Debug("数据库 schema 已是最新版本，无需应用 Migrations");
+                }
+            }
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException sqliteEx)
+        {
+            Log.Error(sqliteEx, "数据库 Migrations 应用失败 (SQLite Error {ErrorCode})", sqliteEx.SqliteErrorCode);
+
+            // 通过全局异常处理器显示错误
+            GlobalExceptionHandler.Instance.HandleException(
+                DatabaseException.MigrationFailed(sqliteEx));
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"❌ 数据库 Migrations 应用失败: {ex.Message}");
+            Log.Error(ex, "数据库 Migrations 应用失败");
+
+            // 通过全局异常处理器显示错误
+            GlobalExceptionHandler.Instance.HandleException(
+                DatabaseException.MigrationFailed(ex));
         }
     }
 
@@ -334,7 +426,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"DisplayName迁移失败: {ex.Message}");
+            Log.Error(ex, "DisplayName 迁移失败");
         }
     }
 
@@ -348,7 +440,7 @@ public partial class MainWindowViewModel : ViewModelBase
             var appDataService = AppDataService.Instance;
             var snapshot = await appDataService.GetSnapshotAsync(date);
 
-            System.Diagnostics.Debug.WriteLine($"=== MainWindow: 获取快照 [{snapshot.GetDebugInfo()}] ===");
+            Log.Debug("MainWindow: 获取快照 [{DebugInfo}]", snapshot.GetDebugInfo());
 
             // 计算数据指纹 (session count + total seconds)
             var currentFingerprint = $"{snapshot.SessionCount}_{snapshot.TotalSeconds}";
@@ -356,16 +448,20 @@ public partial class MainWindowViewModel : ViewModelBase
             // 如果数据没有变化,跳过UI更新以避免图表重绘
             if (currentFingerprint == _lastDataFingerprint)
             {
-                System.Diagnostics.Debug.WriteLine("=== 数据未变化,跳过UI更新 ===");
+                Log.Debug("数据未变化,跳过UI更新");
                 return;
             }
 
             _lastDataFingerprint = currentFingerprint;
-            System.Diagnostics.Debug.WriteLine($"=== 检测到数据变化: {_lastDataFingerprint} ===");
+            Log.Debug("检测到数据变化: {DataFingerprint}", _lastDataFingerprint);
+
+            // 更新数据时间戳
+            DataUpdateTime = DateTime.Now.ToString("HH:mm");
 
             if (snapshot.AllApps.Count == 0)
             {
-                // 没有数据
+                // 没有数据 - 显示空状态
+                ShowEmptyState = true;
                 TotalDuration = "00h 00m";
                 SessionCount = 0;
                 AppTypeCount = 0;
@@ -381,6 +477,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 _lastDataFingerprint = string.Empty; // 重置指纹
                 return;
             }
+
+            // 有数据 - 隐藏空状态
+            ShowEmptyState = false;
 
             // 从快照计算汇总数据
             var hours = snapshot.TotalSeconds / 3600;
@@ -427,9 +526,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 TopApps.Clear();
                 var top10Apps = snapshot.AllApps.Take(10).ToList();
 
-                System.Diagnostics.Debug.WriteLine($"=== MainWindow: 开始更新 TOP 10 ===");
-                System.Diagnostics.Debug.WriteLine($"  AllApps.Count = {snapshot.AllApps.Count}");
-                System.Diagnostics.Debug.WriteLine($"  top10Apps.Count = {top10Apps.Count}");
+                Log.Debug("MainWindow: 开始更新 TOP 10");
+                Log.Verbose("AllApps.Count = {AllAppsCount}, top10Apps.Count = {Top10Count}", snapshot.AllApps.Count, top10Apps.Count);
 
                 for (int i = 0; i < top10Apps.Count; i++)
                 {
@@ -447,9 +545,9 @@ public partial class MainWindowViewModel : ViewModelBase
                         Icon = icon
                     };
                     TopApps.Add(item);
-                    System.Diagnostics.Debug.WriteLine($"  添加 #{item.Rank}: {item.AppName} - {item.Duration.TotalSeconds:F0}s (图标: {(icon != null ? "✓" : "✗")})");
+                    Log.Verbose("添加 #{Rank}: {AppName} - {DurationSeconds}s (图标: {HasIcon})", item.Rank, item.AppName, item.Duration.TotalSeconds, icon != null ? "✓" : "✗");
                 }
-                System.Diagnostics.Debug.WriteLine($"=== MainWindow: UI 更新完成，TopApps.Count = {TopApps.Count} ===");
+                Log.Debug("MainWindow: UI 更新完成，TopApps.Count = {TopAppsCount}", TopApps.Count);
 
                 // 更新饼图数据 - TOP 5 应用
                 var top5Apps = snapshot.AllApps.Take(5).ToList();
@@ -569,7 +667,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"加载数据失败: {ex.Message}");
+            Log.Error(ex, "加载数据失败");
         }
         finally
         {
@@ -591,7 +689,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Dispose 时停止 SessionManager 失败: {ex.Message}");
+                Log.Warning(ex, "Dispose 时停止 SessionManager 失败");
             }
             finally
             {

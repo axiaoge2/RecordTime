@@ -1,6 +1,6 @@
 using RecordTime.Core.Models;
 using RecordTime.Core.Repositories;
-using System.Diagnostics;
+using Serilog;
 
 namespace RecordTime.Core.Services;
 
@@ -14,6 +14,7 @@ public class SessionManager : IDisposable
     private readonly IMediaDetector _mediaDetector;
     private readonly IActivityDetector _activityDetector;
     private readonly Func<ISessionRepository> _repositoryFactory;
+    private readonly int _idleTimeoutSeconds;
 
     private int? _currentSessionId;
     private readonly SemaphoreSlim _sessionLock = new(1, 1);
@@ -27,13 +28,15 @@ public class SessionManager : IDisposable
         IInputMonitor inputMonitor,
         IMediaDetector mediaDetector,
         IActivityDetector activityDetector,
-        Func<ISessionRepository> repositoryFactory)
+        Func<ISessionRepository> repositoryFactory,
+        int idleTimeoutSeconds = 300) // 默认 5 分钟
     {
         _windowMonitor = windowMonitor;
         _inputMonitor = inputMonitor;
         _mediaDetector = mediaDetector;
         _activityDetector = activityDetector;
         _repositoryFactory = repositoryFactory;
+        _idleTimeoutSeconds = idleTimeoutSeconds;
     }
 
     /// <summary>
@@ -54,7 +57,7 @@ public class SessionManager : IDisposable
         // 订阅窗口切换事件
         _windowMonitor.WindowFocusChanged += OnWindowFocusChanged;
 
-        Debug.WriteLine("✅ SessionManager started");
+        Log.Information("SessionManager 已启动");
     }
 
     /// <summary>
@@ -81,7 +84,7 @@ public class SessionManager : IDisposable
         _inputMonitor.Stop();
         _mediaDetector.Stop();
 
-        Debug.WriteLine("⏹️ SessionManager stopped");
+        Log.Information("SessionManager 已停止");
     }
 
     private void OnWindowFocusChanged(object? sender, WindowInfo window)
@@ -94,18 +97,18 @@ public class SessionManager : IDisposable
     {
         try
         {
-            Debug.WriteLine($"🎯 SessionManager: 收到窗口焦点变化事件 - {window.ProcessName}");
+            Log.Debug("收到窗口焦点变化事件: {ProcessName}", window.ProcessName);
 
             if (!_isRunning)
             {
-                Debug.WriteLine("⚠️ SessionManager: 未运行,忽略事件");
+                Log.Debug("SessionManager 未运行,忽略窗口焦点变化事件");
                 return;
             }
 
             await _sessionLock.WaitAsync();
             try
             {
-                Debug.WriteLine($"🔒 SessionManager: 已获取锁,开始处理会话");
+                Log.Debug("已获取会话锁,开始处理会话");
 
                 // 收集系统状态
                 var systemState = CollectSystemState(window);
@@ -114,30 +117,29 @@ public class SessionManager : IDisposable
                 var activityType = _activityDetector.DetermineActivity(window, systemState);
                 var category = _activityDetector.GetAppCategory(window.ProcessName);
 
-                Debug.WriteLine($"📊 SessionManager: 活动类型={activityType}, 分类={category}");
+                Log.Debug("活动分析完成: 类型={ActivityType}, 分类={Category}", activityType, category);
 
                 // 结束上一个会话
                 if (_currentSessionId != null)
                 {
-                    Debug.WriteLine($"⏹️ SessionManager: 结束上一个会话 ID={_currentSessionId}");
+                    Log.Debug("结束上一个会话: SessionId={SessionId}", _currentSessionId);
                     await EndCurrentSessionAsync();
                 }
 
                 // 创建新会话
-                Debug.WriteLine($"🆕 SessionManager: 创建新会话");
+                Log.Debug("创建新会话: ProcessName={ProcessName}", window.ProcessName);
                 await StartNewSessionAsync(window, activityType, category);
             }
             finally
             {
                 _sessionLock.Release();
-                Debug.WriteLine($"🔓 SessionManager: 已释放锁");
+                Log.Debug("已释放会话锁");
             }
         }
         catch (Exception ex)
         {
             // 记录异常但不让它传播导致应用崩溃
-            Debug.WriteLine($"❌ SessionManager error: {ex.Message}\n{ex.StackTrace}");
-            // TODO: 添加到日志系统后,使用 _logger.LogError(ex, "处理窗口焦点变化时发生错误");
+            Log.Error(ex, "处理窗口焦点变化时发生错误: ProcessName={ProcessName}", window.ProcessName);
         }
     }
 
@@ -161,7 +163,7 @@ public class SessionManager : IDisposable
             IsBrowser = isBrowser,
             BrowserVideoPlaying = isBrowser && isMediaPlaying,
             WindowFocused = true,
-            SystemIdle = idleTime > 300, // 5分钟无活动视为空闲
+            SystemIdle = idleTime > _idleTimeoutSeconds,
             KeyboardActivityLast30s = keyboardActivity,
             MouseClicksLast30s = mouseClicks,
             FrequentInput = keyboardActivity > 20 || mouseClicks > 10,
@@ -192,7 +194,7 @@ public class SessionManager : IDisposable
 
         SessionStarted?.Invoke(this, session);
 
-        Debug.WriteLine($"✅ Session started: {friendlyName} [{window.ProcessName}] ({activityType})");
+        Log.Information("会话已开始: {DisplayName} [{ProcessName}] ({ActivityType})", friendlyName, window.ProcessName, activityType);
     }
 
     private string HashWindowTitle(string title)
@@ -221,7 +223,7 @@ public class SessionManager : IDisposable
             SessionEnded?.Invoke(this, session);
         }
 
-        Debug.WriteLine($"⏹️ Session ended: ID={_currentSessionId}");
+        Log.Debug("会话已结束: SessionId={SessionId}", _currentSessionId);
         _currentSessionId = null;
     }
 
@@ -280,7 +282,7 @@ public class SessionManager : IDisposable
                 _sessionLock?.Dispose();
             }
 
-            Debug.WriteLine("♻️ SessionManager disposed");
+            Log.Debug("SessionManager 已释放资源");
         }
 
         _disposed = true;
