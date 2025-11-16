@@ -3,6 +3,9 @@ using System;
 using System.IO;
 using Microsoft.Data.Sqlite;
 
+// 检查是否为自动模式 (通过命令行参数 --auto 或 -y)
+var autoMode = args.Length > 0 && (args[0] == "--auto" || args[0] == "-y");
+
 var dbPath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "RecordTime", "recordtime.db");
@@ -64,13 +67,22 @@ using (var cmd = connection.CreateCommand())
 }
 
 Console.WriteLine("─────────────────────────────────────────────────────────────────────────");
-Console.Write("\n是否修复这些异常会话? (Y/N): ");
-var response = Console.ReadLine();
 
-if (response?.ToUpper() != "Y")
+// 如果是自动模式,跳过确认
+if (!autoMode)
 {
-    Console.WriteLine("⏹️ 已取消操作");
-    return 0;
+    Console.Write("\n是否修复这些异常会话? (Y/N): ");
+    var response = Console.ReadLine();
+
+    if (response?.ToUpper() != "Y")
+    {
+        Console.WriteLine("⏹️ 已取消操作");
+        return 0;
+    }
+}
+else
+{
+    Console.WriteLine("\n[自动模式] 跳过确认,自动修复...");
 }
 
 // 3. 备份数据库
