@@ -134,6 +134,9 @@ public partial class MainWindowViewModel : ViewModelBase
         // 执行数据库迁移（更新旧数据的 DisplayName）
         _ = MigrateDisplayNamesAsync();
 
+        // 自动修复未结束的会话（Phase 1 数据完整性保障）
+        _ = AutoFixIncompleteSessionsAsync();
+
         // 加载今日数据（只加载一次，不自动刷新）
         _ = LoadDataForDateAsync(SelectedDate);
 
@@ -427,6 +430,66 @@ public partial class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             Log.Error(ex, "DisplayName 迁移失败");
+        }
+    }
+
+    /// <summary>
+    /// Phase 1 任务 1.1: 应用启动时自动修复未结束的会话
+    /// </summary>
+    /// <remarks>
+    /// 此方法在应用启动时静默执行,无需用户干预:
+    /// - 检测 EndTime 为 null 的异常会话
+    /// - 将 EndTime 设置为 StartTime + 5分钟
+    /// - 将 DurationSeconds 设置为 300秒
+    /// - 记录所有修复操作到日志以供审计
+    ///
+    /// 设计原则:
+    /// 1. 静默执行,不打断用户体验
+    /// 2. 详细日志记录,便于问题追溯
+    /// 3. 异常容错,即使失败也不影响应用启动
+    /// </remarks>
+    private async Task AutoFixIncompleteSessionsAsync()
+    {
+        try
+        {
+            await using var dbContext = new RecordTimeDbContext();
+
+            // 查找所有未结束的会话
+            var incompleteSessions = await dbContext.Sessions
+                .Where(s => s.EndTime == null)
+                .ToListAsync();
+
+            if (incompleteSessions.Count == 0)
+            {
+                Log.Debug("启动检查: 没有发现未结束的会话");
+                return;
+            }
+
+            Log.Information("启动检查: 发现 {Count} 个未结束的会话,正在自动修复...", incompleteSessions.Count);
+
+            // 修复每个会话
+            foreach (var session in incompleteSessions)
+            {
+                // 修复策略: EndTime = StartTime + 5分钟
+                session.EndTime = session.StartTime.AddMinutes(5);
+                session.DurationSeconds = 300;
+
+                Log.Debug("修复会话 {Id}: {ProcessName} (DisplayName: {DisplayName}, StartTime: {StartTime})",
+                    session.Id,
+                    session.ProcessName,
+                    session.DisplayName,
+                    session.StartTime);
+            }
+
+            // 保存修改
+            await dbContext.SaveChangesAsync();
+
+            Log.Information("会话自动修复完成: 已修复 {Count} 个会话", incompleteSessions.Count);
+        }
+        catch (Exception ex)
+        {
+            // 异常不应影响应用启动,只记录日志
+            Log.Error(ex, "自动修复会话时发生错误");
         }
     }
 
