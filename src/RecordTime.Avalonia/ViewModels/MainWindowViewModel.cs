@@ -134,6 +134,12 @@ public partial class MainWindowViewModel : ViewModelBase
         // 执行数据库迁移（更新旧数据的 DisplayName）
         _ = MigrateDisplayNamesAsync();
 
+        // 自动修复未结束的会话（Phase 1 数据完整性保障）
+        _ = AutoFixIncompleteSessionsAsync();
+
+        // Phase 1 Task 1.2: 检测并修复心跳过期的会话
+        _ = FixStaleSessionsAsync();
+
         // 加载今日数据（只加载一次，不自动刷新）
         _ = LoadDataForDateAsync(SelectedDate);
 
@@ -427,6 +433,140 @@ public partial class MainWindowViewModel : ViewModelBase
         catch (Exception ex)
         {
             Log.Error(ex, "DisplayName 迁移失败");
+        }
+    }
+
+    /// <summary>
+    /// Phase 1 任务 1.1: 应用启动时自动修复未结束的会话
+    /// </summary>
+    /// <remarks>
+    /// 此方法在应用启动时静默执行,无需用户干预:
+    /// - 检测 EndTime 为 null 的异常会话
+    /// - 将 EndTime 设置为 StartTime + 5分钟
+    /// - 将 DurationSeconds 设置为 300秒
+    /// - 记录所有修复操作到日志以供审计
+    ///
+    /// 设计原则:
+    /// 1. 静默执行,不打断用户体验
+    /// 2. 详细日志记录,便于问题追溯
+    /// 3. 异常容错,即使失败也不影响应用启动
+    /// </remarks>
+    private async Task AutoFixIncompleteSessionsAsync()
+    {
+        try
+        {
+            await using var dbContext = new RecordTimeDbContext();
+
+            // 查找所有未结束的会话
+            var incompleteSessions = await dbContext.Sessions
+                .Where(s => s.EndTime == null)
+                .ToListAsync();
+
+            if (incompleteSessions.Count == 0)
+            {
+                Log.Debug("启动检查: 没有发现未结束的会话");
+                return;
+            }
+
+            Log.Information("启动检查: 发现 {Count} 个未结束的会话,正在自动修复...", incompleteSessions.Count);
+
+            // 修复每个会话
+            foreach (var session in incompleteSessions)
+            {
+                // 修复策略: EndTime = StartTime + 5分钟
+                session.EndTime = session.StartTime.AddMinutes(5);
+                session.DurationSeconds = 300;
+
+                Log.Debug("修复会话 {Id}: {ProcessName} (DisplayName: {DisplayName}, StartTime: {StartTime})",
+                    session.Id,
+                    session.ProcessName,
+                    session.DisplayName,
+                    session.StartTime);
+            }
+
+            // 保存修改
+            await dbContext.SaveChangesAsync();
+
+            Log.Information("会话自动修复完成: 已修复 {Count} 个会话", incompleteSessions.Count);
+        }
+        catch (Exception ex)
+        {
+            // 异常不应影响应用启动,只记录日志
+            Log.Error(ex, "自动修复会话时发生错误");
+        }
+    }
+
+    /// <summary>
+    /// Phase 1 任务 1.2: 检测并修复心跳过期的会话
+    /// </summary>
+    /// <remarks>
+    /// 此方法在应用启动时静默执行:
+    /// - 检测 EndTime 为 null 且 LastHeartbeat 超过2分钟的会话
+    /// - 将 EndTime 设置为 LastHeartbeat (如果存在) 或 StartTime + 5分钟 (如果不存在)
+    /// - 计算实际持续时长
+    /// - 记录所有修复操作
+    ///
+    /// 设计原则:
+    /// 1. 使用心跳时间作为会话结束时间,更准确反映实际使用情况
+    /// 2. 兼容旧数据(无心跳记录)
+    /// 3. 2分钟阈值:心跳间隔30秒,允许4个心跳周期的容错
+    /// </remarks>
+    private async Task FixStaleSessionsAsync()
+    {
+        try
+        {
+            await using var dbContext = new RecordTimeDbContext();
+
+            var now = DateTime.Now;
+            var staleThreshold = now.AddMinutes(-2); // 心跳超过2分钟视为过期
+
+            // 查找所有未结束但心跳过期的会话
+            var staleSessions = await dbContext.Sessions
+                .Where(s => s.EndTime == null &&
+                           (s.LastHeartbeat == null || s.LastHeartbeat < staleThreshold))
+                .ToListAsync();
+
+            if (staleSessions.Count == 0)
+            {
+                Log.Debug("启动检查: 没有发现心跳过期的会话");
+                return;
+            }
+
+            Log.Information("启动检查: 发现 {Count} 个心跳过期的会话,正在自动修复...", staleSessions.Count);
+
+            foreach (var session in staleSessions)
+            {
+                // 修复策略:
+                // - 如果有心跳记录,使用 LastHeartbeat 作为 EndTime
+                // - 如果没有心跳记录,使用 StartTime + 5分钟 作为 EndTime (兼容旧数据)
+                if (session.LastHeartbeat != null)
+                {
+                    session.EndTime = session.LastHeartbeat;
+                    session.DurationSeconds = (int)(session.LastHeartbeat.Value - session.StartTime).TotalSeconds;
+                    Log.Debug("修复会话 {Id} (基于心跳): {ProcessName}, StartTime={StartTime}, LastHeartbeat={LastHeartbeat}",
+                        session.Id,
+                        session.ProcessName,
+                        session.StartTime,
+                        session.LastHeartbeat);
+                }
+                else
+                {
+                    session.EndTime = session.StartTime.AddMinutes(5);
+                    session.DurationSeconds = 300;
+                    Log.Debug("修复会话 {Id} (无心跳,使用默认5分钟): {ProcessName}, StartTime={StartTime}",
+                        session.Id,
+                        session.ProcessName,
+                        session.StartTime);
+                }
+            }
+
+            await dbContext.SaveChangesAsync();
+
+            Log.Information("心跳过期会话修复完成: 已修复 {Count} 个会话", staleSessions.Count);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "修复心跳过期会话时发生错误");
         }
     }
 

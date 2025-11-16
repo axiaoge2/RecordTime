@@ -23,6 +23,11 @@ public interface ISessionRepository : IDisposable
     Task EndSessionAsync(int sessionId, DateTime endTime);
 
     /// <summary>
+    /// 更新会话心跳时间 (Phase 1 Task 1.2)
+    /// </summary>
+    Task UpdateSessionHeartbeatAsync(int sessionId, DateTime heartbeatTime);
+
+    /// <summary>
     /// 获取会话
     /// </summary>
     Task<AppSession?> GetSessionByIdAsync(int sessionId);

@@ -51,4 +51,10 @@ public class AppSession
     /// 应用分类（生产力、娱乐、社交等）
     /// </summary>
     public string? Category { get; set; }
+
+    /// <summary>
+    /// 最后心跳时间 (Phase 1 Task 1.2)
+    /// 用于检测应用异常退出导致的会话未正常结束
+    /// </summary>
+    public DateTime? LastHeartbeat { get; set; }
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecordTime.Data;
 
@@ -10,9 +11,11 @@ using RecordTime.Data;
 namespace RecordTime.Data.Migrations
 {
     [DbContext(typeof(RecordTimeDbContext))]
-    partial class RecordTimeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251116134141_AddLastHeartbeatToSessions")]
+    partial class AddLastHeartbeatToSessions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.20");
@@ -62,23 +65,11 @@ namespace RecordTime.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ActivityType")
-                        .HasDatabaseName("IX_Sessions_ActivityType");
+                    b.HasIndex("ActivityType");
 
-                    b.HasIndex("EndTime")
-                        .HasDatabaseName("IX_Sessions_EndTime");
+                    b.HasIndex("ProcessName");
 
-                    b.HasIndex("LastHeartbeat")
-                        .HasDatabaseName("IX_Sessions_LastHeartbeat");
-
-                    b.HasIndex("ProcessName")
-                        .HasDatabaseName("IX_Sessions_ProcessName");
-
-                    b.HasIndex("StartTime")
-                        .HasDatabaseName("IX_Sessions_StartTime");
-
-                    b.HasIndex("StartTime", "EndTime")
-                        .HasDatabaseName("IX_Sessions_StartTime_EndTime");
+                    b.HasIndex("StartTime");
 
                     b.ToTable("Sessions");
                 });
