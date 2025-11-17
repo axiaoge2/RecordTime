@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 蓝色渐变定义 -->
+    <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007AFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0051D5;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- 外圈光晕渐变 -->
+    <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="85%" style="stop-color:#5AC8FA;stop-opacity:0" />
+      <stop offset="100%" style="stop-color:#5AC8FA;stop-opacity:0.3" />
+    </radialGradient>
+
+    <!-- 阴影滤镜 -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- 高光滤镜 -->
+    <radialGradient id="highlight" cx="40%" cy="30%" r="60%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- 外圈光晕 -->
+  <circle cx="128" cy="128" r="120" fill="url(#glowGradient)" opacity="0.5"/>
+
+  <!-- 主表盘（带阴影） -->
+  <circle cx="128" cy="128" r="100" fill="url(#clockGradient)" filter="url(#shadow)"/>
+
+  <!-- 表盘高光效果 -->
+  <circle cx="128" cy="128" r="100" fill="url(#highlight)"/>
+
+  <!-- 12 个时刻点 -->
+  <g id="hourMarks" stroke="none">
+    <!-- 12点 -->
+    <circle cx="128" cy="38" r="4" fill="#FFFFFF" opacity="0.8"/>
+    <!-- 1点 -->
+    <circle cx="178" cy="53" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 2点 -->
+    <circle cx="211" cy="89" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 3点 -->
+    <circle cx="218" cy="128" r="4" fill="#FFFFFF" opacity="0.8"/>
+    <!-- 4点 -->
+    <circle cx="211" cy="167" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 5点 -->
+    <circle cx="178" cy="203" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 6点 -->
+    <circle cx="128" cy="218" r="4" fill="#FFFFFF" opacity="0.8"/>
+    <!-- 7点 -->
+    <circle cx="78" cy="203" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 8点 -->
+    <circle cx="45" cy="167" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 9点 -->
+    <circle cx="38" cy="128" r="4" fill="#FFFFFF" opacity="0.8"/>
+    <!-- 10点 -->
+    <circle cx="45" cy="89" r="4" fill="#FFFFFF" opacity="0.6"/>
+    <!-- 11点 -->
+    <circle cx="78" cy="53" r="4" fill="#FFFFFF" opacity="0.6"/>
+  </g>
+
+  <!-- 中心圆点 -->
+  <circle cx="128" cy="128" r="8" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- 时针 (指向10点方向) -->
+  <g id="hourHand" filter="url(#shadow)">
+    <line x1="128" y1="128" x2="78" y2="89"
+          stroke="#FFFFFF" stroke-width="8"
+          stroke-linecap="round" opacity="0.95"/>
+    <circle cx="78" cy="89" r="6" fill="#FFFFFF" opacity="0.95"/>
+  </g>
+
+  <!-- 分针 (指向12点方向) -->
+  <g id="minuteHand" filter="url(#shadow)">
+    <line x1="128" y1="128" x2="128" y2="48"
+          stroke="#FFFFFF" stroke-width="6"
+          stroke-linecap="round" opacity="0.95"/>
+    <circle cx="128" cy="48" r="5" fill="#FFFFFF" opacity="0.95"/>
+  </g>
+
+  <!-- 中心覆盖圆点（确保指针连接处美观） -->
+  <circle cx="128" cy="128" r="10" fill="#FFFFFF"/>
+</svg>

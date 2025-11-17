@@ -34,4 +34,9 @@ public interface IInputMonitor
     /// 获取系统空闲时间（秒）
     /// </summary>
     int GetIdleTimeSeconds();
+
+    /// <summary>
+    /// 用户活动检测事件（用于会话恢复）
+    /// </summary>
+    event EventHandler? UserActivityDetected;
 }

@@ -8,7 +8,7 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="RecordTime.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/Icons/AppIcon.ico"
         Title="RecordTime - 时间追踪工具"
         WindowStartupLocation="CenterScreen"
         Width="1000"

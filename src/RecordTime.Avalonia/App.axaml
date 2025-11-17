@@ -9,6 +9,8 @@
         <local:ViewLocator/>
     </Application.DataTemplates>
 
+    <!-- System Tray Icon - DataContext will be set in code-behind -->
+
     <Application.Styles>
         <FluentTheme />
 

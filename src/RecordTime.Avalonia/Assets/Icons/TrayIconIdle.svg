@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- 空心圆 - 未监控状态 -->
+  <circle cx="8" cy="8" r="6"
+          fill="none"
+          stroke="#8E8E93"
+          stroke-width="1.5"/>
+
+  <!-- 指针 - 指向3点钟方向 -->
+  <line x1="8" y1="8" x2="13" y2="8"
+        stroke="#8E8E93"
+        stroke-width="2"
+        stroke-linecap="round"/>
+</svg>

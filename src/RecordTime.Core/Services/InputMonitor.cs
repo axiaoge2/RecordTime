@@ -24,6 +24,11 @@ public class InputMonitor : IInputMonitor
     private LowLevelMouseProc? _mouseProc;
     private System.Drawing.Point _lastMousePos;
 
+    // 用户活动检测事件（用于会话恢复）
+    public event EventHandler? UserActivityDetected;
+    private DateTime _lastActivityEventTime = DateTime.MinValue;
+    private readonly int _activityEventThrottleSeconds = 5; // 5秒内只触发一次
+
     private const int WH_KEYBOARD_LL = 13;
     private const int WH_MOUSE_LL = 14;
     private const int WM_KEYDOWN = 0x0100;
@@ -134,6 +139,9 @@ public class InputMonitor : IInputMonitor
             _keyboardEvents.Enqueue(now);
             System.Threading.Interlocked.Increment(ref _keyboardCount);
 
+            // 触发用户活动事件（带节流）
+            TriggerUserActivityEvent(now);
+
             // 异步清理过期数据,避免在Hook回调中执行耗时操作
             if (_keyboardCount > CLEANUP_THRESHOLD)
             {
@@ -170,6 +178,9 @@ public class InputMonitor : IInputMonitor
             {
                 _mouseClickEvents.Enqueue(now);
                 System.Threading.Interlocked.Increment(ref _mouseClickCount);
+
+                // 触发用户活动事件（带节流）
+                TriggerUserActivityEvent(now);
 
                 // 异步清理
                 if (_mouseClickCount > CLEANUP_THRESHOLD)
@@ -274,6 +285,19 @@ public class InputMonitor : IInputMonitor
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// 触发用户活动事件（带节流机制，避免频繁触发）
+    /// </summary>
+    private void TriggerUserActivityEvent(DateTime now)
+    {
+        // 节流：5秒内只触发一次
+        if ((now - _lastActivityEventTime).TotalSeconds > _activityEventThrottleSeconds)
+        {
+            _lastActivityEventTime = now;
+            UserActivityDetected?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     ~InputMonitor()

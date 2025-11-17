@@ -35,6 +35,28 @@ public class ActivityDetector : IActivityDetector
         "qqbrowser", "liebao", "tor"
     };
 
+    // 在线会议工具
+    private static readonly HashSet<string> OnlineMeetingApps = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "zoom", "teams", "skype", "webex", "dingtalk", "lark",
+        "feishu", "腾讯会议", "tencent_meeting", "voovmeeting",
+        "googlemeet", "meet", "discord" // Discord 也可能用于会议
+    };
+
+    // 音乐播放器
+    private static readonly HashSet<string> MusicPlayerApps = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "spotify", "cloudmusic", "qqmusic", "kugou", "kuwo",
+        "foobar2000", "aimp", "musicbee", "netease_cloud_music",
+        "applemusic", "itunes", "vlc" // VLC 也可以播放音乐
+    };
+
+    // 桌面进程（系统桌面）
+    private static readonly HashSet<string> DesktopProcesses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "explorer", "progman", "workerw"
+    };
+
     public ActivityType DetermineActivity(WindowInfo window, SystemState state)
     {
         // 优先级1: 空闲检测（优先判断，避免误判）
@@ -105,6 +127,30 @@ public class ActivityDetector : IActivityDetector
     }
 
     /// <summary>
+    /// 检查是否为在线会议工具
+    /// </summary>
+    public bool IsOnlineMeeting(string processName)
+    {
+        return OnlineMeetingApps.Contains(processName);
+    }
+
+    /// <summary>
+    /// 检查是否为音乐播放器
+    /// </summary>
+    public bool IsMusicPlayer(string processName)
+    {
+        return MusicPlayerApps.Contains(processName);
+    }
+
+    /// <summary>
+    /// 检查是否为桌面
+    /// </summary>
+    public bool IsDesktop(string processName)
+    {
+        return DesktopProcesses.Contains(processName);
+    }
+
+    /// <summary>
     /// 根据进程名获取应用分类
     /// </summary>
     public string GetAppCategory(string processName)
@@ -118,6 +164,18 @@ public class ActivityDetector : IActivityDetector
         // 浏览器
         if (BrowserProcesses.Contains(processName))
             return "浏览器";
+
+        // 在线会议
+        if (OnlineMeetingApps.Contains(processName))
+            return "在线会议";
+
+        // 音乐
+        if (MusicPlayerApps.Contains(processName))
+            return "音乐";
+
+        // 桌面
+        if (DesktopProcesses.Contains(processName))
+            return "系统桌面";
 
         // 开发工具
         if (processName.Contains("code") || processName.Contains("studio") ||

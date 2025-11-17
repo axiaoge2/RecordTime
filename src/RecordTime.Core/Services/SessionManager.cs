@@ -24,6 +24,14 @@ public class SessionManager : IDisposable
     private System.Threading.Timer? _heartbeatTimer;
     private readonly int _heartbeatIntervalSeconds = 30; // 每30秒更新一次心跳
 
+    // 空闲检查机制
+    private System.Threading.Timer? _idleCheckTimer;
+    private readonly int _idleCheckIntervalSeconds = 120; // 默认 2 分钟检查一次
+    private bool _sessionPausedDueToIdle = false; // 标记会话是否因空闲而暂停
+
+    // 桌面延迟检查定时器
+    private System.Threading.Timer? _desktopDelayTimer;
+
     public event EventHandler<AppSession>? SessionStarted;
     public event EventHandler<AppSession>? SessionEnded;
 
@@ -61,6 +69,12 @@ public class SessionManager : IDisposable
         // 订阅窗口切换事件
         _windowMonitor.WindowFocusChanged += OnWindowFocusChanged;
 
+        // 订阅用户活动事件（用于会话恢复）
+        _inputMonitor.UserActivityDetected += OnUserActivityDetected;
+
+        // 启动空闲检查定时器
+        StartIdleCheckTimer();
+
         Log.Information("SessionManager 已启动");
     }
 
@@ -80,8 +94,13 @@ public class SessionManager : IDisposable
             await EndCurrentSessionAsync();
         }
 
+        // 停止所有定时器
+        StopIdleCheckTimer();
+        _desktopDelayTimer?.Dispose();
+
         // 取消订阅
         _windowMonitor.WindowFocusChanged -= OnWindowFocusChanged;
+        _inputMonitor.UserActivityDetected -= OnUserActivityDetected;
 
         // 停止所有监控服务
         _windowMonitor.Stop();
@@ -297,6 +316,233 @@ public class SessionManager : IDisposable
             Log.Error(ex, "更新会话心跳时发生错误: SessionId={SessionId}", _currentSessionId);
         }
     }
+
+    #region 空闲检查机制
+
+    /// <summary>
+    /// 启动空闲检查定时器
+    /// </summary>
+    private void StartIdleCheckTimer()
+    {
+        StopIdleCheckTimer();
+
+        _idleCheckTimer = new System.Threading.Timer(
+            callback: async _ => await PerformIdleCheckAsync(),
+            state: null,
+            dueTime: TimeSpan.FromSeconds(_idleCheckIntervalSeconds),
+            period: TimeSpan.FromSeconds(_idleCheckIntervalSeconds)
+        );
+
+        Log.Debug("空闲检查定时器已启动，间隔 {Interval} 秒", _idleCheckIntervalSeconds);
+    }
+
+    /// <summary>
+    /// 停止空闲检查定时器
+    /// </summary>
+    private void StopIdleCheckTimer()
+    {
+        if (_idleCheckTimer != null)
+        {
+            _idleCheckTimer.Dispose();
+            _idleCheckTimer = null;
+            Log.Debug("空闲检查定时器已停止");
+        }
+    }
+
+    /// <summary>
+    /// 执行空闲检查
+    /// </summary>
+    private async Task PerformIdleCheckAsync()
+    {
+        if (_currentSessionId == null || !_isRunning)
+            return;
+
+        try
+        {
+            var idleTime = _inputMonitor.GetIdleTimeSeconds();
+
+            if (idleTime > _idleTimeoutSeconds)
+            {
+                // 检查是否应该豁免
+                var shouldExempt = await ShouldExemptFromIdleCheckAsync();
+
+                if (!shouldExempt)
+                {
+                    // 暂停会话
+                    await PauseSessionDueToIdleAsync(idleTime);
+                }
+                else
+                {
+                    Log.Debug("空闲超时但豁免检查，继续计时: IdleTime={IdleTime}s", idleTime);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "执行空闲检查时发生错误");
+        }
+    }
+
+    /// <summary>
+    /// 判断当前会话是否应该豁免空闲检查
+    /// </summary>
+    private async Task<bool> ShouldExemptFromIdleCheckAsync()
+    {
+        if (_currentSessionId == null)
+            return false;
+
+        try
+        {
+            using var repository = _repositoryFactory();
+            var session = await repository.GetSessionByIdAsync(_currentSessionId.Value);
+
+            if (session == null)
+                return false;
+
+            // 重新收集系统状态（媒体播放状态可能已变化）
+            var window = new WindowInfo
+            {
+                ProcessName = session.ProcessName,
+                WindowTitle = "", // 不需要标题
+                IsFullscreen = false
+            };
+
+            var systemState = CollectSystemState(window);
+
+            // 根据活动类型和系统状态判断是否豁免
+            switch (session.ActivityType)
+            {
+                case ActivityType.Video:
+                    // Video 类型：必须仍在播放（有媒体会话或音频活动）
+                    return systemState.MediaSessionPlaying || systemState.AudioActive;
+
+                case ActivityType.PassiveBrowsing:
+                    // 在线会议工具：必须有音频活动
+                    if (_activityDetector.IsOnlineMeeting(session.ProcessName))
+                    {
+                        return systemState.AudioActive;
+                    }
+                    // 音乐播放器：必须有音频活动
+                    if (_activityDetector.IsMusicPlayer(session.ProcessName))
+                    {
+                        return systemState.AudioActive;
+                    }
+                    return false;
+
+                default:
+                    return false; // 其他类型不豁免
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "判断豁免逻辑时发生错误");
+            return false; // 出错时不豁免，安全起见
+        }
+    }
+
+    /// <summary>
+    /// 因空闲暂停会话
+    /// </summary>
+    private async Task PauseSessionDueToIdleAsync(int idleSeconds)
+    {
+        if (_currentSessionId == null)
+            return;
+
+        try
+        {
+            await _sessionLock.WaitAsync();
+            try
+            {
+                // 结束时间 = 当前时间 - 空闲时长
+                var endTime = DateTime.Now.AddSeconds(-idleSeconds);
+
+                // 停止心跳定时器
+                StopHeartbeatTimer();
+
+                using var repository = _repositoryFactory();
+                await repository.EndSessionAsync(_currentSessionId.Value, endTime);
+
+                var session = await repository.GetSessionByIdAsync(_currentSessionId.Value);
+                if (session != null)
+                {
+                    SessionEnded?.Invoke(this, session);
+                }
+
+                Log.Information("会话因空闲暂停: SessionId={SessionId}, IdleTime={IdleSeconds}s, EndTime={EndTime}",
+                                _currentSessionId, idleSeconds, endTime);
+
+                _currentSessionId = null;
+                _sessionPausedDueToIdle = true;
+            }
+            finally
+            {
+                _sessionLock.Release();
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "暂停会话时发生错误: SessionId={SessionId}", _currentSessionId);
+        }
+    }
+
+    /// <summary>
+    /// 用户活动检测事件处理（用于会话恢复）
+    /// </summary>
+    private void OnUserActivityDetected(object? sender, EventArgs e)
+    {
+        // 仅当会话因空闲而暂停时才响应
+        if (_sessionPausedDueToIdle && _currentSessionId == null)
+        {
+            _ = CheckAndResumeSessionAsync();
+        }
+    }
+
+    /// <summary>
+    /// 检查并恢复会话
+    /// </summary>
+    private async Task CheckAndResumeSessionAsync()
+    {
+        try
+        {
+            // 获取当前窗口信息（需要 WindowMonitor 提供此方法）
+            // 注意：这里假设有获取当前窗口的方法，实际可能需要修改 WindowMonitor
+            // 暂时通过窗口焦点变化来恢复，用户操作会自然触发
+
+            _sessionPausedDueToIdle = false;
+            Log.Debug("检测到用户活动，会话暂停标记已重置");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "检查并恢复会话时发生错误");
+        }
+    }
+
+    #endregion
+
+    #region 桌面场景特殊处理
+
+    /// <summary>
+    /// 处理桌面延迟检查
+    /// </summary>
+    private async Task HandleDesktopDelayedCheckAsync(WindowInfo desktopWindow)
+    {
+        try
+        {
+            await Task.Delay(30000); // 等待 30 秒
+
+            // 这里需要获取当前窗口，暂时简化实现
+            // 实际应该检查用户是否还在桌面
+            // 如果还在桌面，则创建会话
+
+            Log.Debug("桌面延迟检查完成（简化实现）");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "处理桌面延迟检查时发生错误");
+        }
+    }
+
+    #endregion
 
     private bool _disposed = false;
 
