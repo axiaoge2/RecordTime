@@ -5,11 +5,12 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+        xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="RecordTime.Avalonia.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/Icons/AppIcon.ico"
-        Title="RecordTime - 时间追踪工具"
+        Title="{Binding AppTitle, Source={x:Static strings:StringResources.Current}}"
         WindowStartupLocation="CenterScreen"
         Width="1250"
         Height="750"
@@ -42,17 +43,17 @@
 
                     <!-- Navigation Items -->
                     <Button Classes="sidebar-item"
-                           Content="📊 仪表盘"
+                           Content="{Binding NavigationDashboard, Source={x:Static strings:StringResources.Current}}"
                            Command="{Binding NavigateToDashboardCommand}"
                            HorizontalAlignment="Stretch"/>
 
                     <Button Classes="sidebar-item"
-                           Content="📱 应用统计"
+                           Content="{Binding NavigationAppStats, Source={x:Static strings:StringResources.Current}}"
                            Command="{Binding NavigateToAppStatsCommand}"
                            HorizontalAlignment="Stretch"/>
 
                     <Button Classes="sidebar-item"
-                           Content="📈 报告"
+                           Content="{Binding NavigationReports, Source={x:Static strings:StringResources.Current}}"
                            Command="{Binding NavigateToReportsCommand}"
                            HorizontalAlignment="Stretch"/>
 
@@ -61,12 +62,12 @@
                               Height="0.5"/>
 
                     <Button Classes="sidebar-item"
-                           Content="⚙️ 设置"
+                           Content="{Binding NavigationSettings, Source={x:Static strings:StringResources.Current}}"
                            Command="{Binding NavigateToSettingsCommand}"
                            HorizontalAlignment="Stretch"/>
 
                     <Button Classes="sidebar-item"
-                           Content="ℹ️ 关于"
+                           Content="{Binding NavigationAbout, Source={x:Static strings:StringResources.Current}}"
                            Command="{Binding NavigateToAboutCommand}"
                            HorizontalAlignment="Stretch"/>
                 </StackPanel>
@@ -101,7 +102,7 @@
                          IsVisible="{Binding ShowDashboard}">
                 <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
                     <!-- Page Title with Apple-style large heading -->
-                    <TextBlock Text="今日概览"
+                    <TextBlock Text="{Binding DashboardTitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="title"
                               Margin="0,0,0,16"/>
 
@@ -113,7 +114,7 @@
                             <!-- Previous Day Button -->
                             <Button Grid.Column="0"
                                    Classes="secondary"
-                                   Content="← 前一天"
+                                   Content="{Binding PreviousDayButton, Source={x:Static strings:StringResources.Current}}"
                                    Command="{Binding PreviousDayCommand}"
                                    VerticalAlignment="Center"/>
 
@@ -129,7 +130,7 @@
                                 <TextBlock Text="{Binding SelectedDateText}"
                                           Classes="heading"
                                           VerticalAlignment="Center"/>
-                                <Button Content="今天"
+                                <Button Content="{Binding TodayButton, Source={x:Static strings:StringResources.Current}}"
                                        Classes="secondary"
                                        Command="{Binding TodayCommand}"
                                        Padding="8,4"
@@ -139,7 +140,7 @@
                             <!-- Next Day Button -->
                             <Button Grid.Column="2"
                                    Classes="secondary"
-                                   Content="后一天 →"
+                                   Content="{Binding NextDayButton, Source={x:Static strings:StringResources.Current}}"
                                    Command="{Binding NextDayCommand}"
                                    VerticalAlignment="Center"/>
                         </Grid>
@@ -160,7 +161,7 @@
                                           Classes="number-widget"
                                           Margin="0,4,0,0"/>
                                 <TextBlock Classes="caption" Opacity="0.85">
-                                    <Run Text="总活动时长"/>
+                                    <Run Text="{Binding TotalActivityTime, Source={x:Static strings:StringResources.Current}}"/>
                                     <Run Text=" ("/>
                                     <Run Text="{Binding DataStatusHint}"/>
                                     <Run Text=")"/>
@@ -169,7 +170,8 @@
                                           Opacity="0.65"
                                           FontSize="11"
                                           Margin="0,2,0,0">
-                                    <Run Text="更新于 "/>
+                                    <Run Text="{Binding UpdatedAt, Source={x:Static strings:StringResources.Current}}"/>
+                                    <Run Text=" "/>
                                     <Run Text="{Binding DataUpdateTime}"/>
                                 </TextBlock>
                             </StackPanel>
@@ -185,7 +187,7 @@
                                 <TextBlock Text="{Binding SessionCount}"
                                           Classes="number-widget"
                                           Margin="0,4,0,0"/>
-                                <TextBlock Text="会话数量"
+                                <TextBlock Text="{Binding SessionCount, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"
                                           Opacity="0.85"/>
                             </StackPanel>
@@ -198,7 +200,7 @@
                         <Grid RowDefinitions="Auto,*">
                             <!-- Header -->
                             <TextBlock Grid.Row="0"
-                                      Text="📱 应用类型分布"
+                                      Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
                                       Classes="heading"
                                       Margin="0,0,0,20"/>
 
@@ -237,7 +239,7 @@
                             <StackPanel Grid.Column="0"
                                        Spacing="8"
                                        VerticalAlignment="Center">
-                                <TextBlock Text="监控状态"
+                                <TextBlock Text="{Binding MonitoringStatus, Source={x:Static strings:StringResources.Current}}"
                                           Classes="heading"/>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <!-- 监控运行中指示器 -->
@@ -275,7 +277,7 @@
                         <StackPanel Spacing="20">
                             <Grid ColumnDefinitions="*,Auto">
                                 <TextBlock Grid.Column="0"
-                                          Text="TOP 10 应用"
+                                          Text="{Binding TopAppsTitle, Source={x:Static strings:StringResources.Current}}"
                                           Classes="heading"/>
                                 <TextBlock Grid.Column="1"
                                           Text="{Binding TopApps.Count, StringFormat='当前显示: {0} 个'}"
@@ -367,39 +369,38 @@
                                               Opacity="0.9"/>
 
                                     <!-- Title -->
-                                    <TextBlock Text="开始追踪您的时间"
+                                    <TextBlock Text="{Binding EmptyStateTitle, Source={x:Static strings:StringResources.Current}}"
                                               Classes="heading"
                                               FontSize="20"
                                               HorizontalAlignment="Center"
                                               TextAlignment="Center"/>
 
                                     <!-- Description -->
-                                    <TextBlock TextWrapping="Wrap"
+                                    <TextBlock Text="{Binding EmptyStateDescription, Source={x:Static strings:StringResources.Current}}"
+                                              TextWrapping="Wrap"
                                               TextAlignment="Center"
                                               Classes="caption"
                                               Opacity="0.75"
-                                              LineHeight="22">
-                                        <Run Text="点击下方的"/><Run Text="启动监控" FontWeight="SemiBold"/><Run Text="按钮，RecordTime 将开始自动记录您的应用使用情况。"/>
-                                    </TextBlock>
+                                              LineHeight="22"/>
 
                                     <!-- Features -->
                                     <StackPanel Spacing="12" Margin="0,8,0,0">
                                         <StackPanel Orientation="Horizontal" Spacing="12">
                                             <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                            <TextBlock Text="自动追踪应用使用时长" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding EmptyStateFeature1, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="12">
                                             <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                            <TextBlock Text="智能识别活动类型（视频、游戏等）" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding EmptyStateFeature2, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="12">
                                             <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                            <TextBlock Text="数据本地存储，保护您的隐私" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding EmptyStateFeature3, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
                                         </StackPanel>
                                     </StackPanel>
 
                                     <!-- Hint -->
-                                    <TextBlock Text="💡 提示：监控在后台运行，不会影响您的正常使用"
+                                    <TextBlock Text="{Binding EmptyStateHint, Source={x:Static strings:StringResources.Current}}"
                                               Classes="caption"
                                               FontSize="11"
                                               Opacity="0.65"

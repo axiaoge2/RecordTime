@@ -3,6 +3,7 @@
              xmlns:vm="using:RecordTime.Avalonia.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
              mc:Ignorable="d"
              d:DesignWidth="900"
              d:DesignHeight="700"
@@ -13,7 +14,7 @@
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="24" MaxWidth="1400" Margin="24,40,24,80">
             <!-- Title -->
-            <TextBlock Text="应用统计"
+            <TextBlock Text="{Binding AppStatsTitle, Source={x:Static strings:StringResources.Current}}"
                       Classes="title"
                       Margin="0,0,0,16"/>
 
@@ -21,27 +22,27 @@
             <Border Classes="card"
                    Padding="24,20">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="时间范围"
+                    <TextBlock Text="{Binding TimeRange, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
                     <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
                         <Button Grid.Column="0"
                                Classes="secondary"
-                               Content="今日"
+                               Content="{Binding Today, Source={x:Static strings:StringResources.Current}}"
                                Command="{Binding SetTodayCommand}"
                                Margin="0,0,8,0"/>
                         <Button Grid.Column="1"
                                Classes="secondary"
-                               Content="昨日"
+                               Content="{Binding Yesterday, Source={x:Static strings:StringResources.Current}}"
                                Command="{Binding SetYesterdayCommand}"
                                Margin="0,0,8,0"/>
                         <Button Grid.Column="2"
                                Classes="secondary"
-                               Content="本周"
+                               Content="{Binding ThisWeek, Source={x:Static strings:StringResources.Current}}"
                                Command="{Binding SetThisWeekCommand}"
                                Margin="0,0,8,0"/>
                         <Button Grid.Column="3"
                                Classes="secondary"
-                               Content="本月"
+                               Content="{Binding ThisMonth, Source={x:Static strings:StringResources.Current}}"
                                Command="{Binding SetThisMonthCommand}"
                                Margin="0,0,8,0"/>
                         <TextBlock Grid.Column="4"
@@ -66,7 +67,7 @@
                         <TextBlock Text="{Binding TotalDuration}"
                                   Classes="number-widget"
                                   Margin="0,4,0,0"/>
-                        <TextBlock Text="总使用时长"
+                        <TextBlock Text="{Binding TotalUsageTime, Source={x:Static strings:StringResources.Current}}"
                                   Classes="caption"
                                   Opacity="0.85"/>
                     </StackPanel>
@@ -82,7 +83,7 @@
                         <TextBlock Text="{Binding TotalSessions}"
                                   Classes="number-widget"
                                   Margin="0,4,0,0"/>
-                        <TextBlock Text="当前显示应用"
+                        <TextBlock Text="{Binding CurrentDisplayApps, Source={x:Static strings:StringResources.Current}}"
                                   Classes="caption"
                                   Opacity="0.85"/>
                         <TextBlock Text="{Binding TotalAppCount, StringFormat='全部共 {0} 个'}"
@@ -100,18 +101,18 @@
                              MinWidth="220"
                              Margin="0,0,12,12"
                              Text="{Binding SearchText}"
-                             Watermark="🔍 搜索应用名称..."
+                             Watermark="{Binding SearchAppPlaceholder, Source={x:Static strings:StringResources.Current}}"
                              VerticalAlignment="Center"/>
 
                     <ComboBox Width="220"
                              ItemsSource="{Binding Categories}"
                              SelectedItem="{Binding SelectedCategory}"
-                             PlaceholderText="选择分类"
+                             PlaceholderText="{Binding SelectCategory, Source={x:Static strings:StringResources.Current}}"
                              Margin="0,0,12,12"
                              VerticalAlignment="Center"/>
 
                     <Button Classes="secondary"
-                           Content="清除筛选"
+                           Content="{Binding ClearFilter, Source={x:Static strings:StringResources.Current}}"
                            Command="{Binding ClearFilterCommand}"
                            Margin="0,0,12,12"
                            VerticalAlignment="Center"/>
@@ -122,7 +123,7 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="应用详细列表"
+                    <TextBlock Text="{Binding AppDetailList, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <Border Padding="12,8"
@@ -135,30 +136,30 @@
                                       Classes="body"
                                       FontWeight="SemiBold"/>
                             <TextBlock Grid.Column="1"
-                                      Text="应用名称"
+                                      Text="{Binding ColumnAppName, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
                             <TextBlock Grid.Column="2"
-                                      Text="分类"
+                                      Text="{Binding ColumnCategory, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
                             <TextBlock Grid.Column="3"
-                                      Text="占比"
+                                      Text="{Binding ColumnPercentage, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"
                                       TextAlignment="Right"/>
                             <TextBlock Grid.Column="4"
-                                      Text="使用时长"
+                                      Text="{Binding ColumnUsageTime, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"
                                       TextAlignment="Right"/>
                             <TextBlock Grid.Column="5"
-                                      Text="使用次数"
+                                      Text="{Binding ColumnUsageCount, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"
                                       TextAlignment="Center"/>
                             <TextBlock Grid.Column="6"
-                                      Text="最后使用"
+                                      Text="{Binding ColumnLastUsed, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"
                                       TextAlignment="Right"/>
@@ -216,7 +217,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Text="今天还没有应用使用记录"
+                    <TextBlock Text="{Binding NoAppsRecorded, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               HorizontalAlignment="Center"
                               Margin="0,40,0,40"

@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
@@ -11,7 +12,7 @@
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="24" MaxWidth="900" Margin="48,40,48,80">
             <!-- Page Title -->
-            <TextBlock Text="⚙️ 设置"
+            <TextBlock Text="{Binding Settings, Source={x:Static strings:StringResources.Current}}"
                       Classes="title"
                       Margin="0,0,0,16"/>
 
@@ -28,16 +29,16 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="常规设置"
+                    <TextBlock Text="{Binding GeneralSettings, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <!-- Auto Start -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="开机自动启动"
+                            <TextBlock Text="{Binding AutoStart, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="程序将在 Windows 启动时自动运行"
+                            <TextBlock Text="{Binding AutoStartDesc, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
@@ -49,10 +50,10 @@
                     <!-- Minimize to Tray -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="最小化到系统托盘"
+                            <TextBlock Text="{Binding MinimizeToTray, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="关闭窗口时最小化到系统托盘而非退出"
+                            <TextBlock Text="{Binding MinimizeToTrayDesc, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
@@ -64,10 +65,10 @@
                     <!-- Notifications -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="显示通知"
+                            <TextBlock Text="{Binding ShowNotifications, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="显示活动追踪和统计通知"
+                            <TextBlock Text="{Binding ShowNotificationsDesc, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
@@ -79,10 +80,10 @@
                     <!-- Language -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="语言 / Language"
+                            <TextBlock Text="{Binding Language, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="选择界面显示语言 / Select interface language"
+                            <TextBlock Text="{Binding LanguageDesc, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"/>
                         </StackPanel>
                         <ComboBox Grid.Column="1"
@@ -101,10 +102,10 @@
                     <!-- Idle Timeout -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="空闲超时时间"
+                            <TextBlock Text="{Binding IdleTimeout, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       FontWeight="SemiBold"/>
-                            <TextBlock Text="无操作多久后视为空闲（分钟）"
+                            <TextBlock Text="{Binding IdleTimeoutDesc, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"/>
                         </StackPanel>
                         <NumericUpDown Grid.Column="1"
@@ -122,7 +123,7 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="数据管理"
+                    <TextBlock Text="{Binding DataManagement, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <!-- Database Info -->
@@ -132,7 +133,7 @@
                         <StackPanel Spacing="8">
                             <Grid ColumnDefinitions="Auto,*">
                                 <TextBlock Grid.Column="0"
-                                          Text="数据库路径："
+                                          Text="{Binding DatabasePath, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"
                                           Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1"
@@ -142,7 +143,7 @@
                             </Grid>
                             <Grid ColumnDefinitions="Auto,Auto,*">
                                 <TextBlock Grid.Column="0"
-                                          Text="数据库大小："
+                                          Text="{Binding DatabaseSize, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"
                                           Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1"
@@ -150,7 +151,7 @@
                                           Classes="caption"
                                           Margin="0,0,16,0"/>
                                 <TextBlock Grid.Column="2"
-                                          Text="{Binding TotalSessions, StringFormat='共 {0} 条记录'}"
+                                          Text="{Binding TotalSessions, StringFormat='{}{0} records total'}"
                                           Classes="caption"/>
                             </Grid>
                         </StackPanel>
@@ -158,18 +159,18 @@
 
                     <!-- Database Actions -->
                     <UniformGrid Columns="3" ColumnSpacing="12">
-                        <Button Content="打开数据库文件夹"
+                        <Button Content="{Binding OpenDatabaseFolder, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding OpenDatabaseFolderCommand}"/>
-                        <Button Content="备份数据库"
+                        <Button Content="{Binding BackupDatabase, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding BackupDatabaseCommand}"/>
-                        <Button Content="清除旧数据"
+                        <Button Content="{Binding ClearOldData, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding ClearOldDataCommand}"/>
                     </UniformGrid>
 
-                    <TextBlock Text="💡 提示：清除旧数据将删除 30 天前的所有记录"
+                    <TextBlock Text="{Binding ClearOldDataWarning, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               TextWrapping="Wrap"
                               Foreground="{StaticResource SecondaryText}"/>
@@ -180,15 +181,15 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="高级设置"
+                    <TextBlock Text="{Binding AdvancedSettings, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
-                    <Button Content="打开日志文件夹"
+                    <Button Content="{Binding OpenLogsFolder, Source={x:Static strings:StringResources.Current}}"
                            Classes="secondary"
                            Command="{Binding OpenLogsFolderCommand}"
                            HorizontalAlignment="Left"/>
 
-                    <TextBlock Text="日志文件可用于故障排查和问题诊断"
+                    <TextBlock Text="Log files can be used for troubleshooting and diagnostics"
                               Classes="caption"
                               TextWrapping="Wrap"/>
                 </StackPanel>
@@ -198,17 +199,17 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="ℹ️ 关于 RecordTime"
+                    <TextBlock Text="{Binding About, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
-                    <TextBlock Text="版本：1.0.0"
+                    <TextBlock Text="{Binding Version, Source={x:Static strings:StringResources.Current}}"
                               Classes="body"/>
 
-                    <TextBlock Text="RecordTime 是一款 Windows 桌面时间追踪工具"
+                    <TextBlock Text="RecordTime is a Windows desktop time tracking tool"
                               Classes="body"
                               TextWrapping="Wrap"/>
 
-                    <TextBlock Text="功能：实时监控、数据统计、HTML 报告、AI 分析"
+                    <TextBlock Text="Features: Real-time monitoring, data statistics, HTML reports, AI analysis"
                               Classes="body"
                               TextWrapping="Wrap"/>
 

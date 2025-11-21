@@ -3,6 +3,7 @@
              xmlns:vm="using:RecordTime.Avalonia.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RecordTime.Avalonia.Views.AboutView"
              x:DataType="vm:AboutViewModel">
@@ -11,7 +12,7 @@
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="24" MaxWidth="900" Margin="48,40,48,80">
             <!-- Page Title -->
-            <TextBlock Text="ℹ️ 关于 RecordTime"
+            <TextBlock Text="{Binding AboutTitle, Source={x:Static strings:StringResources.Current}}"
                       Classes="title"
                       Margin="0,0,0,16"/>
 
@@ -26,10 +27,13 @@
                               Classes="title"
                               HorizontalAlignment="Center"
                               FontSize="32"/>
-                    <TextBlock Text="{Binding Version, StringFormat='版本 {0}'}"
-                              Classes="heading"
+                    <TextBlock Classes="heading"
                               HorizontalAlignment="Center"
-                              Foreground="{StaticResource SecondaryText}"/>
+                              Foreground="{StaticResource SecondaryText}">
+                        <Run Text="{Binding VersionPrefix, Source={x:Static strings:StringResources.Current}}"/>
+                        <Run Text=" "/>
+                        <Run Text="{Binding Version}"/>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 
@@ -37,9 +41,9 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="📝 应用简介"
+                    <TextBlock Text="{Binding AppDescriptionTitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
-                    <TextBlock Text="{Binding Description}"
+                    <TextBlock Text="{Binding AppDescription, Source={x:Static strings:StringResources.Current}}"
                               Classes="body"
                               TextWrapping="Wrap"
                               LineHeight="24"/>
@@ -56,28 +60,17 @@
                                 <TextBlock Text="🔒"
                                           FontSize="20"
                                           VerticalAlignment="Center"/>
-                                <TextBlock Text="隐私承诺"
+                                <TextBlock Text="{Binding PrivacyPromise, Source={x:Static strings:StringResources.Current}}"
                                           Classes="body"
                                           FontWeight="SemiBold"
                                           Foreground="#34C759"
                                           VerticalAlignment="Center"/>
                             </StackPanel>
-                            <TextBlock Classes="caption"
+                            <TextBlock Text="{Binding PrivacyPromiseDesc, Source={x:Static strings:StringResources.Current}}"
+                                      Classes="caption"
                                       TextWrapping="Wrap"
                                       LineHeight="20"
-                                      Opacity="0.85">
-                                <Run Text="RecordTime 采用"/>
-                                <Run Text="100% 本地存储" FontWeight="SemiBold"/>
-                                <Run Text="架构,所有时间追踪数据仅保存在您的设备上。"/>
-                                <LineBreak/>
-                                <Run Text="未经您授权,"/>
-                                <Run Text="绝不上传任何数据" FontWeight="SemiBold"/>
-                                <Run Text="至云端或第三方服务器。"/>
-                                <LineBreak/>
-                                <Run Text="AI 分析功能为"/>
-                                <Run Text="可选项" FontWeight="SemiBold"/>
-                                <Run Text=",仅在您主动开启时才会发送匿名化的统计数据。"/>
-                            </TextBlock>
+                                      Opacity="0.85"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -87,9 +80,9 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="✨ 核心功能"
+                    <TextBlock Text="{Binding CoreFeatures, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
-                    <TextBlock Text="深度挖掘时间数据价值,助力高效时间管理"
+                    <TextBlock Text="{Binding CoreFeaturesSubtitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               Opacity="0.7"
                               Margin="0,0,0,8"/>
@@ -116,9 +109,9 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="🔐 数据安全"
+                    <TextBlock Text="{Binding DataSecurity, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
-                    <TextBlock Text="隐私至上,数据完整性优先的设计理念"
+                    <TextBlock Text="{Binding DataSecuritySubtitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               Opacity="0.7"
                               Margin="0,0,0,8"/>
@@ -145,9 +138,9 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="🎨 用户体验"
+                    <TextBlock Text="{Binding UserExperience, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
-                    <TextBlock Text="极致性能与现代设计的完美融合"
+                    <TextBlock Text="{Binding UserExperienceSubtitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               Opacity="0.7"
                               Margin="0,0,0,8"/>
@@ -174,7 +167,7 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="🛠️ 技术栈"
+                    <TextBlock Text="{Binding TechStack, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
                     <TextBlock Text="{Binding TechStack}"
                               Classes="body"
@@ -186,19 +179,19 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="🔗 链接"
+                    <TextBlock Text="{Binding Links, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <Grid ColumnDefinitions="*,12,*">
                         <Button Grid.Column="0"
-                               Content="📦 GitHub 仓库"
+                               Content="{Binding GitHubRepo, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding OpenGitHubCommand}"
                                HorizontalAlignment="Stretch"
                                Height="44"/>
 
                         <Button Grid.Column="2"
-                               Content="📄 开源许可"
+                               Content="{Binding OpenSourceLicense, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding OpenLicenseCommand}"
                                HorizontalAlignment="Stretch"
@@ -215,7 +208,7 @@
                               Classes="body"
                               HorizontalAlignment="Center"
                               Foreground="{StaticResource SecondaryText}"/>
-                    <TextBlock Text="Made with ❤️ for productivity"
+                    <TextBlock Text="{Binding MadeWithLove, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               HorizontalAlignment="Center"
                               Foreground="{StaticResource SecondaryText}"

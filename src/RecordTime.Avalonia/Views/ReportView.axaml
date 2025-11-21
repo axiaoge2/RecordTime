@@ -3,6 +3,7 @@
              xmlns:vm="using:RecordTime.Avalonia.ViewModels"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="RecordTime.Avalonia.Views.ReportView"
              x:DataType="vm:ReportViewModel">
@@ -11,7 +12,7 @@
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
             <!-- Page Title -->
-            <TextBlock Text="报告生成"
+            <TextBlock Text="{Binding ReportGenerationTitle, Source={x:Static strings:StringResources.Current}}"
                       Classes="title"
                       Margin="0,0,0,16"/>
 
@@ -19,23 +20,23 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="📅 选择日期范围"
+                    <TextBlock Text="{Binding SelectDateRange, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <!-- Quick Date Range Buttons -->
                     <Grid ColumnDefinitions="Auto,Auto,Auto,*">
                         <Button Grid.Column="0"
-                               Content="最近一周"
+                               Content="{Binding LastWeek, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding SetLastWeekCommand}"
                                Margin="0,0,8,0"/>
                         <Button Grid.Column="1"
-                               Content="最近一月"
+                               Content="{Binding LastMonth, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding SetLastMonthCommand}"
                                Margin="0,0,8,0"/>
                         <Button Grid.Column="2"
-                               Content="最近三月"
+                               Content="{Binding LastThreeMonths, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding SetLastThreeMonthsCommand}"/>
                     </Grid>
@@ -47,7 +48,7 @@
                         <Grid ColumnDefinitions="*,Auto,*">
                             <!-- Start Date -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="开始日期"
+                                <TextBlock Text="{Binding StartDate, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"
                                           Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding StartDateText}"
@@ -64,7 +65,7 @@
 
                             <!-- End Date -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="结束日期"
+                                <TextBlock Text="{Binding EndDate, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"
                                           Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding EndDateText}"
@@ -79,7 +80,7 @@
             <!-- Report Summary (Preview) -->
             <Border Classes="widget-card">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="📊 报告预览"
+                    <TextBlock Text="{Binding ReportPreview, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <Grid ColumnDefinitions="*,20,*,20,*"
@@ -90,7 +91,7 @@
                                       Classes="number-widget"
                                       HorizontalAlignment="Center"
                                       FontSize="28"/>
-                            <TextBlock Text="统计天数"
+                            <TextBlock Text="{Binding StatisticDays, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"
                                       HorizontalAlignment="Center"
                                       Margin="0,4,0,0"/>
@@ -102,7 +103,7 @@
                                       Classes="number-widget"
                                       HorizontalAlignment="Center"
                                       FontSize="28"/>
-                            <TextBlock Text="会话总数"
+                            <TextBlock Text="{Binding TotalSessions, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"
                                       HorizontalAlignment="Center"
                                       Margin="0,4,0,0"/>
@@ -114,7 +115,7 @@
                                       Classes="number-widget"
                                       HorizontalAlignment="Center"
                                       FontSize="28"/>
-                            <TextBlock Text="应用总数"
+                            <TextBlock Text="{Binding TotalApps, Source={x:Static strings:StringResources.Current}}"
                                       Classes="caption"
                                       HorizontalAlignment="Center"
                                       Margin="0,4,0,0"/>
@@ -129,12 +130,12 @@
                 <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
-                                  Text="🤖 AI 智能分析"
+                                  Text="{Binding AIAnalysisTitle, Source={x:Static strings:StringResources.Current}}"
                                   Classes="heading"/>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding EnableAIAnalysis}"
-                                     OnContent="开启"
-                                     OffContent="关闭"
+                                     OnContent="{Binding AIEnable, Source={x:Static strings:StringResources.Current}}"
+                                     OffContent="{Binding AIDisable, Source={x:Static strings:StringResources.Current}}"
                                      VerticalAlignment="Center"/>
                     </Grid>
 
@@ -162,13 +163,13 @@
                     </Border>
 
                     <!-- AI 配置面板（可折叠） -->
-                    <Expander Header="配置 AI 服务"
+                    <Expander Header="{Binding ConfigureAIService, Source={x:Static strings:StringResources.Current}}"
                              IsExpanded="False">
                         <StackPanel Spacing="16" Margin="0,16,0,0">
                             <!-- 配置选择 - 支持可编辑名称 -->
                             <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                                 <StackPanel Grid.Column="0" Spacing="4">
-                                    <TextBlock Text="配置方案（可直接编辑名称）"
+                                    <TextBlock Text="{Binding ConfigurationProfileDesc, Source={x:Static strings:StringResources.Current}}"
                                               Classes="caption"/>
                                     <ComboBox ItemsSource="{Binding AvailableConfigs}"
                                              SelectedItem="{Binding CurrentConfigName}"
@@ -183,7 +184,7 @@
                                        Width="36"
                                        Height="36"
                                        FontSize="14"
-                                       ToolTip.Tip="添加新配置"/>
+                                       ToolTip.Tip="{Binding AddNewConfig, Source={x:Static strings:StringResources.Current}}"/>
                                 <Button Grid.Column="2"
                                        Content="💾"
                                        Classes="secondary"
@@ -192,7 +193,7 @@
                                        Width="36"
                                        Height="36"
                                        FontSize="14"
-                                       ToolTip.Tip="保存当前配置"/>
+                                       ToolTip.Tip="{Binding SaveConfig, Source={x:Static strings:StringResources.Current}}"/>
                                 <Button Grid.Column="3"
                                        Content="🗑️"
                                        Classes="secondary"
@@ -201,31 +202,31 @@
                                        Width="36"
                                        Height="36"
                                        FontSize="14"
-                                       ToolTip.Tip="删除当前配置"/>
+                                       ToolTip.Tip="{Binding DeleteConfig, Source={x:Static strings:StringResources.Current}}"/>
                             </Grid>
 
                             <!-- API Key -->
                             <StackPanel Spacing="4">
-                                <TextBlock Text="API Key"
+                                <TextBlock Text="{Binding APIKey, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"/>
-                                <TextBox Watermark="输入您的 OpenAI API Key"
+                                <TextBox Watermark="{Binding APIKeyPlaceholder, Source={x:Static strings:StringResources.Current}}"
                                         PasswordChar="•"
                                         Text="{Binding AiApiKey}"/>
                             </StackPanel>
 
                             <!-- Model -->
                             <StackPanel Spacing="4">
-                                <TextBlock Text="模型"
+                                <TextBlock Text="{Binding Model, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"/>
-                                <TextBox Watermark="gpt-4o-mini"
+                                <TextBox Watermark="{Binding ModelPlaceholder, Source={x:Static strings:StringResources.Current}}"
                                         Text="{Binding AiModel}"/>
                             </StackPanel>
 
                             <!-- Base URL -->
                             <StackPanel Spacing="4">
-                                <TextBlock Text="API 地址（可选，支持兼容 API）"
+                                <TextBlock Text="{Binding APIAddress, Source={x:Static strings:StringResources.Current}}"
                                           Classes="caption"/>
-                                <TextBox Watermark="https://api.openai.com/v1"
+                                <TextBox Watermark="{Binding APIAddressPlaceholder, Source={x:Static strings:StringResources.Current}}"
                                         Text="{Binding AiBaseUrl}"/>
                             </StackPanel>
 
@@ -244,7 +245,7 @@
                                               Margin="0,0,8,0"
                                               VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1"
-                                              Text="测试连接"
+                                              Text="{Binding TestConnection, Source={x:Static strings:StringResources.Current}}"
                                               VerticalAlignment="Center"/>
                                 </Grid>
                             </Button>
@@ -254,10 +255,10 @@
                                    Background="{StaticResource HoverBackground}"
                                    CornerRadius="8">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="🔒 隐私保护"
+                                    <TextBlock Text="{Binding PrivacyProtection, Source={x:Static strings:StringResources.Current}}"
                                               Classes="caption"
                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="仅发送统计数据（分类时长、活动类型分布等），不上传具体应用名称和窗口标题"
+                                    <TextBlock Text="{Binding PrivacyProtectionDesc, Source={x:Static strings:StringResources.Current}}"
                                               Classes="caption"
                                               TextWrapping="Wrap"
                                               Opacity="0.8"/>
@@ -272,7 +273,7 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="20">
-                    <TextBlock Text="📝 生成报告"
+                    <TextBlock Text="{Binding GenerateReportTitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <!-- Status Text -->
@@ -293,7 +294,7 @@
 
                     <!-- Generate Button -->
                     <Grid>
-                        <Button Content="🚀 生成 HTML 报告"
+                        <Button Content="{Binding GenerateHTMLReport, Source={x:Static strings:StringResources.Current}}"
                                Classes="primary"
                                Command="{Binding GenerateReportCommand}"
                                IsEnabled="{Binding !IsGenerating}"
@@ -302,7 +303,7 @@
                                Height="44"
                                FontSize="16"
                                Margin="0,8,0,0"/>
-                        <Button Content="🤖 生成报告（含 AI 分析）"
+                        <Button Content="{Binding GenerateReportWithAI, Source={x:Static strings:StringResources.Current}}"
                                Classes="primary"
                                Command="{Binding GenerateReportCommand}"
                                IsEnabled="{Binding !IsGenerating}"
@@ -316,7 +317,7 @@
                     <!-- Action Buttons -->
                     <Grid ColumnDefinitions="*,12,*">
                         <Button Grid.Column="0"
-                               Content="📄 打开报告"
+                               Content="{Binding OpenReport, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding OpenReportCommand}"
                                IsEnabled="{Binding LastReportPath}"
@@ -324,7 +325,7 @@
                                Height="40"/>
 
                         <Button Grid.Column="2"
-                               Content="📁 打开文件夹"
+                               Content="{Binding OpenReportsFolder, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
                                Command="{Binding OpenReportsFolderCommand}"
                                HorizontalAlignment="Stretch"
@@ -337,7 +338,7 @@
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="ℹ️ 报告说明"
+                    <TextBlock Text="{Binding ReportInfoTitle, Source={x:Static strings:StringResources.Current}}"
                               Classes="heading"/>
 
                     <StackPanel Spacing="8">
@@ -349,7 +350,7 @@
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
-                                      Text="包含详细的时间使用统计和可视化图表"
+                                      Text="{Binding ReportInfoFeature1, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
@@ -362,7 +363,7 @@
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
-                                      Text="报告保存在应用程序目录下的 Reports 文件夹"
+                                      Text="{Binding ReportInfoFeature2, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
@@ -375,7 +376,7 @@
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
-                                      Text="可在任何现代浏览器中打开查看"
+                                      Text="{Binding ReportInfoFeature3, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
@@ -388,7 +389,7 @@
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
-                                      Text="包含应用使用统计、分类统计、时间线和 AI 分析建议"
+                                      Text="{Binding ReportInfoFeature4, Source={x:Static strings:StringResources.Current}}"
                                       Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>

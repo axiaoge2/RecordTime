@@ -35,15 +35,149 @@ public class StringResources : INotifyPropertyChanged
         OnPropertyChanged(string.Empty);
     }
 
-    // 常规
+    // ============================================
+    // Common / Navigation
+    // ============================================
     public string AppName => _provider.AppName;
+    public string AppTitle => _provider.AppTitle;
     public string Settings => _provider.Settings;
     public string Dashboard => _provider.Dashboard;
     public string Reports => _provider.Reports;
     public string Statistics => _provider.Statistics;
     public string About => _provider.About;
 
-    // 设置页面
+    // Navigation with icons
+    public string NavigationDashboard => _provider.NavigationDashboard;
+    public string NavigationAppStats => _provider.NavigationAppStats;
+    public string NavigationReports => _provider.NavigationReports;
+    public string NavigationSettings => _provider.NavigationSettings;
+    public string NavigationAbout => _provider.NavigationAbout;
+
+    // ============================================
+    // Dashboard strings
+    // ============================================
+    public string DashboardTitle => _provider.DashboardTitle;
+    public string PreviousDayButton => _provider.PreviousDayButton;
+    public string NextDayButton => _provider.NextDayButton;
+    public string TodayButton => _provider.TodayButton;
+    public string TotalActivityTime => _provider.TotalActivityTime;
+    public string UpdatedAt => _provider.UpdatedAt;
+    public string SessionCount => _provider.SessionCount;
+    public string AppTypeDistribution => _provider.AppTypeDistribution;
+    public string MonitoringStatus => _provider.MonitoringStatus;
+    public string MonitoringRunning => _provider.MonitoringRunning;
+    public string MonitoringStopped => _provider.MonitoringStopped;
+    public string StartMonitoring => _provider.StartMonitoring;
+    public string StopMonitoring => _provider.StopMonitoring;
+    public string TopAppsTitle => _provider.TopAppsTitle;
+    public string CurrentDisplaying => _provider.CurrentDisplaying;
+
+    // Empty state
+    public string EmptyStateTitle => _provider.EmptyStateTitle;
+    public string EmptyStateDescription => _provider.EmptyStateDescription;
+    public string EmptyStateFeature1 => _provider.EmptyStateFeature1;
+    public string EmptyStateFeature2 => _provider.EmptyStateFeature2;
+    public string EmptyStateFeature3 => _provider.EmptyStateFeature3;
+    public string EmptyStateHint => _provider.EmptyStateHint;
+
+    // ============================================
+    // AppStats strings
+    // ============================================
+    public string AppStatsTitle => _provider.AppStatsTitle;
+    public string TimeRange => _provider.TimeRange;
+    public string Today => _provider.Today;
+    public string Yesterday => _provider.Yesterday;
+    public string ThisWeek => _provider.ThisWeek;
+    public string ThisMonth => _provider.ThisMonth;
+    public string TotalUsageTime => _provider.TotalUsageTime;
+    public string CurrentDisplayApps => _provider.CurrentDisplayApps;
+    public string TotalAppsCount => _provider.TotalAppsCount;
+    public string SearchAppPlaceholder => _provider.SearchAppPlaceholder;
+    public string SelectCategory => _provider.SelectCategory;
+    public string ClearFilter => _provider.ClearFilter;
+    public string AppDetailList => _provider.AppDetailList;
+
+    // Table headers
+    public string ColumnAppName => _provider.ColumnAppName;
+    public string ColumnCategory => _provider.ColumnCategory;
+    public string ColumnPercentage => _provider.ColumnPercentage;
+    public string ColumnUsageTime => _provider.ColumnUsageTime;
+    public string ColumnUsageCount => _provider.ColumnUsageCount;
+    public string ColumnLastUsed => _provider.ColumnLastUsed;
+
+    public string NoAppsRecorded => _provider.NoAppsRecorded;
+
+    // ============================================
+    // Report strings
+    // ============================================
+    public string ReportGenerationTitle => _provider.ReportGenerationTitle;
+    public string SelectDateRange => _provider.SelectDateRange;
+    public string LastWeek => _provider.LastWeek;
+    public string LastMonth => _provider.LastMonth;
+    public string LastThreeMonths => _provider.LastThreeMonths;
+    public string StartDate => _provider.StartDate;
+    public string EndDate => _provider.EndDate;
+    public string ReportPreview => _provider.ReportPreview;
+    public string StatisticDays => _provider.StatisticDays;
+    public string TotalSessions => _provider.TotalSessions;
+    public string TotalApps => _provider.TotalApps;
+
+    // AI Analysis
+    public string AIAnalysisTitle => _provider.AIAnalysisTitle;
+    public string AIEnable => _provider.AIEnable;
+    public string AIDisable => _provider.AIDisable;
+    public string ConfigureAIService => _provider.ConfigureAIService;
+    public string ConfigurationProfile => _provider.ConfigurationProfile;
+    public string ConfigurationProfileDesc => _provider.ConfigurationProfileDesc;
+    public string AddNewConfig => _provider.AddNewConfig;
+    public string SaveConfig => _provider.SaveConfig;
+    public string DeleteConfig => _provider.DeleteConfig;
+    public string APIKey => _provider.APIKey;
+    public string APIKeyPlaceholder => _provider.APIKeyPlaceholder;
+    public string Model => _provider.Model;
+    public string ModelPlaceholder => _provider.ModelPlaceholder;
+    public string APIAddress => _provider.APIAddress;
+    public string APIAddressPlaceholder => _provider.APIAddressPlaceholder;
+    public string TestConnection => _provider.TestConnection;
+    public string PrivacyProtection => _provider.PrivacyProtection;
+    public string PrivacyProtectionDesc => _provider.PrivacyProtectionDesc;
+
+    // Report generation
+    public string GenerateReportTitle => _provider.GenerateReportTitle;
+    public string GenerateHTMLReport => _provider.GenerateHTMLReport;
+    public string GenerateReportWithAI => _provider.GenerateReportWithAI;
+    public string OpenReport => _provider.OpenReport;
+    public string OpenReportsFolder => _provider.OpenReportsFolder;
+    public string ReportInfoTitle => _provider.ReportInfoTitle;
+    public string ReportInfoFeature1 => _provider.ReportInfoFeature1;
+    public string ReportInfoFeature2 => _provider.ReportInfoFeature2;
+    public string ReportInfoFeature3 => _provider.ReportInfoFeature3;
+    public string ReportInfoFeature4 => _provider.ReportInfoFeature4;
+
+    // ============================================
+    // About strings
+    // ============================================
+    public string AboutTitle => _provider.AboutTitle;
+    public string VersionPrefix => _provider.VersionPrefix;
+    public string AppDescription => _provider.AppDescription;
+    public string AppDescriptionTitle => _provider.AppDescriptionTitle;
+    public string PrivacyPromise => _provider.PrivacyPromise;
+    public string PrivacyPromiseDesc => _provider.PrivacyPromiseDesc;
+    public string CoreFeatures => _provider.CoreFeatures;
+    public string CoreFeaturesSubtitle => _provider.CoreFeaturesSubtitle;
+    public string DataSecurity => _provider.DataSecurity;
+    public string DataSecuritySubtitle => _provider.DataSecuritySubtitle;
+    public string UserExperience => _provider.UserExperience;
+    public string UserExperienceSubtitle => _provider.UserExperienceSubtitle;
+    public string TechStack => _provider.TechStack;
+    public string Links => _provider.Links;
+    public string GitHubRepo => _provider.GitHubRepo;
+    public string OpenSourceLicense => _provider.OpenSourceLicense;
+    public string MadeWithLove => _provider.MadeWithLove;
+
+    // ============================================
+    // Settings page (existing)
+    // ============================================
     public string GeneralSettings => _provider.GeneralSettings;
     public string MonitoringSettings => _provider.MonitoringSettings;
     public string PrivacySettings => _provider.PrivacySettings;
@@ -77,7 +211,9 @@ public class StringResources : INotifyPropertyChanged
     public string OpenLogsFolder => _provider.OpenLogsFolder;
     public string Version => _provider.Version;
 
-    // 按钮
+    // ============================================
+    // Common Buttons
+    // ============================================
     public string Apply => _provider.Apply;
     public string Cancel => _provider.Cancel;
     public string OK => _provider.OK;
@@ -88,7 +224,9 @@ public class StringResources : INotifyPropertyChanged
     public string Export => _provider.Export;
     public string Import => _provider.Import;
 
-    // 消息
+    // ============================================
+    // Status Messages
+    // ============================================
     public string Ready => _provider.Ready;
     public string Success => _provider.Success;
     public string Failed => _provider.Failed;
@@ -108,13 +246,149 @@ public class StringResources : INotifyPropertyChanged
 /// </summary>
 public interface IStringProvider
 {
+    // ============================================
+    // Common / Navigation
+    // ============================================
     string AppName { get; }
+    string AppTitle { get; }
     string Settings { get; }
     string Dashboard { get; }
     string Reports { get; }
     string Statistics { get; }
     string About { get; }
 
+    // Navigation with icons
+    string NavigationDashboard { get; }
+    string NavigationAppStats { get; }
+    string NavigationReports { get; }
+    string NavigationSettings { get; }
+    string NavigationAbout { get; }
+
+    // ============================================
+    // Dashboard strings
+    // ============================================
+    string DashboardTitle { get; }
+    string PreviousDayButton { get; }
+    string NextDayButton { get; }
+    string TodayButton { get; }
+    string TotalActivityTime { get; }
+    string UpdatedAt { get; }
+    string SessionCount { get; }
+    string AppTypeDistribution { get; }
+    string MonitoringStatus { get; }
+    string MonitoringRunning { get; }
+    string MonitoringStopped { get; }
+    string StartMonitoring { get; }
+    string StopMonitoring { get; }
+    string TopAppsTitle { get; }
+    string CurrentDisplaying { get; }
+
+    // Empty state
+    string EmptyStateTitle { get; }
+    string EmptyStateDescription { get; }
+    string EmptyStateFeature1 { get; }
+    string EmptyStateFeature2 { get; }
+    string EmptyStateFeature3 { get; }
+    string EmptyStateHint { get; }
+
+    // ============================================
+    // AppStats strings
+    // ============================================
+    string AppStatsTitle { get; }
+    string TimeRange { get; }
+    string Today { get; }
+    string Yesterday { get; }
+    string ThisWeek { get; }
+    string ThisMonth { get; }
+    string TotalUsageTime { get; }
+    string CurrentDisplayApps { get; }
+    string TotalAppsCount { get; }
+    string SearchAppPlaceholder { get; }
+    string SelectCategory { get; }
+    string ClearFilter { get; }
+    string AppDetailList { get; }
+
+    // Table headers
+    string ColumnAppName { get; }
+    string ColumnCategory { get; }
+    string ColumnPercentage { get; }
+    string ColumnUsageTime { get; }
+    string ColumnUsageCount { get; }
+    string ColumnLastUsed { get; }
+
+    string NoAppsRecorded { get; }
+
+    // ============================================
+    // Report strings
+    // ============================================
+    string ReportGenerationTitle { get; }
+    string SelectDateRange { get; }
+    string LastWeek { get; }
+    string LastMonth { get; }
+    string LastThreeMonths { get; }
+    string StartDate { get; }
+    string EndDate { get; }
+    string ReportPreview { get; }
+    string StatisticDays { get; }
+    string TotalSessions { get; }
+    string TotalApps { get; }
+
+    // AI Analysis
+    string AIAnalysisTitle { get; }
+    string AIEnable { get; }
+    string AIDisable { get; }
+    string ConfigureAIService { get; }
+    string ConfigurationProfile { get; }
+    string ConfigurationProfileDesc { get; }
+    string AddNewConfig { get; }
+    string SaveConfig { get; }
+    string DeleteConfig { get; }
+    string APIKey { get; }
+    string APIKeyPlaceholder { get; }
+    string Model { get; }
+    string ModelPlaceholder { get; }
+    string APIAddress { get; }
+    string APIAddressPlaceholder { get; }
+    string TestConnection { get; }
+    string PrivacyProtection { get; }
+    string PrivacyProtectionDesc { get; }
+
+    // Report generation
+    string GenerateReportTitle { get; }
+    string GenerateHTMLReport { get; }
+    string GenerateReportWithAI { get; }
+    string OpenReport { get; }
+    string OpenReportsFolder { get; }
+    string ReportInfoTitle { get; }
+    string ReportInfoFeature1 { get; }
+    string ReportInfoFeature2 { get; }
+    string ReportInfoFeature3 { get; }
+    string ReportInfoFeature4 { get; }
+
+    // ============================================
+    // About strings
+    // ============================================
+    string AboutTitle { get; }
+    string VersionPrefix { get; }
+    string AppDescription { get; }
+    string AppDescriptionTitle { get; }
+    string PrivacyPromise { get; }
+    string PrivacyPromiseDesc { get; }
+    string CoreFeatures { get; }
+    string CoreFeaturesSubtitle { get; }
+    string DataSecurity { get; }
+    string DataSecuritySubtitle { get; }
+    string UserExperience { get; }
+    string UserExperienceSubtitle { get; }
+    string TechStack { get; }
+    string Links { get; }
+    string GitHubRepo { get; }
+    string OpenSourceLicense { get; }
+    string MadeWithLove { get; }
+
+    // ============================================
+    // Settings page (existing)
+    // ============================================
     string GeneralSettings { get; }
     string MonitoringSettings { get; }
     string PrivacySettings { get; }
@@ -148,6 +422,9 @@ public interface IStringProvider
     string OpenLogsFolder { get; }
     string Version { get; }
 
+    // ============================================
+    // Common Buttons
+    // ============================================
     string Apply { get; }
     string Cancel { get; }
     string OK { get; }
@@ -158,6 +435,9 @@ public interface IStringProvider
     string Export { get; }
     string Import { get; }
 
+    // ============================================
+    // Status Messages
+    // ============================================
     string Ready { get; }
     string Success { get; }
     string Failed { get; }
