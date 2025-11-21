@@ -1,10 +1,12 @@
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Serilog;
 
 namespace RecordTime.Core.Services;
 
 /// <summary>
-/// Windows输入监控实现
+/// Windows输入监控实现 (性能优化版)
+/// 性能优化: 使用滑动窗口计数器代替队列全遍历，大幅提升查询性能
 /// </summary>
 public class InputMonitor : IInputMonitor
 {
@@ -17,6 +19,12 @@ public class InputMonitor : IInputMonitor
     private int _keyboardCount = 0;
     private int _mouseClickCount = 0;
     private const int CLEANUP_THRESHOLD = 1000; // 达到1000条记录时触发清理
+
+    // 性能优化: 滑动窗口计数器 (30秒窗口)
+    private int _keyboard30sCount = 0;
+    private int _mouseClick30sCount = 0;
+    private int _mouseMovement30sDistance = 0;
+    private DateTime _last30sWindowUpdate = DateTime.Now;
 
     private IntPtr _keyboardHookId = IntPtr.Zero;
     private IntPtr _mouseHookId = IntPtr.Zero;
@@ -246,6 +254,17 @@ public class InputMonitor : IInputMonitor
 
     public int GetKeyboardActivityCount(int seconds)
     {
+        // 性能优化: 对于30秒窗口使用预计算的计数器，避免 LINQ 遍历
+        if (seconds == 30)
+        {
+            lock (_lock)
+            {
+                UpdateSlidingWindow();
+                return _keyboard30sCount;
+            }
+        }
+
+        // 其他时间窗口仍使用原逻辑
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddSeconds(-seconds);
@@ -255,6 +274,17 @@ public class InputMonitor : IInputMonitor
 
     public int GetMouseClickCount(int seconds)
     {
+        // 性能优化: 对于30秒窗口使用预计算的计数器
+        if (seconds == 30)
+        {
+            lock (_lock)
+            {
+                UpdateSlidingWindow();
+                return _mouseClick30sCount;
+            }
+        }
+
+        // 其他时间窗口仍使用原逻辑
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddSeconds(-seconds);
@@ -264,6 +294,17 @@ public class InputMonitor : IInputMonitor
 
     public int GetMouseMovementDistance(int seconds)
     {
+        // 性能优化: 对于30秒窗口使用预计算的距离
+        if (seconds == 30)
+        {
+            lock (_lock)
+            {
+                UpdateSlidingWindow();
+                return _mouseMovement30sDistance;
+            }
+        }
+
+        // 其他时间窗口仍使用原逻辑
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddSeconds(-seconds);
@@ -271,6 +312,32 @@ public class InputMonitor : IInputMonitor
                 .Where(m => m.Time >= cutoff)
                 .Sum(m => m.Distance);
         }
+    }
+
+    /// <summary>
+    /// 更新滑动窗口计数器 (仅在需要时调用，减少计算开销)
+    /// </summary>
+    private void UpdateSlidingWindow()
+    {
+        var now = DateTime.Now;
+
+        // 如果距离上次更新不到1秒，则跳过更新（避免过于频繁的重计算）
+        if ((now - _last30sWindowUpdate).TotalSeconds < 1)
+            return;
+
+        var cutoff = now.AddSeconds(-30);
+
+        // 重新计算30秒窗口的统计数据
+        _keyboard30sCount = _keyboardEvents.Count(e => e >= cutoff);
+        _mouseClick30sCount = _mouseClickEvents.Count(e => e >= cutoff);
+        _mouseMovement30sDistance = _mouseMovements
+            .Where(m => m.Time >= cutoff)
+            .Sum(m => m.Distance);
+
+        _last30sWindowUpdate = now;
+
+        Log.Verbose("滑动窗口已更新: 键盘={Keyboard}, 鼠标点击={MouseClick}, 鼠标移动={MouseMove}px",
+            _keyboard30sCount, _mouseClick30sCount, _mouseMovement30sDistance);
     }
 
     public int GetIdleTimeSeconds()

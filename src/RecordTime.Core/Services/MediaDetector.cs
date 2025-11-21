@@ -1,12 +1,14 @@
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using Serilog;
 
 namespace RecordTime.Core.Services;
 
 /// <summary>
-/// Windows媒体检测实现
+/// Windows媒体检测实现 (性能优化版)
 /// 注意：完整的媒体检测需要Windows.Media API (UWP)
 /// 这里提供基础实现，主要依赖音频检测和进程匹配
+/// 性能优化: 使用进程缓存避免频繁调用 Process.GetProcesses()
 /// </summary>
 public class MediaDetector : IMediaDetector
 {
@@ -40,18 +42,114 @@ public class MediaDetector : IMediaDetector
         "qqbrowser", "liebao", "tor"
     };
 
+    private readonly HashSet<string> _audioPlayerProcesses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "spotify", "cloudmusic", "qqmusic", "wmplayer", "kugou", "kuwo",
+        "foobar2000", "aimp", "musicbee"
+    };
+
     private bool _isRunning;
+
+    // 性能优化: 进程缓存机制
+    private readonly object _cacheLock = new();
+    private HashSet<string> _cachedVideoProcesses = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<string> _cachedAudioProcesses = new(StringComparer.OrdinalIgnoreCase);
+    private DateTime _lastCacheUpdate = DateTime.MinValue;
+    private readonly TimeSpan _cacheRefreshInterval = TimeSpan.FromSeconds(5); // 5秒刷新一次缓存
+    private System.Threading.Timer? _cacheRefreshTimer;
 
     public void Start()
     {
         _isRunning = true;
-        Debug.WriteLine("✅ MediaDetector started");
+
+        // 立即刷新一次缓存
+        RefreshProcessCache();
+
+        // 启动定时器，每5秒刷新缓存
+        _cacheRefreshTimer = new System.Threading.Timer(
+            callback: _ => RefreshProcessCache(),
+            state: null,
+            dueTime: _cacheRefreshInterval,
+            period: _cacheRefreshInterval
+        );
+
+        Log.Debug("MediaDetector 已启动，缓存刷新间隔: {Interval}秒", _cacheRefreshInterval.TotalSeconds);
     }
 
     public void Stop()
     {
         _isRunning = false;
-        Debug.WriteLine("⏹️ MediaDetector stopped");
+
+        // 停止定时器
+        _cacheRefreshTimer?.Dispose();
+        _cacheRefreshTimer = null;
+
+        // 清空缓存
+        lock (_cacheLock)
+        {
+            _cachedVideoProcesses.Clear();
+            _cachedAudioProcesses.Clear();
+        }
+
+        Log.Debug("MediaDetector 已停止");
+    }
+
+    /// <summary>
+    /// 刷新进程缓存 (后台异步执行，避免阻塞)
+    /// </summary>
+    private void RefreshProcessCache()
+    {
+        try
+        {
+            var videoProcesses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var audioProcesses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // 获取所有进程（这是昂贵的操作，但现在只在后台定时执行）
+            var processes = Process.GetProcesses();
+
+            foreach (var process in processes)
+            {
+                try
+                {
+                    var processName = process.ProcessName;
+
+                    // 检查是否为视频播放器
+                    if (_videoPlayerProcesses.Contains(processName))
+                    {
+                        videoProcesses.Add(processName);
+                    }
+
+                    // 检查是否为音频播放器
+                    if (_audioPlayerProcesses.Contains(processName))
+                    {
+                        audioProcesses.Add(processName);
+                    }
+                }
+                catch
+                {
+                    // 忽略无法访问的进程
+                }
+                finally
+                {
+                    process.Dispose();
+                }
+            }
+
+            // 原子更新缓存
+            lock (_cacheLock)
+            {
+                _cachedVideoProcesses = videoProcesses;
+                _cachedAudioProcesses = audioProcesses;
+                _lastCacheUpdate = DateTime.Now;
+            }
+
+            Log.Verbose("进程缓存已刷新: 视频={VideoCount}, 音频={AudioCount}",
+                videoProcesses.Count, audioProcesses.Count);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "刷新进程缓存时发生错误");
+        }
     }
 
     public bool IsMediaPlaying()
@@ -61,34 +159,16 @@ public class MediaDetector : IMediaDetector
 
         try
         {
-            // 方法1: 检查已知视频播放器进程
-            var processes = Process.GetProcesses();
-            foreach (var process in processes)
+            // 性能优化: 直接使用缓存的进程列表，避免每次都调用 Process.GetProcesses()
+            lock (_cacheLock)
             {
-                try
-                {
-                    if (_videoPlayerProcesses.Contains(process.ProcessName))
-                    {
-                        // 检查进程是否有窗口且可见
-                        if (IsProcessWindowVisible(process))
-                        {
-                            return true;
-                        }
-                    }
-                }
-                catch
-                {
-                    // 忽略无权访问的进程
-                }
+                // 如果缓存中有视频或音频进程，则认为正在播放
+                return _cachedVideoProcesses.Count > 0 || _cachedAudioProcesses.Count > 0;
             }
-
-            // 方法2: 检查是否有音频播放（简化版）
-            // 实际生产环境应使用 Core Audio API
-            return HasAudioActivity();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"MediaDetector error: {ex.Message}");
+            Log.Error(ex, "检测媒体播放状态时发生错误");
             return false;
         }
     }
@@ -109,24 +189,13 @@ public class MediaDetector : IMediaDetector
 
     public bool HasAudioActivity()
     {
-        // 简化实现：检查是否有音频相关进程活跃
-        // 完整实现需要使用 Core Audio API (IAudioSessionManager2)
+        // 性能优化: 使用缓存的音频进程列表
         try
         {
-            var audioProcesses = new[] { "spotify", "cloudmusic", "qqmusic", "wmplayer" };
-            var processes = Process.GetProcesses();
-
-            return processes.Any(p =>
+            lock (_cacheLock)
             {
-                try
-                {
-                    return audioProcesses.Any(ap => p.ProcessName.Contains(ap, StringComparison.OrdinalIgnoreCase));
-                }
-                catch
-                {
-                    return false;
-                }
-            });
+                return _cachedAudioProcesses.Count > 0;
+            }
         }
         catch
         {
@@ -136,35 +205,39 @@ public class MediaDetector : IMediaDetector
 
     public MediaInfo? GetCurrentMediaInfo()
     {
-        // 基础实现：返回检测到的播放器信息
-        // 完整实现需要使用 Windows.Media.Control API
+        // 性能优化: 使用缓存的进程列表
         try
         {
-            var processes = Process.GetProcesses();
-            foreach (var process in processes)
+            lock (_cacheLock)
             {
-                try
+                // 优先返回视频播放器
+                if (_cachedVideoProcesses.Count > 0)
                 {
-                    if (_videoPlayerProcesses.Contains(process.ProcessName) &&
-                        IsProcessWindowVisible(process))
+                    var firstVideo = _cachedVideoProcesses.First();
+                    return new MediaInfo
                     {
-                        return new MediaInfo
-                        {
-                            SourceAppName = process.ProcessName,
-                            IsPlaying = true,
-                            Title = "正在播放" // 实际需要从窗口标题或API获取
-                        };
-                    }
+                        SourceAppName = firstVideo,
+                        IsPlaying = true,
+                        Title = "正在播放"
+                    };
                 }
-                catch
+
+                // 其次返回音频播放器
+                if (_cachedAudioProcesses.Count > 0)
                 {
-                    // 忽略
+                    var firstAudio = _cachedAudioProcesses.First();
+                    return new MediaInfo
+                    {
+                        SourceAppName = firstAudio,
+                        IsPlaying = true,
+                        Title = "正在播放"
+                    };
                 }
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"GetCurrentMediaInfo error: {ex.Message}");
+            Log.Error(ex, "获取媒体信息时发生错误");
         }
 
         return null;

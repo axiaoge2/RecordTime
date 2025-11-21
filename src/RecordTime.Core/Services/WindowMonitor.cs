@@ -7,7 +7,8 @@ using Serilog;
 namespace RecordTime.Core.Services;
 
 /// <summary>
-/// Windows窗口监控实现
+/// Windows窗口监控实现 (性能优化版)
+/// 性能优化: 根据用户活跃度动态调整轮询间隔，活跃时快速响应，空闲时降低CPU占用
 /// </summary>
 public class WindowMonitor : IWindowMonitor
 {
@@ -15,15 +16,23 @@ public class WindowMonitor : IWindowMonitor
     private WindowInfo? _lastWindow;
     private readonly int _monitorIntervalMs;
 
+    // 性能优化: 动态轮询间隔
+    private int _currentIntervalMs;
+    private const int ACTIVE_INTERVAL_MS = 500;    // 活跃时：500ms
+    private const int IDLE_INTERVAL_MS = 2000;     // 空闲时：2000ms
+    private DateTime _lastWindowChange = DateTime.Now;
+    private const int IDLE_THRESHOLD_SECONDS = 30;  // 30秒无窗口切换视为空闲
+
     public event EventHandler<WindowInfo>? WindowFocusChanged;
 
-    public WindowMonitor() : this(2000) // 默认 2 秒
+    public WindowMonitor() : this(ACTIVE_INTERVAL_MS) // 默认使用活跃间隔
     {
     }
 
     public WindowMonitor(int monitorIntervalMs)
     {
         _monitorIntervalMs = monitorIntervalMs;
+        _currentIntervalMs = monitorIntervalMs;
     }
 
     #region Win32 API
@@ -103,17 +112,51 @@ public class WindowMonitor : IWindowMonitor
             {
                 Log.Debug("窗口已变化,触发事件: {ProcessName}", currentWindow.ProcessName);
                 _lastWindow = currentWindow;
+                _lastWindowChange = DateTime.Now;
+
+                // 窗口切换后切换到活跃轮询模式
+                AdjustPollingInterval(true);
+
                 WindowFocusChanged?.Invoke(this, currentWindow);
             }
             else
             {
                 Log.Verbose("窗口未变化,跳过: {ProcessName}", currentWindow.ProcessName);
+
+                // 检查是否应该切换到空闲轮询模式
+                var idleTime = (DateTime.Now - _lastWindowChange).TotalSeconds;
+                if (idleTime > IDLE_THRESHOLD_SECONDS)
+                {
+                    AdjustPollingInterval(false);
+                }
             }
         }
         catch (Exception ex)
         {
             Log.Error(ex, "WindowMonitor 监控过程中发生错误");
         }
+    }
+
+    /// <summary>
+    /// 动态调整轮询间隔 (性能优化)
+    /// </summary>
+    /// <param name="isActive">是否处于活跃状态</param>
+    private void AdjustPollingInterval(bool isActive)
+    {
+        var targetInterval = isActive ? ACTIVE_INTERVAL_MS : IDLE_INTERVAL_MS;
+
+        // 如果间隔已经匹配，跳过调整
+        if (_currentIntervalMs == targetInterval)
+            return;
+
+        _currentIntervalMs = targetInterval;
+
+        // 重新创建定时器以应用新的间隔
+        _monitorTimer?.Dispose();
+        _monitorTimer = new Timer(MonitorCallback, null, 0, _currentIntervalMs);
+
+        Log.Debug("轮询间隔已调整: {Interval}ms ({Mode})",
+            _currentIntervalMs, isActive ? "活跃模式" : "空闲模式");
     }
 
     private WindowInfo? GetWindowInfoFromHandle(IntPtr hwnd)
