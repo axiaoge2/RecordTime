@@ -503,7 +503,7 @@ public partial class ReportViewModel : ViewModelBase
     /// 重命名当前 AI 配置
     /// </summary>
     [RelayCommand]
-    private async Task RenameAIConfigAsync()
+    private void RenameAIConfig()
     {
         try
         {
