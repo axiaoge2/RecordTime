@@ -181,6 +181,34 @@ public class EnglishStrings : IStringProvider
     public string OpenLogsFolder => "Open Logs Folder";
     public string Version => "Version";
 
+    // Settings About section
+    public string SettingsDescription => "RecordTime is a Windows desktop time tracking tool";
+    public string SettingsFeatures => "Features: Real-time monitoring, data statistics, HTML reports, AI analysis";
+    public string SettingsCopyright => "© 2025 RecordTime. All rights reserved.";
+    public string LogsDescription => "Log files can be used for troubleshooting and diagnostics";
+    public string TotalRecordsFormat => "{0} records total";
+
+    // ============================================
+    // About Page Feature Lists
+    // ============================================
+    // Core Features
+    public string CoreFeature1 => "🎯 Smart Activity Detection - Automatically identify video, gaming, active input, passive browsing and other activity types";
+    public string CoreFeature2 => "📊 Visual Statistics Analysis - Real-time charts showing application usage distribution and time trends";
+    public string CoreFeature3 => "🤖 AI Smart Insights - Optional AI analysis provides personalized time management recommendations";
+    public string CoreFeature4 => "📈 Professional Report Generation - Support exporting detailed HTML format reports, viewable in browsers";
+
+    // Security Features
+    public string SecurityFeature1 => "🔒 Local-first Storage - All data stored on your device, never uploaded to cloud";
+    public string SecurityFeature2 => "🔐 Privacy Data Encryption - Window titles stored using SHA256 hash encryption";
+    public string SecurityFeature3 => "💾 Heartbeat Protection - Auto-save every 30 seconds, preventing data loss from crashes";
+    public string SecurityFeature4 => "🛡️ Auto-repair Mechanism - Detects and repairs abnormal sessions on startup, ensuring data integrity";
+
+    // UX Features
+    public string UXFeature1 => "🚀 Lightweight Operation - Low resource usage, silent background monitoring without affecting normal use";
+    public string UXFeature2 => "🎨 Modern Interface - Apple-style design, clean and beautiful user interface";
+    public string UXFeature3 => "⚡ High Performance Optimization - 500ms window polling, accurately captures app switching";
+    public string UXFeature4 => "🔧 Flexible Configuration - Support multiple AI configurations, custom naming, state persistence";
+
     // ============================================
     // Common Buttons
     // ============================================

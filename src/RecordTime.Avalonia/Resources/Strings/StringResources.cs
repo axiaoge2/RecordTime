@@ -211,6 +211,29 @@ public class StringResources : INotifyPropertyChanged
     public string OpenLogsFolder => _provider.OpenLogsFolder;
     public string Version => _provider.Version;
 
+    // Settings About section
+    public string SettingsDescription => _provider.SettingsDescription;
+    public string SettingsFeatures => _provider.SettingsFeatures;
+    public string SettingsCopyright => _provider.SettingsCopyright;
+    public string LogsDescription => _provider.LogsDescription;
+    public string TotalRecordsFormat => _provider.TotalRecordsFormat;
+
+    // About Page Feature Lists
+    public string CoreFeature1 => _provider.CoreFeature1;
+    public string CoreFeature2 => _provider.CoreFeature2;
+    public string CoreFeature3 => _provider.CoreFeature3;
+    public string CoreFeature4 => _provider.CoreFeature4;
+
+    public string SecurityFeature1 => _provider.SecurityFeature1;
+    public string SecurityFeature2 => _provider.SecurityFeature2;
+    public string SecurityFeature3 => _provider.SecurityFeature3;
+    public string SecurityFeature4 => _provider.SecurityFeature4;
+
+    public string UXFeature1 => _provider.UXFeature1;
+    public string UXFeature2 => _provider.UXFeature2;
+    public string UXFeature3 => _provider.UXFeature3;
+    public string UXFeature4 => _provider.UXFeature4;
+
     // ============================================
     // Common Buttons
     // ============================================
@@ -421,6 +444,29 @@ public interface IStringProvider
 
     string OpenLogsFolder { get; }
     string Version { get; }
+
+    // Settings About section
+    string SettingsDescription { get; }
+    string SettingsFeatures { get; }
+    string SettingsCopyright { get; }
+    string LogsDescription { get; }
+    string TotalRecordsFormat { get; }
+
+    // About Page Feature Lists
+    string CoreFeature1 { get; }
+    string CoreFeature2 { get; }
+    string CoreFeature3 { get; }
+    string CoreFeature4 { get; }
+
+    string SecurityFeature1 { get; }
+    string SecurityFeature2 { get; }
+    string SecurityFeature3 { get; }
+    string SecurityFeature4 { get; }
+
+    string UXFeature1 { get; }
+    string UXFeature2 { get; }
+    string UXFeature3 { get; }
+    string UXFeature4 { get; }
 
     // ============================================
     // Common Buttons

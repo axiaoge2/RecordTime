@@ -189,7 +189,7 @@
                            Command="{Binding OpenLogsFolderCommand}"
                            HorizontalAlignment="Left"/>
 
-                    <TextBlock Text="Log files can be used for troubleshooting and diagnostics"
+                    <TextBlock Text="{Binding LogsDescription, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               TextWrapping="Wrap"/>
                 </StackPanel>
@@ -205,15 +205,15 @@
                     <TextBlock Text="{Binding Version, Source={x:Static strings:StringResources.Current}}"
                               Classes="body"/>
 
-                    <TextBlock Text="RecordTime is a Windows desktop time tracking tool"
+                    <TextBlock Text="{Binding SettingsDescription, Source={x:Static strings:StringResources.Current}}"
                               Classes="body"
                               TextWrapping="Wrap"/>
 
-                    <TextBlock Text="Features: Real-time monitoring, data statistics, HTML reports, AI analysis"
+                    <TextBlock Text="{Binding SettingsFeatures, Source={x:Static strings:StringResources.Current}}"
                               Classes="body"
                               TextWrapping="Wrap"/>
 
-                    <TextBlock Text="© 2025 RecordTime. All rights reserved."
+                    <TextBlock Text="{Binding SettingsCopyright, Source={x:Static strings:StringResources.Current}}"
                               Classes="caption"
                               Margin="0,8,0,0"/>
                 </StackPanel>

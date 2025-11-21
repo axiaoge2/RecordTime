@@ -181,6 +181,34 @@ public class ChineseStrings : IStringProvider
     public string OpenLogsFolder => "打开日志文件夹";
     public string Version => "版本";
 
+    // Settings About section
+    public string SettingsDescription => "RecordTime 是一款 Windows 桌面时间追踪工具";
+    public string SettingsFeatures => "功能:实时监控、数据统计、HTML 报告、AI 分析";
+    public string SettingsCopyright => "© 2025 RecordTime. All rights reserved.";
+    public string LogsDescription => "日志文件可用于故障排除和诊断";
+    public string TotalRecordsFormat => "共 {0} 条记录";
+
+    // ============================================
+    // About Page Feature Lists
+    // ============================================
+    // Core Features
+    public string CoreFeature1 => "🎯 智能活动检测 - 自动识别视频、游戏、主动输入、被动浏览等活动类型";
+    public string CoreFeature2 => "📊 可视化统计分析 - 实时图表展示应用使用分布和时间趋势";
+    public string CoreFeature3 => "🤖 AI 智能洞察 - 可选的 AI 分析提供个性化时间管理建议";
+    public string CoreFeature4 => "📈 专业报告生成 - 支持导出详细的 HTML 格式报告,可在浏览器查看";
+
+    // Security Features
+    public string SecurityFeature1 => "🔒 本地优先存储 - 所有数据存储在您的设备上,永不上传云端";
+    public string SecurityFeature2 => "🔐 隐私数据加密 - 窗口标题使用 SHA256 哈希加密存储";
+    public string SecurityFeature3 => "💾 心跳机制保护 - 每30秒自动保存,防止崩溃导致数据丢失";
+    public string SecurityFeature4 => "🛡️ 自动修复机制 - 启动时检测并修复异常会话,确保数据完整性";
+
+    // UX Features
+    public string UXFeature1 => "🚀 轻量级运行 - 低资源占用,后台静默监控不影响正常使用";
+    public string UXFeature2 => "🎨 现代化界面 - Apple 风格设计,简洁美观的用户界面";
+    public string UXFeature3 => "⚡ 高性能优化 - 500ms 窗口轮询,准确捕捉应用切换";
+    public string UXFeature4 => "🔧 灵活配置 - 支持多 AI 配置、自定义命名、状态持久化";
+
     // ============================================
     // Common Buttons
     // ============================================
