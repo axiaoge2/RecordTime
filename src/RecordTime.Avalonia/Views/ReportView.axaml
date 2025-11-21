@@ -123,6 +123,151 @@
                 </StackPanel>
             </Border>
 
+            <!-- AI 分析配置 -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                  Text="🤖 AI 智能分析"
+                                  Classes="heading"/>
+                        <ToggleSwitch Grid.Column="1"
+                                     IsChecked="{Binding EnableAIAnalysis}"
+                                     OnContent="开启"
+                                     OffContent="关闭"
+                                     VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- AI 状态提示 - 增强视觉反馈 -->
+                    <Border Padding="16"
+                           Background="{StaticResource HoverBackground}"
+                           CornerRadius="10"
+                           BorderThickness="2"
+                           BorderBrush="Transparent">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <TextBlock Grid.Column="0"
+                                      Text="{Binding ConnectionTestIcon}"
+                                      FontSize="20"
+                                      Margin="0,0,12,0"
+                                      VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1"
+                                      Text="{Binding AiStatusText}"
+                                      Classes="caption"
+                                      FontSize="14"
+                                      FontWeight="SemiBold"
+                                      TextAlignment="Left"
+                                      VerticalAlignment="Center"
+                                      TextWrapping="Wrap"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- AI 配置面板（可折叠） -->
+                    <Expander Header="配置 AI 服务"
+                             IsExpanded="False">
+                        <StackPanel Spacing="16" Margin="0,16,0,0">
+                            <!-- 配置选择 - 支持可编辑名称 -->
+                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                                <StackPanel Grid.Column="0" Spacing="4">
+                                    <TextBlock Text="配置方案（可直接编辑名称）"
+                                              Classes="caption"/>
+                                    <ComboBox ItemsSource="{Binding AvailableConfigs}"
+                                             SelectedItem="{Binding CurrentConfigName}"
+                                             IsEditable="True"
+                                             HorizontalAlignment="Stretch"/>
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                       Content="➕"
+                                       Classes="secondary"
+                                       Command="{Binding AddNewAIConfigCommand}"
+                                       VerticalAlignment="Bottom"
+                                       Width="36"
+                                       Height="36"
+                                       FontSize="14"
+                                       ToolTip.Tip="添加新配置"/>
+                                <Button Grid.Column="2"
+                                       Content="💾"
+                                       Classes="secondary"
+                                       Command="{Binding SaveAIConfigCommand}"
+                                       VerticalAlignment="Bottom"
+                                       Width="36"
+                                       Height="36"
+                                       FontSize="14"
+                                       ToolTip.Tip="保存当前配置"/>
+                                <Button Grid.Column="3"
+                                       Content="🗑️"
+                                       Classes="secondary"
+                                       Command="{Binding DeleteAIConfigCommand}"
+                                       VerticalAlignment="Bottom"
+                                       Width="36"
+                                       Height="36"
+                                       FontSize="14"
+                                       ToolTip.Tip="删除当前配置"/>
+                            </Grid>
+
+                            <!-- API Key -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="API Key"
+                                          Classes="caption"/>
+                                <TextBox Watermark="输入您的 OpenAI API Key"
+                                        PasswordChar="•"
+                                        Text="{Binding AiApiKey}"/>
+                            </StackPanel>
+
+                            <!-- Model -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="模型"
+                                          Classes="caption"/>
+                                <TextBox Watermark="gpt-4o-mini"
+                                        Text="{Binding AiModel}"/>
+                            </StackPanel>
+
+                            <!-- Base URL -->
+                            <StackPanel Spacing="4">
+                                <TextBlock Text="API 地址（可选，支持兼容 API）"
+                                          Classes="caption"/>
+                                <TextBox Watermark="https://api.openai.com/v1"
+                                        Text="{Binding AiBaseUrl}"/>
+                            </StackPanel>
+
+                            <!-- Test Connection Button - 增强视觉效果 -->
+                            <Button Command="{Binding TestAIConnectionCommand}"
+                                   IsEnabled="{Binding !IsTestingConnection}"
+                                   Classes="secondary"
+                                   HorizontalAlignment="Stretch"
+                                   Height="40"
+                                   FontSize="14"
+                                   FontWeight="SemiBold">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <TextBlock Grid.Column="0"
+                                              Text="{Binding ConnectionTestIcon}"
+                                              FontSize="16"
+                                              Margin="0,0,8,0"
+                                              VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                              Text="测试连接"
+                                              VerticalAlignment="Center"/>
+                                </Grid>
+                            </Button>
+
+                            <!-- 隐私说明 -->
+                            <Border Padding="12"
+                                   Background="{StaticResource HoverBackground}"
+                                   CornerRadius="8">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="🔒 隐私保护"
+                                              Classes="caption"
+                                              FontWeight="SemiBold"/>
+                                    <TextBlock Text="仅发送统计数据（分类时长、活动类型分布等），不上传具体应用名称和窗口标题"
+                                              Classes="caption"
+                                              TextWrapping="Wrap"
+                                              Opacity="0.8"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </Border>
+
             <!-- Generate Report Section -->
             <Border Classes="card"
                    Padding="24,20,24,24">
@@ -142,19 +287,31 @@
                             <TextBlock Text="{Binding StatusDetail}"
                                       Classes="caption"
                                       TextAlignment="Center"
-                                      IsVisible="{Binding StatusDetail}"/>
+                                      IsVisible="{Binding StatusDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Generate Button -->
-                    <Button Content="🚀 生成 HTML 报告"
-                           Classes="primary"
-                           Command="{Binding GenerateReportCommand}"
-                           IsEnabled="{Binding !IsGenerating}"
-                           HorizontalAlignment="Stretch"
-                           Height="44"
-                           FontSize="16"
-                           Margin="0,8,0,0"/>
+                    <Grid>
+                        <Button Content="🚀 生成 HTML 报告"
+                               Classes="primary"
+                               Command="{Binding GenerateReportCommand}"
+                               IsEnabled="{Binding !IsGenerating}"
+                               IsVisible="{Binding !EnableAIAnalysis}"
+                               HorizontalAlignment="Stretch"
+                               Height="44"
+                               FontSize="16"
+                               Margin="0,8,0,0"/>
+                        <Button Content="🤖 生成报告（含 AI 分析）"
+                               Classes="primary"
+                               Command="{Binding GenerateReportCommand}"
+                               IsEnabled="{Binding !IsGenerating}"
+                               IsVisible="{Binding EnableAIAnalysis}"
+                               HorizontalAlignment="Stretch"
+                               Height="44"
+                               FontSize="16"
+                               Margin="0,8,0,0"/>
+                    </Grid>
 
                     <!-- Action Buttons -->
                     <Grid ColumnDefinitions="*,12,*">

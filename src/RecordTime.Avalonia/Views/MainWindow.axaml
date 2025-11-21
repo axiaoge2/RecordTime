@@ -11,9 +11,9 @@
         Icon="/Assets/Icons/AppIcon.ico"
         Title="RecordTime - 时间追踪工具"
         WindowStartupLocation="CenterScreen"
-        Width="1000"
-        Height="700"
-        MinWidth="900"
+        Width="1250"
+        Height="750"
+        MinWidth="1100"
         MinHeight="650">
 
     <Design.DataContext>

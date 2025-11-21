@@ -32,6 +32,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IIconExtractor _iconExtractor;
     private int _timerExecuting = 0; // 0 = 未执行, 1 = 执行中 (防重入)
 
+    // 页面 ViewModel 单例 - 保持页面状态,避免切换时丢失进度
+    private ReportViewModel? _reportViewModel;
+    private AppStatsViewModel? _appStatsViewModel;
+    private SettingsViewModel? _settingsViewModel;
+    private AboutViewModel? _aboutViewModel;
+
     // 汇总数据
     [ObservableProperty]
     private string _totalDuration = "00h 00m";
@@ -192,25 +198,33 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToAppStats()
     {
-        CurrentPageViewModel = new AppStatsViewModel();
+        // 使用单例模式 - 避免重复创建 ViewModel,保持页面状态
+        _appStatsViewModel ??= new AppStatsViewModel();
+        CurrentPageViewModel = _appStatsViewModel;
     }
 
     [RelayCommand]
     private void NavigateToReports()
     {
-        CurrentPageViewModel = new ReportViewModel();
+        // 使用单例模式 - 避免重复创建 ViewModel,保持报告生成进度
+        _reportViewModel ??= new ReportViewModel();
+        CurrentPageViewModel = _reportViewModel;
     }
 
     [RelayCommand]
     private void NavigateToSettings()
     {
-        CurrentPageViewModel = new SettingsViewModel();
+        // 使用单例模式 - 避免重复创建 ViewModel,保持设置页面状态
+        _settingsViewModel ??= new SettingsViewModel();
+        CurrentPageViewModel = _settingsViewModel;
     }
 
     [RelayCommand]
     private void NavigateToAbout()
     {
-        CurrentPageViewModel = new AboutViewModel();
+        // 使用单例模式 - 避免重复创建 ViewModel
+        _aboutViewModel ??= new AboutViewModel();
+        CurrentPageViewModel = _aboutViewModel;
     }
 
     private async Task StartMonitoringAsync()
@@ -596,7 +610,33 @@ public partial class MainWindowViewModel : ViewModelBase
             Log.Debug("检测到数据变化: {DataFingerprint}", _lastDataFingerprint);
 
             // 更新数据时间戳
-            DataUpdateTime = DateTime.Now.ToString("HH:mm");
+            // - 监控运行中: 显示实时查询时间
+            // - 监控未运行: 显示最后一条会话的结束时间
+            if (IsMonitoring && date.Date == DateTime.Today)
+            {
+                DataUpdateTime = DateTime.Now.ToString("HH:mm");
+            }
+            else
+            {
+                // 查询最后一条会话的结束时间
+                await using var db = new RecordTimeDbContext();
+                var dateStart = date.Date;
+                var lastSession = await db.Sessions
+                    .AsNoTracking()
+                    .Where(s => s.StartTime >= dateStart && s.StartTime < dateStart.AddDays(1) && s.EndTime != null)
+                    .OrderByDescending(s => s.EndTime)
+                    .Select(s => s.EndTime)
+                    .FirstOrDefaultAsync();
+
+                if (lastSession.HasValue)
+                {
+                    DataUpdateTime = lastSession.Value.ToString("HH:mm");
+                }
+                else
+                {
+                    DataUpdateTime = "--";
+                }
+            }
 
             if (snapshot.AllApps.Count == 0)
             {
