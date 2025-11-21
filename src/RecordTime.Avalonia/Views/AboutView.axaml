@@ -43,23 +43,127 @@
                               Classes="body"
                               TextWrapping="Wrap"
                               LineHeight="24"/>
+
+                    <!-- Privacy Emphasis -->
+                    <Border Padding="16,12"
+                           Background="#1A34C759"
+                           BorderBrush="#34C759"
+                           BorderThickness="2"
+                           CornerRadius="10"
+                           Margin="0,12,0,0">
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🔒"
+                                          FontSize="20"
+                                          VerticalAlignment="Center"/>
+                                <TextBlock Text="隐私承诺"
+                                          Classes="body"
+                                          FontWeight="SemiBold"
+                                          Foreground="#34C759"
+                                          VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Classes="caption"
+                                      TextWrapping="Wrap"
+                                      LineHeight="20"
+                                      Opacity="0.85">
+                                <Run Text="RecordTime 采用"/>
+                                <Run Text="100% 本地存储" FontWeight="SemiBold"/>
+                                <Run Text="架构,所有时间追踪数据仅保存在您的设备上。"/>
+                                <LineBreak/>
+                                <Run Text="未经您授权,"/>
+                                <Run Text="绝不上传任何数据" FontWeight="SemiBold"/>
+                                <Run Text="至云端或第三方服务器。"/>
+                                <LineBreak/>
+                                <Run Text="AI 分析功能为"/>
+                                <Run Text="可选项" FontWeight="SemiBold"/>
+                                <Run Text=",仅在您主动开启时才会发送匿名化的统计数据。"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
 
-            <!-- Features -->
+            <!-- Core Features -->
             <Border Classes="card"
                    Padding="24,20,24,24">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="✨ 主要功能"
+                    <TextBlock Text="✨ 核心功能"
                               Classes="heading"/>
+                    <TextBlock Text="深度挖掘时间数据价值,助力高效时间管理"
+                              Classes="caption"
+                              Opacity="0.7"
+                              Margin="0,0,0,8"/>
 
-                    <ItemsControl ItemsSource="{Binding Features}">
+                    <ItemsControl ItemsSource="{Binding CoreFeatures}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding}"
-                                          Classes="body"
-                                          Margin="0,4"
-                                          TextWrapping="Wrap"/>
+                                <Border Padding="12,8"
+                                       Background="{StaticResource HoverBackground}"
+                                       CornerRadius="8"
+                                       Margin="0,4">
+                                    <TextBlock Text="{Binding}"
+                                              Classes="body"
+                                              TextWrapping="Wrap"
+                                              LineHeight="22"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- Security Features -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="🔐 数据安全"
+                              Classes="heading"/>
+                    <TextBlock Text="隐私至上,数据完整性优先的设计理念"
+                              Classes="caption"
+                              Opacity="0.7"
+                              Margin="0,0,0,8"/>
+
+                    <ItemsControl ItemsSource="{Binding SecurityFeatures}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="12,8"
+                                       Background="{StaticResource HoverBackground}"
+                                       CornerRadius="8"
+                                       Margin="0,4">
+                                    <TextBlock Text="{Binding}"
+                                              Classes="body"
+                                              TextWrapping="Wrap"
+                                              LineHeight="22"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- UX Features -->
+            <Border Classes="card"
+                   Padding="24,20,24,24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="🎨 用户体验"
+                              Classes="heading"/>
+                    <TextBlock Text="极致性能与现代设计的完美融合"
+                              Classes="caption"
+                              Opacity="0.7"
+                              Margin="0,0,0,8"/>
+
+                    <ItemsControl ItemsSource="{Binding UXFeatures}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="12,8"
+                                       Background="{StaticResource HoverBackground}"
+                                       CornerRadius="8"
+                                       Margin="0,4">
+                                    <TextBlock Text="{Binding}"
+                                              Classes="body"
+                                              TextWrapping="Wrap"
+                                              LineHeight="22"/>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>

@@ -11,7 +11,7 @@
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                   VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
+        <StackPanel Spacing="24" MaxWidth="1400" Margin="24,40,24,80">
             <!-- Title -->
             <TextBlock Text="应用统计"
                       Classes="title"
@@ -129,7 +129,7 @@
                            Background="{StaticResource HoverBackground}"
                            CornerRadius="8"
                            MinWidth="900">
-                        <Grid ColumnDefinitions="40,*,140,90,140,120,170">
+                        <Grid ColumnDefinitions="40,*,140,90,140,100,150">
                             <TextBlock Grid.Column="0"
                                       Text=""
                                       Classes="body"
@@ -178,7 +178,7 @@
                                             <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
                                         </Style>
                                     </Border.Styles>
-                                    <Grid ColumnDefinitions="40,*,140,90,140,120,170">
+                                    <Grid ColumnDefinitions="40,*,140,90,140,100,150">
                                         <Image Grid.Column="0"
                                                Source="{Binding Icon}"
                                                Width="24"

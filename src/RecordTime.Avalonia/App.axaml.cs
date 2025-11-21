@@ -36,8 +36,33 @@ public partial class App : Application
                 .AddLightTheme()
         );
 
+        // 初始化多语言系统
+        InitializeLanguageSystem();
+
         // 注册全局异常处理
         SetupExceptionHandling();
+    }
+
+    /// <summary>
+    /// 初始化多语言系统
+    /// </summary>
+    private void InitializeLanguageSystem()
+    {
+        try
+        {
+            var settingsService = new RecordTime.Core.Services.AppSettingsService();
+            var settings = settingsService.GetSettings();
+
+            // 根据配置切换语言
+            RecordTime.Avalonia.Resources.Strings.StringResources.Current.SwitchLanguage(settings.General.Language);
+
+            Log.Information("语言系统已初始化: {Language}", settings.General.Language);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning(ex, "初始化语言系统失败，使用默认中文");
+            RecordTime.Avalonia.Resources.Strings.StringResources.Current.SwitchLanguage("zh-CN");
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()

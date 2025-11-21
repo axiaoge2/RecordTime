@@ -2,16 +2,22 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using RecordTime.Data;
+using RecordTime.Core.Services;
+using RecordTime.Avalonia.Resources.Strings;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace RecordTime.Avalonia.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {
+    private readonly AppSettingsService _settingsService;
+
     [ObservableProperty]
     private bool _autoStart = false;
 
@@ -36,8 +42,19 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private int _totalSessions;
 
+    [ObservableProperty]
+    private string _selectedLanguage = "zh-CN";
+
+    // 语言选项
+    public List<LanguageOption> LanguageOptions { get; } = new()
+    {
+        new LanguageOption { Code = "zh-CN", Name = "简体中文" },
+        new LanguageOption { Code = "en-US", Name = "English" }
+    };
+
     public SettingsViewModel()
     {
+        _settingsService = new AppSettingsService();
         _ = LoadSettingsAsync();
     }
 
@@ -45,9 +62,21 @@ public partial class SettingsViewModel : ViewModelBase
     {
         try
         {
+            // 加载应用设置
+            var settings = _settingsService.GetSettings();
+
+            AutoStart = settings.General.AutoStart;
+            MinimizeToTray = settings.General.MinimizeToTray;
+            ShowNotifications = settings.General.ShowNotifications;
+            SelectedLanguage = settings.General.Language;
+            IdleTimeoutMinutes = settings.Monitoring.IdleTimeoutMinutes;
+
             // 加载数据库信息
             await using var dbContext = new RecordTimeDbContext();
-            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "recordtime.db");
+            var dbPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RecordTime",
+                "recordtime.db");
 
             if (File.Exists(dbPath))
             {
@@ -58,19 +87,74 @@ public partial class SettingsViewModel : ViewModelBase
 
             // 统计会话数量
             TotalSessions = await dbContext.Sessions.CountAsync();
+
+            StatusText = "设置加载成功";
+            Log.Information("设置已加载");
         }
         catch (Exception ex)
         {
-            StatusText = $"加载设置失败：{ex.Message}";
+            StatusText = $"加载设置失败:{ex.Message}";
+            Log.Error(ex, "加载设置失败");
+        }
+    }
+
+    partial void OnSelectedLanguageChanged(string value)
+    {
+        // 切换语言
+        StringResources.Current.SwitchLanguage(value);
+
+        // 保存到配置
+        _ = SaveLanguageSettingAsync(value);
+
+        StatusText = value == "zh-CN" ? "语言已切换为简体中文" : "Language switched to English";
+        Log.Information("语言已切换: {Language}", value);
+    }
+
+    private async Task SaveLanguageSettingAsync(string language)
+    {
+        try
+        {
+            await _settingsService.UpdateSettingsAsync(s => s.General.Language = language);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "保存语言设置失败");
         }
     }
 
     [RelayCommand]
-    private void ToggleAutoStart()
+    private async Task ToggleAutoStartAsync()
     {
         AutoStart = !AutoStart;
+        await _settingsService.UpdateSettingsAsync(s => s.General.AutoStart = AutoStart);
         StatusText = AutoStart ? "已启用开机自启动" : "已禁用开机自启动";
-        // TODO: 实现注册表写入逻辑
+        Log.Information("开机自启动已{Status}", AutoStart ? "启用" : "禁用");
+    }
+
+    [RelayCommand]
+    private async Task ToggleMinimizeToTrayAsync()
+    {
+        MinimizeToTray = !MinimizeToTray;
+        await _settingsService.UpdateSettingsAsync(s => s.General.MinimizeToTray = MinimizeToTray);
+        StatusText = "设置已保存";
+        Log.Information("最小化到托盘已{Status}", MinimizeToTray ? "启用" : "禁用");
+    }
+
+    [RelayCommand]
+    private async Task ToggleShowNotificationsAsync()
+    {
+        ShowNotifications = !ShowNotifications;
+        await _settingsService.UpdateSettingsAsync(s => s.General.ShowNotifications = ShowNotifications);
+        StatusText = "设置已保存";
+        Log.Information("显示通知已{Status}", ShowNotifications ? "启用" : "禁用");
+    }
+
+    [RelayCommand]
+    private async Task SaveIdleTimeoutAsync()
+    {
+        await _settingsService.UpdateSettingsAsync(s => s.Monitoring.IdleTimeoutMinutes = IdleTimeoutMinutes);
+        StatusText = $"空闲超时已设置为 {IdleTimeoutMinutes} 分钟";
+        Log.Information("空闲超时已设置为 {Minutes} 分钟", IdleTimeoutMinutes);
     }
 
     [RelayCommand]
@@ -78,7 +162,9 @@ public partial class SettingsViewModel : ViewModelBase
     {
         try
         {
-            var dbFolder = AppDomain.CurrentDomain.BaseDirectory;
+            var dbFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RecordTime");
             Process.Start(new ProcessStartInfo
             {
                 FileName = "explorer.exe",
@@ -89,7 +175,8 @@ public partial class SettingsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            StatusText = $"打开失败：{ex.Message}";
+            StatusText = $"打开失败:{ex.Message}";
+            Log.Error(ex, "打开数据库文件夹失败");
         }
     }
 
@@ -100,14 +187,21 @@ public partial class SettingsViewModel : ViewModelBase
         {
             StatusText = "正在备份数据库...";
 
-            var dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "recordtime.db");
+            var dbPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RecordTime",
+                "recordtime.db");
+
             if (!File.Exists(dbPath))
             {
                 StatusText = "数据库文件不存在";
                 return;
             }
 
-            var backupFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "backups");
+            var backupFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RecordTime",
+                "backups");
             Directory.CreateDirectory(backupFolder);
 
             var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
@@ -115,11 +209,13 @@ public partial class SettingsViewModel : ViewModelBase
 
             await Task.Run(() => File.Copy(dbPath, backupPath));
 
-            StatusText = $"备份成功：{Path.GetFileName(backupPath)}";
+            StatusText = $"备份成功:{Path.GetFileName(backupPath)}";
+            Log.Information("数据库备份成功: {BackupPath}", backupPath);
         }
         catch (Exception ex)
         {
-            StatusText = $"备份失败：{ex.Message}";
+            StatusText = $"备份失败:{ex.Message}";
+            Log.Error(ex, "备份数据库失败");
         }
     }
 
@@ -134,17 +230,23 @@ public partial class SettingsViewModel : ViewModelBase
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
             // 删除 30 天前的数据
-            var oldSessions = dbContext.Sessions.Where(s => s.StartTime < thirtyDaysAgo);
-            dbContext.Sessions.RemoveRange(oldSessions);
+            var oldSessions = await dbContext.Sessions
+                .Where(s => s.StartTime < thirtyDaysAgo)
+                .ToListAsync();
 
-            var deletedCount = await dbContext.SaveChangesAsync();
+            var deletedCount = oldSessions.Count;
+            dbContext.Sessions.RemoveRange(oldSessions);
+            await dbContext.SaveChangesAsync();
 
             StatusText = $"已清除 {deletedCount} 条旧数据";
+            Log.Information("已清除 {Count} 条旧数据", deletedCount);
+
             await LoadSettingsAsync(); // 重新加载统计
         }
         catch (Exception ex)
         {
-            StatusText = $"清除失败：{ex.Message}";
+            StatusText = $"清除失败:{ex.Message}";
+            Log.Error(ex, "清除旧数据失败");
         }
     }
 
@@ -153,7 +255,10 @@ public partial class SettingsViewModel : ViewModelBase
     {
         try
         {
-            var logsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            var logsFolder = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RecordTime",
+                "logs");
 
             if (!Directory.Exists(logsFolder))
             {
@@ -170,7 +275,8 @@ public partial class SettingsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            StatusText = $"打开失败：{ex.Message}";
+            StatusText = $"打开失败:{ex.Message}";
+            Log.Error(ex, "打开日志文件夹失败");
         }
     }
 
@@ -188,4 +294,11 @@ public partial class SettingsViewModel : ViewModelBase
 
         return $"{len:0.##} {sizes[order]}";
     }
+}
+
+// 语言选项模型
+public class LanguageOption
+{
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }
