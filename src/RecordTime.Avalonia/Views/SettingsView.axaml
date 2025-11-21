@@ -57,6 +57,7 @@
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding MinimizeToTray}"
+                                     Command="{Binding ToggleMinimizeToTrayCommand}"
                                      VerticalAlignment="Center"/>
                     </Grid>
 
@@ -71,7 +72,30 @@
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding ShowNotifications}"
+                                     Command="{Binding ToggleShowNotificationsCommand}"
                                      VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Language -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="语言 / Language"
+                                      Classes="body"
+                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="选择界面显示语言 / Select interface language"
+                                      Classes="caption"/>
+                        </StackPanel>
+                        <ComboBox Grid.Column="1"
+                                 ItemsSource="{Binding LanguageOptions}"
+                                 SelectedItem="{Binding SelectedLanguageOption}"
+                                 Width="180"
+                                 VerticalAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                     </Grid>
 
                     <!-- Idle Timeout -->

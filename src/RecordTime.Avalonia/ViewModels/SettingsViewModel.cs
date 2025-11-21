@@ -45,6 +45,9 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _selectedLanguage = "zh-CN";
 
+    [ObservableProperty]
+    private LanguageOption? _selectedLanguageOption;
+
     // 语言选项
     public List<LanguageOption> LanguageOptions { get; } = new()
     {
@@ -70,6 +73,10 @@ public partial class SettingsViewModel : ViewModelBase
             ShowNotifications = settings.General.ShowNotifications;
             SelectedLanguage = settings.General.Language;
             IdleTimeoutMinutes = settings.Monitoring.IdleTimeoutMinutes;
+
+            // 设置选中的语言选项
+            SelectedLanguageOption = LanguageOptions.FirstOrDefault(l => l.Code == SelectedLanguage)
+                                    ?? LanguageOptions[0];
 
             // 加载数据库信息
             await using var dbContext = new RecordTimeDbContext();
@@ -108,6 +115,14 @@ public partial class SettingsViewModel : ViewModelBase
 
         StatusText = value == "zh-CN" ? "语言已切换为简体中文" : "Language switched to English";
         Log.Information("语言已切换: {Language}", value);
+    }
+
+    partial void OnSelectedLanguageOptionChanged(LanguageOption? value)
+    {
+        if (value != null && value.Code != SelectedLanguage)
+        {
+            SelectedLanguage = value.Code;
+        }
     }
 
     private async Task SaveLanguageSettingAsync(string language)
