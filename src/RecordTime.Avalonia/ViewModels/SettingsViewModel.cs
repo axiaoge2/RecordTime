@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RecordTime.Data;
 using RecordTime.Core.Services;
 using RecordTime.Avalonia.Resources.Strings;
+using RecordTime.Avalonia.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,6 +18,7 @@ namespace RecordTime.Avalonia.ViewModels;
 public partial class SettingsViewModel : ViewModelBase
 {
     private readonly AppSettingsService _settingsService;
+    private readonly TrayIconService _trayService;
 
     [ObservableProperty]
     private bool _autoStart = false;
@@ -58,6 +60,17 @@ public partial class SettingsViewModel : ViewModelBase
     public SettingsViewModel()
     {
         _settingsService = new AppSettingsService();
+        _trayService = TrayIconService.Instance;
+
+        // 订阅托盘服务的 AutoStart 变化
+        _trayService.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TrayIconService.AutoStartEnabled))
+            {
+                AutoStart = _trayService.AutoStartEnabled;
+            }
+        };
+
         _ = LoadSettingsAsync();
     }
 
@@ -68,7 +81,8 @@ public partial class SettingsViewModel : ViewModelBase
             // 加载应用设置
             var settings = _settingsService.GetSettings();
 
-            AutoStart = settings.General.AutoStart;
+            // AutoStart 从托盘服务读取(托盘服务从注册表读取)
+            AutoStart = _trayService.AutoStartEnabled;
             MinimizeToTray = settings.General.MinimizeToTray;
             ShowNotifications = settings.General.ShowNotifications;
             SelectedLanguage = settings.General.Language;
@@ -140,10 +154,15 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task ToggleAutoStartAsync()
     {
-        AutoStart = !AutoStart;
-        await _settingsService.UpdateSettingsAsync(s => s.General.AutoStart = AutoStart);
-        StatusText = AutoStart ? "已启用开机自启动" : "已禁用开机自启动";
-        Log.Information("开机自启动已{Status}", AutoStart ? "启用" : "禁用");
+        // 切换托盘服务的自启动状态(会自动更新注册表)
+        _trayService.AutoStartEnabled = !_trayService.AutoStartEnabled;
+
+        // AutoStart 会通过 PropertyChanged 事件自动更新
+        // 同时也更新到配置文件
+        await _settingsService.UpdateSettingsAsync(s => s.General.AutoStart = _trayService.AutoStartEnabled);
+
+        StatusText = _trayService.AutoStartEnabled ? "已启用开机自启动" : "已禁用开机自启动";
+        Log.Information("开机自启动已{Status}", _trayService.AutoStartEnabled ? "启用" : "禁用");
     }
 
     [RelayCommand]

@@ -142,8 +142,7 @@ public partial class TrayIconService : ObservableObject
         {
             // 如果设置失败，恢复原状态
             Log.Warning("开机自启动设置失败，恢复原状态");
-            _autoStartEnabled = !value;
-            OnPropertyChanged(nameof(AutoStartEnabled));
+            AutoStartEnabled = !value;
         }
     }
 
