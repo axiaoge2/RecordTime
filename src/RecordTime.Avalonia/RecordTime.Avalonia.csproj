@@ -6,6 +6,31 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- 应用程序信息 -->
+    <AssemblyName>RecordTime</AssemblyName>
+    <Product>RecordTime</Product>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Company>RecordTime</Company>
+    <Description>Windows桌面应用使用时长追踪工具</Description>
+    <Copyright>Copyright © 2025</Copyright>
+
+    <!-- 应用程序图标 -->
+    <ApplicationIcon>Assets\Icons\AppIcon.ico</ApplicationIcon>
+
+    <!-- 平台目标 -->
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <!-- 发布配置 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

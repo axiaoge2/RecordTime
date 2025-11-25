@@ -1,7 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using RecordTime.Avalonia.Resources.Strings;
 using RecordTime.Data;
+using RecordTime.Data.Repositories;
 using RecordTime.Data.Reports;
+using RecordTime.Core.Models;
 using RecordTime.Core.Models.AI;
 using RecordTime.Core.Services.AI;
 using System;
@@ -12,6 +15,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 using Serilog;
 
 namespace RecordTime.Avalonia.ViewModels;
@@ -25,13 +32,13 @@ public partial class ReportViewModel : ViewModelBase
     private DateTime _endDate = DateTime.Today;
 
     [ObservableProperty]
-    private string _startDateText = DateTime.Today.AddDays(-7).ToString("yyyy年MM月dd日");
+    private string _startDateText = DateTime.Today.AddDays(-7).ToString(StringResources.Current.DateFormatPattern);
 
     [ObservableProperty]
-    private string _endDateText = DateTime.Today.ToString("yyyy年MM月dd日");
+    private string _endDateText = DateTime.Today.ToString(StringResources.Current.DateFormatPattern);
 
     [ObservableProperty]
-    private string _statusText = "准备生成报告";
+    private string _statusText = StringResources.Current.ReportReadyStatus;
 
     [ObservableProperty]
     private string? _statusDetail;
@@ -51,6 +58,22 @@ public partial class ReportViewModel : ViewModelBase
     [ObservableProperty]
     private int _totalApps = 0;
 
+    // LiveCharts 图表属性
+
+    // 7天趋势折线图
+    [ObservableProperty]
+    private ISeries[] _weeklyTrendSeries = Array.Empty<ISeries>();
+
+    [ObservableProperty]
+    private Axis[] _weeklyTrendXAxes = Array.Empty<Axis>();
+
+    [ObservableProperty]
+    private Axis[] _weeklyTrendYAxes = Array.Empty<Axis>();
+
+    // 活动类型分布饼图
+    [ObservableProperty]
+    private ISeries[] _activityDistributionSeries = Array.Empty<ISeries>();
+
     // AI 相关属性
     [ObservableProperty]
     private bool _enableAIAnalysis = false;
@@ -59,7 +82,7 @@ public partial class ReportViewModel : ViewModelBase
     private bool _isAIConfigured = false;
 
     [ObservableProperty]
-    private string _aiStatusText = "AI 分析未配置";
+    private string _aiStatusText = StringResources.Current.AINotConfigured;
 
     [ObservableProperty]
     private string _aiApiKey = string.Empty;
@@ -74,12 +97,12 @@ public partial class ReportViewModel : ViewModelBase
     private AIPrivacyLevel _aiPrivacyLevel = AIPrivacyLevel.CategoryOnly;
 
     [ObservableProperty]
-    private string _currentConfigName = "OpenAI 官方";
+    private string _currentConfigName = StringResources.Current.DefaultConfigName;
 
     [ObservableProperty]
     private List<string> _availableConfigs = new();
 
-    private string _originalConfigName = "OpenAI 官方"; // 用于跟踪配置重命名
+    private string _originalConfigName = StringResources.Current.DefaultConfigName; // 用于跟踪配置重命名
 
     [ObservableProperty]
     private bool _isTestingConnection = false;
@@ -89,10 +112,18 @@ public partial class ReportViewModel : ViewModelBase
 
     private readonly AIConfigManager _configManager = new();
     private CancellationTokenSource? _aiCancellationTokenSource;
+    private CancellationTokenSource? _chartLoadCancellationTokenSource;
+    private System.Timers.Timer? _chartLoadDebounceTimer;
+
+    // 数据缓存
+    private readonly Dictionary<string, (DateTime CacheTime, List<DailyUsage> Data)> _trendCache = new();
+    private readonly Dictionary<string, (DateTime CacheTime, Dictionary<ActivityType, TimeSpan> Data)> _distributionCache = new();
+    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5); // 5分钟缓存过期
 
     public ReportViewModel()
     {
         _ = LoadPreviewDataAsync();
+        _ = LoadChartDataAsync(); // 加载图表数据
         LoadAISettings();
         LoadUserPreferences();
     }
@@ -137,11 +168,11 @@ public partial class ReportViewModel : ViewModelBase
         IsAIConfigured = !string.IsNullOrWhiteSpace(AiApiKey);
         if (IsAIConfigured)
         {
-            AiStatusText = $"AI 已配置 | {CurrentConfigName}";
+            AiStatusText = $"{StringResources.Current.AIConfigured} | {CurrentConfigName}";
         }
         else
         {
-            AiStatusText = "AI 分析未配置（需要 API Key）";
+            AiStatusText = StringResources.Current.AINotConfiguredNeedKey;
         }
     }
 
@@ -170,14 +201,37 @@ public partial class ReportViewModel : ViewModelBase
 
     partial void OnStartDateChanged(DateTime value)
     {
-        StartDateText = value.ToString("yyyy年MM月dd日");
+        StartDateText = value.ToString(StringResources.Current.DateFormatPattern);
         _ = LoadPreviewDataAsync();
+        ScheduleChartDataLoad(); // 使用节流加载
     }
 
     partial void OnEndDateChanged(DateTime value)
     {
-        EndDateText = value.ToString("yyyy年MM月dd日");
+        EndDateText = value.ToString(StringResources.Current.DateFormatPattern);
         _ = LoadPreviewDataAsync();
+        ScheduleChartDataLoad(); // 使用节流加载
+    }
+
+    /// <summary>
+    /// 调度图表数据加载（带节流）
+    /// </summary>
+    private void ScheduleChartDataLoad()
+    {
+        // 停止现有的定时器
+        _chartLoadDebounceTimer?.Stop();
+        _chartLoadDebounceTimer?.Dispose();
+
+        // 创建新的定时器（250ms 节流）
+        _chartLoadDebounceTimer = new System.Timers.Timer(250);
+        _chartLoadDebounceTimer.Elapsed += async (s, e) =>
+        {
+            _chartLoadDebounceTimer?.Dispose();
+            _chartLoadDebounceTimer = null;
+            await LoadChartDataAsync();
+        };
+        _chartLoadDebounceTimer.AutoReset = false;
+        _chartLoadDebounceTimer.Start();
     }
 
     private async Task LoadPreviewDataAsync()
@@ -196,16 +250,271 @@ public partial class ReportViewModel : ViewModelBase
 
             if (sessions.Count == 0)
             {
-                StatusDetail = "所选时间范围内没有数据";
+                StatusDetail = StringResources.Current.NoDataInRange;
             }
             else
             {
-                StatusDetail = $"共有 {TotalSessions} 条记录，涉及 {TotalApps} 个应用";
+                StatusDetail = string.Format(StringResources.Current.RecordsAndApps, TotalSessions, TotalApps);
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"加载预览数据失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 加载图表数据（支持取消、节流和缓存）
+    /// </summary>
+    private async Task LoadChartDataAsync()
+    {
+        // 取消之前的加载请求
+        _chartLoadCancellationTokenSource?.Cancel();
+        _chartLoadCancellationTokenSource?.Dispose();
+        _chartLoadCancellationTokenSource = new CancellationTokenSource();
+
+        var cancellationToken = _chartLoadCancellationTokenSource.Token;
+
+        try
+        {
+            // 生成缓存键
+            var cacheKey = $"{StartDate:yyyy-MM-dd}_{EndDate:yyyy-MM-dd}";
+
+            List<DailyUsage> weeklyTrend;
+            Dictionary<ActivityType, TimeSpan> activityDistribution;
+
+            // 尝试从缓存获取数据
+            var now = DateTime.Now;
+            var trendCacheHit = _trendCache.TryGetValue(cacheKey, out var cachedTrend) &&
+                                (now - cachedTrend.CacheTime) < _cacheExpiration;
+            var distCacheHit = _distributionCache.TryGetValue(cacheKey, out var cachedDist) &&
+                               (now - cachedDist.CacheTime) < _cacheExpiration;
+
+            if (trendCacheHit && distCacheHit)
+            {
+                // 完全命中缓存
+                weeklyTrend = cachedTrend.Data;
+                activityDistribution = cachedDist.Data;
+                Log.Debug("图表数据从缓存加载: {CacheKey}", cacheKey);
+            }
+            else
+            {
+                // 需要查询数据库
+                await using var dbContext = new RecordTimeDbContext();
+                var repository = new SessionRepository(dbContext);
+
+                // 1. 加载趋势数据
+                if (trendCacheHit)
+                {
+                    weeklyTrend = cachedTrend.Data;
+                }
+                else
+                {
+                    weeklyTrend = await repository.GetWeeklyTrendAsync(StartDate, EndDate);
+                    _trendCache[cacheKey] = (now, weeklyTrend);
+                }
+
+                // 检查是否已取消
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Log.Debug("图表数据加载已取消");
+                    return;
+                }
+
+                // 2. 加载活动类型分布数据
+                if (distCacheHit)
+                {
+                    activityDistribution = cachedDist.Data;
+                }
+                else
+                {
+                    activityDistribution = await repository.GetActivityDistributionAsync(StartDate, EndDate);
+                    _distributionCache[cacheKey] = (now, activityDistribution);
+                }
+
+                // 再次检查是否已取消
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Log.Debug("图表数据加载已取消");
+                    return;
+                }
+
+                Log.Debug("图表数据从数据库加载并缓存: {CacheKey}", cacheKey);
+            }
+
+            // 清理过期缓存（保留最近10个）
+            CleanupExpiredCache();
+
+            // 在 UI 线程上更新所有图表属性
+            await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                // 配置折线图数据 - 使用 double 类型避免泛型映射问题
+                WeeklyTrendSeries = new ISeries[]
+                {
+                    new LineSeries<double>
+                    {
+                        Values = weeklyTrend.Select(d => d.TotalHours).ToArray(),
+                        Name = StringResources.Current.DailyUsageSeriesName,
+                        Fill = null, // 不填充区域
+                        Stroke = new SolidColorPaint(new SKColor(102, 126, 234)) { StrokeThickness = 3 },
+                        GeometryFill = new SolidColorPaint(new SKColor(102, 126, 234)),
+                        GeometryStroke = new SolidColorPaint(new SKColor(255, 255, 255)) { StrokeThickness = 2 },
+                        GeometrySize = 8,
+                        LineSmoothness = 0.65, // 平滑曲线
+                        DataLabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
+                        DataLabelsSize = 11,
+                        DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
+                        DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F1}h"
+                    }
+                };
+
+                // 配置 X 轴（日期）
+                WeeklyTrendXAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Labels = weeklyTrend.Select(d => d.DateLabel).ToArray(),
+                        LabelsRotation = 0,
+                        LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234)) { StrokeThickness = 1 }
+                    }
+                };
+
+                // 配置 Y 轴（小时）
+                WeeklyTrendYAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Name = StringResources.Current.HoursAxisLabel,
+                        NamePaint = new SolidColorPaint(new SKColor(110, 110, 115)),
+                        LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234)) { StrokeThickness = 1 },
+                        Labeler = value => $"{value:F0}h"
+                    }
+                };
+
+                if (activityDistribution.Count > 0)
+                {
+                    // 定义活动类型的颜色和名称映射
+                    var activityColors = new Dictionary<ActivityType, SKColor>
+                    {
+                        { ActivityType.Video, new SKColor(255, 59, 48) },        // 红色 - 视频娱乐
+                        { ActivityType.Gaming, new SKColor(255, 149, 0) },        // 橙色 - 游戏
+                        { ActivityType.ActiveTyping, new SKColor(48, 209, 88) },  // 绿色 - 主动输入
+                        { ActivityType.PassiveBrowsing, new SKColor(0, 113, 227) }, // 蓝色 - 被动浏览
+                        { ActivityType.Idle, new SKColor(142, 142, 147) }         // 灰色 - 空闲
+                    };
+
+                    var activityNames = new Dictionary<ActivityType, string>
+                    {
+                        { ActivityType.Video, StringResources.Current.ActivityTypeVideo },
+                        { ActivityType.Gaming, StringResources.Current.ActivityTypeGaming },
+                        { ActivityType.ActiveTyping, StringResources.Current.ActivityTypeActiveTyping },
+                        { ActivityType.PassiveBrowsing, StringResources.Current.ActivityTypePassiveBrowsing },
+                        { ActivityType.Idle, StringResources.Current.ActivityTypeIdle }
+                    };
+
+                    ActivityDistributionSeries = activityDistribution
+                        .Where(kv => kv.Value.TotalSeconds > 0) // 过滤掉0时长的活动
+                        .Select(kv => new PieSeries<double>
+                        {
+                            Values = new[] { kv.Value.TotalHours },
+                            Name = activityNames.GetValueOrDefault(kv.Key, kv.Key.ToString()),
+                            Fill = new SolidColorPaint(activityColors.GetValueOrDefault(kv.Key, new SKColor(142, 142, 147))),
+                            DataLabelsPaint = new SolidColorPaint(new SKColor(255, 255, 255)),
+                            DataLabelsSize = 13,
+                            DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
+                            DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F1}h"
+                        })
+                        .Cast<ISeries>()
+                        .ToArray();
+                }
+                else
+                {
+                    ActivityDistributionSeries = Array.Empty<ISeries>();
+                }
+
+                Log.Debug("图表数据加载完成: {StartDate}至{EndDate} 趋势={TrendCount}天, 活动分布={ActivityCount}类型",
+                    StartDate.ToString("yyyy-MM-dd"),
+                    EndDate.ToString("yyyy-MM-dd"),
+                    weeklyTrend.Count,
+                    activityDistribution.Count);
+            }, global::Avalonia.Threading.DispatcherPriority.Background);
+        }
+        catch (OperationCanceledException)
+        {
+            Log.Debug("图表数据加载被取消");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "加载图表数据失败");
+            // 在 UI 线程上设置空数据避免UI错误
+            await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                WeeklyTrendSeries = Array.Empty<ISeries>();
+                WeeklyTrendXAxes = Array.Empty<Axis>();
+                WeeklyTrendYAxes = Array.Empty<Axis>();
+                ActivityDistributionSeries = Array.Empty<ISeries>();
+            });
+        }
+    }
+
+    /// <summary>
+    /// 清理过期的缓存条目
+    /// </summary>
+    private void CleanupExpiredCache()
+    {
+        var now = DateTime.Now;
+
+        // 清理趋势缓存
+        var expiredTrendKeys = _trendCache
+            .Where(kv => (now - kv.Value.CacheTime) > _cacheExpiration)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        foreach (var key in expiredTrendKeys)
+        {
+            _trendCache.Remove(key);
+        }
+
+        // 清理分布缓存
+        var expiredDistKeys = _distributionCache
+            .Where(kv => (now - kv.Value.CacheTime) > _cacheExpiration)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        foreach (var key in expiredDistKeys)
+        {
+            _distributionCache.Remove(key);
+        }
+
+        // 如果缓存仍然过大，保留最近的10个
+        if (_trendCache.Count > 10)
+        {
+            var keysToRemove = _trendCache
+                .OrderBy(kv => kv.Value.CacheTime)
+                .Take(_trendCache.Count - 10)
+                .Select(kv => kv.Key)
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _trendCache.Remove(key);
+            }
+        }
+
+        if (_distributionCache.Count > 10)
+        {
+            var keysToRemove = _distributionCache
+                .OrderBy(kv => kv.Value.CacheTime)
+                .Take(_distributionCache.Count - 10)
+                .Select(kv => kv.Key)
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                _distributionCache.Remove(key);
+            }
         }
     }
 
@@ -215,8 +524,8 @@ public partial class ReportViewModel : ViewModelBase
         try
         {
             IsGenerating = true;
-            StatusText = "正在生成报告...";
-            StatusDetail = "请稍候，这可能需要几秒钟";
+            StatusText = StringResources.Current.GeneratingReport;
+            StatusDetail = StringResources.Current.PleaseWait;
 
             // 创建报告生成器
             await using var dbContext = new RecordTimeDbContext();
@@ -237,18 +546,18 @@ public partial class ReportViewModel : ViewModelBase
 
             if (aiResult != null && aiResult.IsSuccess)
             {
-                StatusText = "✓ 报告生成成功（含 AI 分析）";
-                StatusDetail = $"效率评分: {aiResult.ProductivityScore} 分 | 文件：{Path.GetFileName(reportPath)}";
+                StatusText = StringResources.Current.ReportSuccessWithAI;
+                StatusDetail = $"{StringResources.Current.ProductivityScore}: {aiResult.ProductivityScore} 分 | {StringResources.Current.FileLabel}：{Path.GetFileName(reportPath)}";
             }
             else
             {
-                StatusText = "✓ 报告生成成功";
-                StatusDetail = $"文件名：{Path.GetFileName(reportPath)}";
+                StatusText = StringResources.Current.ReportSuccessWithAI;
+                StatusDetail = $"{StringResources.Current.FileNameLabel}：{Path.GetFileName(reportPath)}";
             }
         }
         catch (Exception ex)
         {
-            StatusText = "✗ 生成失败";
+            StatusText = StringResources.Current.GenerateFailed;
             StatusDetail = ex.Message;
             Log.Error(ex, "生成报告失败");
         }
@@ -265,7 +574,7 @@ public partial class ReportViewModel : ViewModelBase
     {
         try
         {
-            StatusDetail = "正在进行 AI 分析...";
+            StatusDetail = StringResources.Current.PerformingAIAnalysis;
 
             _aiCancellationTokenSource = new CancellationTokenSource();
             _aiCancellationTokenSource.CancelAfter(TimeSpan.FromMinutes(2)); // 2 分钟超时
@@ -325,13 +634,13 @@ public partial class ReportViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(AiApiKey))
         {
-            AiStatusText = "⚠️ 请先输入 API Key";
+            AiStatusText = StringResources.Current.PleaseEnterAPIKey;
             ConnectionTestIcon = "⚠️";
             return;
         }
 
         IsTestingConnection = true;
-        AiStatusText = "🔄 正在测试连接...";
+        AiStatusText = StringResources.Current.TestingConnection;
         ConnectionTestIcon = "🔄";
 
         try
@@ -341,7 +650,7 @@ public partial class ReportViewModel : ViewModelBase
 
             if (isValid)
             {
-                AiStatusText = "✅ AI 连接成功！配置已验证";
+                AiStatusText = StringResources.Current.AIConnectionSuccess;
                 ConnectionTestIcon = "✅";
                 IsAIConfigured = true;
 
@@ -351,14 +660,14 @@ public partial class ReportViewModel : ViewModelBase
             }
             else
             {
-                AiStatusText = $"❌ 连接失败: {errorMessage}";
+                AiStatusText = $"{StringResources.Current.ConnectionFailed}: {errorMessage}";
                 ConnectionTestIcon = "❌";
                 IsAIConfigured = false;
             }
         }
         catch (Exception ex)
         {
-            AiStatusText = $"❌ 测试出错: {ex.Message}";
+            AiStatusText = $"{StringResources.Current.TestError}: {ex.Message}";
             ConnectionTestIcon = "❌";
             IsAIConfigured = false;
         }
@@ -387,7 +696,7 @@ public partial class ReportViewModel : ViewModelBase
                 }
                 else
                 {
-                    AiStatusText = $"❌ 配置名称 '{CurrentConfigName}' 已存在或无效";
+                    AiStatusText = string.Format(StringResources.Current.ConfigNameExists, CurrentConfigName);
                     CurrentConfigName = _originalConfigName; // 恢复原名称
                     return;
                 }
@@ -409,12 +718,12 @@ public partial class ReportViewModel : ViewModelBase
             var configs = _configManager.GetAllConfigs();
             AvailableConfigs = configs.Select(c => c.Name).ToList();
 
-            AiStatusText = $"✅ 配置已保存 | {CurrentConfigName}";
+            AiStatusText = $"{StringResources.Current.ConfigSaved} | {CurrentConfigName}";
             Log.Information("AI 配置已保存: {Name}", CurrentConfigName);
         }
         catch (Exception ex)
         {
-            AiStatusText = $"❌ 保存失败: {ex.Message}";
+            AiStatusText = $"{StringResources.Current.SaveFailed}: {ex.Message}";
             Log.Error(ex, "保存 AI 配置失败");
         }
     }
@@ -429,7 +738,7 @@ public partial class ReportViewModel : ViewModelBase
         {
             if (_configManager.GetAllConfigs().Count <= 1)
             {
-                AiStatusText = "✗ 无法删除最后一个配置";
+                AiStatusText = StringResources.Current.CannotDeleteLastConfig;
                 return;
             }
 
@@ -447,13 +756,13 @@ public partial class ReportViewModel : ViewModelBase
                 var configs = _configManager.GetAllConfigs();
                 AvailableConfigs = configs.Select(c => c.Name).ToList();
 
-                AiStatusText = "✓ 配置已删除";
+                AiStatusText = StringResources.Current.ConfigDeleted;
                 Log.Information("AI 配置已删除");
             }
         }
         catch (Exception ex)
         {
-            AiStatusText = $"✗ 删除失败: {ex.Message}";
+            AiStatusText = $"{StringResources.Current.DeleteFailed}: {ex.Message}";
             Log.Error(ex, "删除 AI 配置失败");
         }
     }
@@ -471,7 +780,7 @@ public partial class ReportViewModel : ViewModelBase
             string newName;
             do
             {
-                newName = $"配置 {count}";
+                newName = string.Format(StringResources.Current.NewConfigPattern, count);
                 count++;
             } while (_configManager.ConfigExists(newName));
 
@@ -489,12 +798,12 @@ public partial class ReportViewModel : ViewModelBase
             AvailableConfigs = configs.Select(c => c.Name).ToList();
             CurrentConfigName = newName;
 
-            AiStatusText = $"✓ 新配置已创建 | {newName}";
+            AiStatusText = $"{StringResources.Current.NewConfigCreated} | {newName}";
             Log.Information("创建新 AI 配置: {Name}", newName);
         }
         catch (Exception ex)
         {
-            AiStatusText = $"✗ 创建失败: {ex.Message}";
+            AiStatusText = $"{StringResources.Current.CreateFailed}: {ex.Message}";
             Log.Error(ex, "创建新 AI 配置失败");
         }
     }
@@ -509,12 +818,12 @@ public partial class ReportViewModel : ViewModelBase
         {
             // TODO: 这里需要一个输入对话框，暂时先记录功能
             // 实际实现时应该弹出一个对话框让用户输入新名称
-            AiStatusText = "重命名功能需要对话框支持";
+            AiStatusText = StringResources.Current.RenameNeedsDialog;
             Log.Information("重命名配置功能被调用");
         }
         catch (Exception ex)
         {
-            AiStatusText = $"✗ 重命名失败: {ex.Message}";
+            AiStatusText = $"{StringResources.Current.RenameFailed}: {ex.Message}";
             Log.Error(ex, "重命名 AI 配置失败");
         }
     }
@@ -524,7 +833,7 @@ public partial class ReportViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(LastReportPath) || !File.Exists(LastReportPath))
         {
-            StatusText = "报告文件不存在";
+            StatusText = StringResources.Current.ReportFileNotExists;
             return;
         }
 
@@ -536,11 +845,11 @@ public partial class ReportViewModel : ViewModelBase
                 FileName = LastReportPath,
                 UseShellExecute = true
             });
-            StatusText = "已在浏览器中打开报告";
+            StatusText = StringResources.Current.ReportOpenedInBrowser;
         }
         catch (Exception ex)
         {
-            StatusText = $"打开失败：{ex.Message}";
+            StatusText = $"{StringResources.Current.OpenFailed}：{ex.Message}";
         }
     }
 
@@ -553,7 +862,7 @@ public partial class ReportViewModel : ViewModelBase
 
             if (!Directory.Exists(reportsFolder))
             {
-                StatusText = "报告文件夹不存在";
+                StatusText = StringResources.Current.ReportFolderNotExists;
                 return;
             }
 
@@ -564,11 +873,11 @@ public partial class ReportViewModel : ViewModelBase
                 Arguments = reportsFolder,
                 UseShellExecute = true
             });
-            StatusText = "已打开报告文件夹";
+            StatusText = StringResources.Current.ReportFolderOpened;
         }
         catch (Exception ex)
         {
-            StatusText = $"打开失败：{ex.Message}";
+            StatusText = $"{StringResources.Current.OpenFailed}：{ex.Message}";
         }
     }
 
@@ -576,14 +885,14 @@ public partial class ReportViewModel : ViewModelBase
     private void SetStartDateToday()
     {
         StartDate = DateTime.Today;
-        StartDateText = StartDate.ToString("yyyy年MM月dd日");
+        StartDateText = StartDate.ToString(StringResources.Current.DateFormatPattern);
     }
 
     [RelayCommand]
     private void SetEndDateToday()
     {
         EndDate = DateTime.Today;
-        EndDateText = EndDate.ToString("yyyy年MM月dd日");
+        EndDateText = EndDate.ToString(StringResources.Current.DateFormatPattern);
     }
 
     [RelayCommand]
@@ -591,8 +900,8 @@ public partial class ReportViewModel : ViewModelBase
     {
         StartDate = DateTime.Today.AddDays(-7);
         EndDate = DateTime.Today;
-        StartDateText = StartDate.ToString("yyyy年MM月dd日");
-        EndDateText = EndDate.ToString("yyyy年MM月dd日");
+        StartDateText = StartDate.ToString(StringResources.Current.DateFormatPattern);
+        EndDateText = EndDate.ToString(StringResources.Current.DateFormatPattern);
     }
 
     [RelayCommand]

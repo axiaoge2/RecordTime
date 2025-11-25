@@ -6,6 +6,7 @@ using RecordTime.Core.Exceptions;
 using RecordTime.Data;
 using RecordTime.Data.Repositories;
 using RecordTime.Avalonia.Services;
+using RecordTime.Avalonia.Resources.Strings;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -59,14 +60,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isMonitoring = false;
 
     [ObservableProperty]
-    private string _monitoringStatusText = "监控未启动";
+    private string _monitoringStatusText = StringResources.Current.MonitoringNotStarted;
 
     [ObservableProperty]
-    private string _startButtonText = "启动监控";
+    private string _startButtonText = StringResources.Current.StartMonitoring;
 
     // 数据状态提示
     [ObservableProperty]
-    private string _dataStatusHint = "显示历史数据";
+    private string _dataStatusHint = StringResources.Current.ShowHistoricalData;
 
     [ObservableProperty]
     private string _dataUpdateTime = "--";
@@ -79,7 +80,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private DateTime _selectedDate = DateTime.Today;
 
     [ObservableProperty]
-    private string _selectedDateText = DateTime.Today.ToString("yyyy年MM月dd日");
+    private string _selectedDateText = DateTime.Today.ToString(StringResources.Current.DateFormatPattern);
 
     // 分类统计
     public ObservableCollection<CategoryStatItem> CategoryStats { get; } = new();
@@ -104,7 +105,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // 圆环图中心显示的类型名称（使用最多的类型）
     [ObservableProperty]
-    private string _topCategoryName = "暂无数据";
+    private string _topCategoryName = StringResources.Current.NoData;
 
     // 圆环图中心显示的类型时长
     [ObservableProperty]
@@ -169,7 +170,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task PreviousDayAsync()
     {
         SelectedDate = SelectedDate.AddDays(-1);
-        SelectedDateText = SelectedDate.ToString("yyyy年MM月dd日");
+        SelectedDateText = SelectedDate.ToString(StringResources.Current.DateFormatPattern);
         await LoadDataForDateAsync(SelectedDate);
     }
 
@@ -177,7 +178,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task NextDayAsync()
     {
         SelectedDate = SelectedDate.AddDays(1);
-        SelectedDateText = SelectedDate.ToString("yyyy年MM月dd日");
+        SelectedDateText = SelectedDate.ToString(StringResources.Current.DateFormatPattern);
         await LoadDataForDateAsync(SelectedDate);
     }
 
@@ -185,7 +186,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task TodayAsync()
     {
         SelectedDate = DateTime.Today;
-        SelectedDateText = SelectedDate.ToString("yyyy年MM月dd日");
+        SelectedDateText = SelectedDate.ToString(StringResources.Current.DateFormatPattern);
         await LoadDataForDateAsync(SelectedDate);
     }
 
@@ -201,6 +202,9 @@ public partial class MainWindowViewModel : ViewModelBase
         // 使用单例模式 - 避免重复创建 ViewModel,保持页面状态
         _appStatsViewModel ??= new AppStatsViewModel();
         CurrentPageViewModel = _appStatsViewModel;
+
+        // 每次导航到此页面时刷新数据（异步执行，不阻塞UI）
+        _ = _appStatsViewModel.OnNavigatedToAsync();
     }
 
     [RelayCommand]
@@ -287,9 +291,9 @@ public partial class MainWindowViewModel : ViewModelBase
             );
 
             IsMonitoring = true;
-            MonitoringStatusText = "实时监控中";
-            DataStatusHint = "实时数据";
-            StartButtonText = "停止监控";
+            MonitoringStatusText = StringResources.Current.MonitoringRunning;
+            DataStatusHint = StringResources.Current.RealTimeData;
+            StartButtonText = StringResources.Current.StopMonitoring;
 
             Log.Information("监控已成功启动");
 
@@ -301,7 +305,7 @@ public partial class MainWindowViewModel : ViewModelBase
             Log.Error(ex, "启动监控失败");
 
             // 显示用户友好的错误消息
-            MonitoringStatusText = "启动监控失败";
+            MonitoringStatusText = StringResources.Current.StartMonitoringFailed;
 
             // 通过全局异常处理器显示错误对话框
             GlobalExceptionHandler.Instance.HandleException(
@@ -327,16 +331,16 @@ public partial class MainWindowViewModel : ViewModelBase
             }
 
             IsMonitoring = false;
-            MonitoringStatusText = "监控未启动";
-            DataStatusHint = "显示历史数据";
-            StartButtonText = "启动监控";
+            MonitoringStatusText = StringResources.Current.MonitoringNotStarted;
+            DataStatusHint = StringResources.Current.ShowHistoricalData;
+            StartButtonText = StringResources.Current.StartMonitoring;
 
             // 最后刷新一次数据
             await LoadDataForDateAsync(SelectedDate);
         }
         catch (Exception ex)
         {
-            MonitoringStatusText = $"停止失败: {ex.Message}";
+            MonitoringStatusText = StringResources.Current.StopFailedPrefix + ex.Message;
         }
     }
 
@@ -652,7 +656,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 BarChartSeries = Array.Empty<ISeries>();
                 BarChartXAxes = Array.Empty<Axis>();
                 AppTypePieChartSeries = Array.Empty<ISeries>();
-                TopCategoryName = "暂无数据";
+                TopCategoryName = StringResources.Current.NoData;
                 TopCategoryDuration = "--";
                 _lastDataFingerprint = string.Empty; // 重置指纹
                 return;
@@ -722,7 +726,8 @@ public partial class MainWindowViewModel : ViewModelBase
                         AppName = app.AppName,
                         Duration = app.TotalDuration,
                         SessionCount = app.SessionCount,
-                        Icon = icon
+                        Icon = icon,
+                        Percentage = app.TotalPercentage
                     };
                     TopApps.Add(item);
                     Log.Verbose("添加 #{Rank}: {AppName} - {DurationSeconds}s (图标: {HasIcon})", item.Rank, item.AppName, item.Duration.TotalSeconds, icon != null ? "✓" : "✗");
@@ -840,7 +845,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 else
                 {
                     AppTypePieChartSeries = Array.Empty<ISeries>();
-                    TopCategoryName = "暂无数据";
+                    TopCategoryName = StringResources.Current.NoData;
                     TopCategoryDuration = "--";
                 }
             });
@@ -917,7 +922,11 @@ public partial class TopAppItem : ObservableObject
     [ObservableProperty]
     private global::Avalonia.Media.Imaging.Bitmap? _icon;
 
+    [ObservableProperty]
+    private double _percentage;
+
     public string RankText => $"#{Rank}";
     public string DurationText => $"{(int)Duration.TotalHours:D2}:{Duration.Minutes:D2}:{Duration.Seconds:D2}";
-    public string SessionCountText => $"{SessionCount} 次";
+    public string SessionCountText => $"{SessionCount}{StringResources.Current.UsageCountSuffix}";
+    public string PercentageText => $"{Percentage:F1}%";
 }

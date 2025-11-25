@@ -96,9 +96,13 @@ public class AppDataService
         {
             await using var dbContext = new RecordTimeDbContext();
 
+            var rangeStart = startDate.Date;
+            var rangeEnd = endDate.Date.AddDays(1); // 包含结束日期当天
+
+            // 获取所有与日期范围有交集的会话(包括跨日会话)
             var sessions = await dbContext.Sessions
                 .AsNoTracking() // 只读查询,不需要跟踪实体变化
-                .Where(s => s.StartTime >= startDate && s.StartTime < endDate.AddDays(1))
+                .Where(s => s.EndTime != null && s.StartTime < rangeEnd && s.EndTime >= rangeStart)
                 .ToListAsync();
 
             if (sessions.Count == 0)
@@ -115,40 +119,38 @@ public class AppDataService
                 };
             }
 
-            // 对于 EndTime == null 的会话,需要计算实际持续时长
-            // 重要: 历史日期的会话不应使用当前时间,而应限制在当天结束时
-            var now = DateTime.Now;
-            var queryEndBoundary = endDate.AddDays(1); // 查询日期的次日 00:00
+            // 计算每个会话在查询范围内的实际时长
+            var adjustedSessions = new List<(AppSession session, int effectiveDuration)>();
 
             foreach (var session in sessions)
             {
-                if (session.EndTime == null)
-                {
-                    // 对于未结束的会话:
-                    // - 如果是今天的会话: 使用当前时间
-                    // - 如果是历史日期的会话: 使用当天的结束时间 (次日 00:00)
-                    var effectiveEndTime = (session.StartTime.Date < DateTime.Today)
-                        ? queryEndBoundary  // 历史会话: 限制在查询范围的结束边界
-                        : now;              // 今天的会话: 使用当前时间
+                // 计算会话在日期范围内的实际开始和结束时间
+                var effectiveStart = session.StartTime < rangeStart ? rangeStart : session.StartTime;
+                var effectiveEnd = session.EndTime!.Value > rangeEnd ? rangeEnd : session.EndTime.Value;
 
-                    session.DurationSeconds = (int)(effectiveEndTime - session.StartTime).TotalSeconds;
+                // 计算在范围内的时长(秒)
+                var durationInRange = (int)(effectiveEnd - effectiveStart).TotalSeconds;
+
+                if (durationInRange > 0)
+                {
+                    adjustedSessions.Add((session, durationInRange));
                 }
             }
 
-            var totalSeconds = sessions.Sum(s => s.DurationSeconds);
+            var totalSeconds = adjustedSessions.Sum(x => x.effectiveDuration);
 
-            var allApps = sessions
-                .GroupBy(s => string.IsNullOrEmpty(s.DisplayName) ? s.ProcessName : s.DisplayName)
+            var allApps = adjustedSessions
+                .GroupBy(x => string.IsNullOrEmpty(x.session.DisplayName) ? x.session.ProcessName : x.session.DisplayName)
                 .Select(g => new AppDataItem
                 {
                     AppName = g.Key,
-                    ProcessName = g.First().ProcessName,
-                    Category = g.First().Category ?? "未分类",
-                    TotalDuration = TimeSpan.FromSeconds(g.Sum(s => s.DurationSeconds)),
+                    ProcessName = g.First().session.ProcessName,
+                    Category = g.First().session.Category ?? "未分类",
+                    TotalDuration = TimeSpan.FromSeconds(g.Sum(x => x.effectiveDuration)),
                     SessionCount = g.Count(),
-                    FirstUsed = g.Min(s => s.StartTime),
-                    LastUsed = g.Max(s => s.EndTime ?? s.StartTime),
-                    TotalPercentage = totalSeconds == 0 ? 0 : (double)g.Sum(s => s.DurationSeconds) / totalSeconds * 100
+                    FirstUsed = g.Min(x => x.session.StartTime < rangeStart ? rangeStart : x.session.StartTime),
+                    LastUsed = g.Max(x => x.session.EndTime > rangeEnd ? rangeEnd : x.session.EndTime!.Value),
+                    TotalPercentage = totalSeconds == 0 ? 0 : (double)g.Sum(x => x.effectiveDuration) / totalSeconds * 100
                 })
                 .OrderByDescending(x => x.TotalDuration)
                 .ToList();
@@ -169,7 +171,7 @@ public class AppDataService
                 AllApps = allApps.AsReadOnly(),
                 TopApps = topApps.AsReadOnly(),
                 TotalSeconds = totalSeconds,
-                SessionCount = sessions.Count
+                SessionCount = adjustedSessions.Count
             };
         }
         catch (Exception ex)

@@ -194,44 +194,7 @@
                         </Border>
                     </Grid>
 
-                    <!-- App Type Distribution - Large Donut Chart -->
-                    <Border Classes="card"
-                           Padding="32,28,32,32">
-                        <Grid RowDefinitions="Auto,*">
-                            <!-- Header -->
-                            <TextBlock Grid.Row="0"
-                                      Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="heading"
-                                      Margin="0,0,0,20"/>
-
-                            <!-- Donut Chart with Center Text -->
-                            <Grid Grid.Row="1"
-                                 Height="280">
-                                <!-- Donut Chart -->
-                                <lvc:PieChart Series="{Binding AppTypePieChartSeries}"
-                                            LegendPosition="Hidden"
-                                            TooltipPosition="Top"/>
-
-                                <!-- Center Text Overlay -->
-                                <StackPanel VerticalAlignment="Center"
-                                          HorizontalAlignment="Center"
-                                          Spacing="4">
-                                    <TextBlock Text="{Binding TopCategoryName}"
-                                              Classes="heading"
-                                              FontSize="18"
-                                              HorizontalAlignment="Center"
-                                              Foreground="{StaticResource PrimaryText}"/>
-                                    <TextBlock Text="{Binding TopCategoryDuration}"
-                                              Classes="number-widget"
-                                              FontSize="28"
-                                              HorizontalAlignment="Center"
-                                              Foreground="{StaticResource PrimaryGradient}"/>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <!-- Monitoring Status Card with enhanced spacing -->
+                    <!-- Monitoring Status Card - Centered Position -->
                     <Border Classes="card"
                            Padding="24,20">
                         <Grid ColumnDefinitions="Auto,Auto,*,Auto"
@@ -271,145 +234,176 @@
                         </Grid>
                     </Border>
 
-                    <!-- Top Applications -->
+                    <!-- App Type Distribution & Top Apps - Moved Down -->
                     <Border Classes="card"
                            Padding="24,20,24,24">
-                        <StackPanel Spacing="20">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <TextBlock Grid.Column="0"
-                                          Text="{Binding TopAppsTitle, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="heading"/>
-                                <TextBlock Grid.Column="1"
-                                          Text="{Binding TopApps.Count, StringFormat='当前显示: {0} 个'}"
-                                          Classes="caption"
-                                          Foreground="{StaticResource SecondaryText}"
-                                          VerticalAlignment="Center"/>
-                            </Grid>
+                        <Grid ColumnDefinitions="*,24,*">
 
-                            <!-- App List - ListBox 自带滚动条，确保能滚完所有 10 个 -->
-                            <ListBox ItemsSource="{Binding TopApps}"
-                                     Height="420"
-                                     BorderThickness="0"
-                                     Background="Transparent"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                <ListBox.Styles>
-                                    <Style Selector="ListBoxItem">
-                                        <Setter Property="Padding" Value="0"/>
-                                        <Setter Property="BorderThickness" Value="0"/>
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Margin" Value="0,2"/>
-                                        <Setter Property="Focusable" Value="False"/>
-                                    </Style>
-                                </ListBox.Styles>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="8,6"
-                                               Background="Transparent"
-                                               CornerRadius="6">
-                                            <Border.Styles>
-                                                <Style Selector="Border:pointerover">
-                                                    <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
-                                                </Style>
-                                            </Border.Styles>
-                                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
-                                                <!-- Rank -->
-                                                <TextBlock Grid.Column="0"
-                                                          Text="{Binding RankText}"
-                                                          Classes="body"
-                                                          FontWeight="SemiBold"
-                                                          Foreground="{StaticResource PrimaryGradient}"
-                                                          Width="40"/>
+                            <!-- 左侧：应用类型分布 -->
+                            <StackPanel Grid.Column="0" Spacing="16">
+                                <TextBlock Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
+                                          FontSize="16"
+                                          FontWeight="SemiBold"/>
 
-                                                <!-- App Icon -->
-                                                <Image Grid.Column="1"
-                                                      Source="{Binding Icon}"
-                                                      Width="24"
-                                                      Height="24"
-                                                      Margin="0,0,8,0"
-                                                      VerticalAlignment="Center"/>
-
-                                                <!-- App Name -->
-                                                <TextBlock Grid.Column="2"
-                                                          Text="{Binding AppName}"
-                                                          Classes="body"
-                                                          VerticalAlignment="Center"/>
-
-                                                <!-- Duration -->
-                                                <TextBlock Grid.Column="3"
-                                                          Text="{Binding DurationText}"
-                                                          Classes="body"
-                                                          VerticalAlignment="Center"
-                                                          Margin="16,0"
-                                                          Width="80"
-                                                          TextAlignment="Right"/>
-
-                                                <!-- Session Count -->
-                                                <TextBlock Grid.Column="4"
-                                                          Text="{Binding SessionCountText}"
+                                <ItemsControl ItemsSource="{Binding CategoryStats}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Spacing="6" Margin="0,0,0,12">
+                                                <!-- 类别名称 + 百分比 -->
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0"
+                                                              Text="{Binding Category}"
+                                                              Classes="body"/>
+                                                    <TextBlock Grid.Column="1"
+                                                              Text="{Binding PercentageText}"
+                                                              Classes="caption"
+                                                              FontWeight="SemiBold"/>
+                                                </Grid>
+                                                <!-- 进度条 -->
+                                                <ProgressBar Value="{Binding Percentage}"
+                                                            Maximum="100"
+                                                            Height="8"
+                                                            CornerRadius="4"/>
+                                                <!-- 时长 -->
+                                                <TextBlock Text="{Binding DurationText}"
                                                           Classes="caption"
-                                                          VerticalAlignment="Center"
-                                                          Width="60"
-                                                          TextAlignment="Right"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
+                                                          Opacity="0.7"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
 
-                            <!-- Empty State - Welcome Guide -->
-                            <Border IsVisible="{Binding ShowEmptyState}"
-                                   Padding="32"
-                                   Margin="0,20,0,20">
-                                <StackPanel Spacing="20" HorizontalAlignment="Center" MaxWidth="400">
-                                    <!-- Icon -->
-                                    <TextBlock Text="📊"
-                                              FontSize="56"
-                                              HorizontalAlignment="Center"
-                                              Opacity="0.9"/>
+                                <!-- 空数据提示 -->
+                                <TextBlock Text="{Binding NoDataAvailable, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="caption"
+                                          HorizontalAlignment="Center"
+                                          Opacity="0.6"
+                                          IsVisible="{Binding ShowEmptyState}"/>
+                            </StackPanel>
 
-                                    <!-- Title -->
-                                    <TextBlock Text="{Binding EmptyStateTitle, Source={x:Static strings:StringResources.Current}}"
-                                              Classes="heading"
-                                              FontSize="20"
-                                              HorizontalAlignment="Center"
-                                              TextAlignment="Center"/>
+                            <!-- 右侧：Top 10 应用 -->
+                            <StackPanel Grid.Column="2" Spacing="16">
+                                <TextBlock Text="{Binding TopAppsTitle, Source={x:Static strings:StringResources.Current}}"
+                                          FontSize="16"
+                                          FontWeight="SemiBold"/>
 
-                                    <!-- Description -->
-                                    <TextBlock Text="{Binding EmptyStateDescription, Source={x:Static strings:StringResources.Current}}"
-                                              TextWrapping="Wrap"
-                                              TextAlignment="Center"
-                                              Classes="caption"
-                                              Opacity="0.75"
-                                              LineHeight="22"/>
+                                <ItemsControl ItemsSource="{Binding TopApps}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Padding="8,6"
+                                                   CornerRadius="6"
+                                                   Margin="0,0,0,4">
+                                                <Border.Styles>
+                                                    <Style Selector="Border:pointerover">
+                                                        <Setter Property="Background"
+                                                                Value="{StaticResource HoverBackground}"/>
+                                                    </Style>
+                                                </Border.Styles>
 
-                                    <!-- Features -->
-                                    <StackPanel Spacing="12" Margin="0,8,0,0">
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                            <TextBlock Text="{Binding EmptyStateFeature1, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                            <TextBlock Text="{Binding EmptyStateFeature2, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                            <TextBlock Text="{Binding EmptyStateFeature3, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                    </StackPanel>
+                                                <Grid ColumnDefinitions="30,32,*,100,80">
+                                                    <!-- 排名 -->
+                                                    <TextBlock Grid.Column="0"
+                                                              Text="{Binding RankText}"
+                                                              Classes="body"
+                                                              FontWeight="SemiBold"
+                                                              Foreground="{StaticResource SecondaryText}"/>
 
-                                    <!-- Hint -->
-                                    <TextBlock Text="{Binding EmptyStateHint, Source={x:Static strings:StringResources.Current}}"
-                                              Classes="caption"
-                                              FontSize="11"
-                                              Opacity="0.65"
-                                              HorizontalAlignment="Center"
-                                              TextAlignment="Center"
-                                              TextWrapping="Wrap"
-                                              Margin="0,8,0,0"/>
+                                                    <!-- 图标 -->
+                                                    <Image Grid.Column="1"
+                                                          Source="{Binding Icon}"
+                                                          Width="24"
+                                                          Height="24"
+                                                          Margin="0,0,8,0"/>
+
+                                                    <!-- 应用名 -->
+                                                    <TextBlock Grid.Column="2"
+                                                              Text="{Binding AppName}"
+                                                              Classes="body"
+                                                              TextTrimming="CharacterEllipsis"/>
+
+                                                    <!-- 时长 -->
+                                                    <TextBlock Grid.Column="3"
+                                                              Text="{Binding DurationText}"
+                                                              Classes="body"
+                                                              Margin="12,0,0,0"
+                                                              TextAlignment="Right"/>
+
+                                                    <!-- 百分比 -->
+                                                    <TextBlock Grid.Column="4"
+                                                              Text="{Binding PercentageText}"
+                                                              Classes="caption"
+                                                              Foreground="{StaticResource PrimaryGradient}"
+                                                              Margin="8,0,0,0"
+                                                              TextAlignment="Right"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- 空数据提示 -->
+                                <TextBlock Text="{Binding NoDataAvailable, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="caption"
+                                          HorizontalAlignment="Center"
+                                          Opacity="0.6"
+                                          IsVisible="{Binding ShowEmptyState}"/>
+                            </StackPanel>
+
+                        </Grid>
+                    </Border>
+
+                    <!-- Empty State - Welcome Guide -->
+                    <Border IsVisible="{Binding ShowEmptyState}"
+                           Classes="card"
+                           Padding="32"
+                           Margin="0,20,0,20">
+                        <StackPanel Spacing="20" HorizontalAlignment="Center" MaxWidth="400">
+                            <!-- Icon -->
+                            <TextBlock Text="📊"
+                                      FontSize="56"
+                                      HorizontalAlignment="Center"
+                                      Opacity="0.9"/>
+
+                            <!-- Title -->
+                            <TextBlock Text="{Binding EmptyStateTitle, Source={x:Static strings:StringResources.Current}}"
+                                      Classes="heading"
+                                      FontSize="20"
+                                      HorizontalAlignment="Center"
+                                      TextAlignment="Center"/>
+
+                            <!-- Description -->
+                            <TextBlock Text="{Binding EmptyStateDescription, Source={x:Static strings:StringResources.Current}}"
+                                      TextWrapping="Wrap"
+                                      TextAlignment="Center"
+                                      Classes="caption"
+                                      Opacity="0.75"
+                                      LineHeight="22"/>
+
+                            <!-- Features -->
+                            <StackPanel Spacing="12" Margin="0,8,0,0">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{Binding EmptyStateFeature1, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
                                 </StackPanel>
-                            </Border>
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{Binding EmptyStateFeature2, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
+                                    <TextBlock Text="{Binding EmptyStateFeature3, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Hint -->
+                            <TextBlock Text="{Binding EmptyStateHint, Source={x:Static strings:StringResources.Current}}"
+                                      Classes="caption"
+                                      FontSize="11"
+                                      Opacity="0.65"
+                                      HorizontalAlignment="Center"
+                                      TextAlignment="Center"
+                                      TextWrapping="Wrap"
+                                      Margin="0,8,0,0"/>
                         </StackPanel>
                     </Border>
 

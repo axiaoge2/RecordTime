@@ -77,6 +77,11 @@ public class ChineseStrings : IStringProvider
 
     public string NoAppsRecorded => "今天还没有应用使用记录";
 
+    // Category Distribution and Top 10 section
+    public string CategoryDistribution => "应用类型分布";
+    public string Top10AppsTitle => "Top 10 应用";
+    public string NoDataAvailable => "暂无数据";
+
     // ============================================
     // Report strings
     // ============================================
@@ -210,6 +215,24 @@ public class ChineseStrings : IStringProvider
     public string UXFeature4 => "🔧 灵活配置 - 支持多 AI 配置、自定义命名、状态持久化";
 
     // ============================================
+    // Error Dialog
+    // ============================================
+    public string Error => "错误";
+    public string ViewLogs => "查看日志";
+
+    // ============================================
+    // Main Window / Dashboard
+    // ============================================
+    public string MonitoringNotStarted => "监控未启动";
+    public string ShowHistoricalData => "显示历史数据";
+    public string RealTimeData => "实时数据";
+    public string StartMonitoringFailed => "启动监控失败";
+    public string NoData => "暂无数据";
+    public string DateFormatPattern => "yyyy年MM月dd日";
+    public string UsageCountSuffix => " 次";
+    public string StopFailedPrefix => "停止失败: ";
+
+    // ============================================
     // Common Buttons
     // ============================================
     public string Apply => "应用";
@@ -230,4 +253,84 @@ public class ChineseStrings : IStringProvider
     public string Failed => "失败";
     public string Confirm => "确认";
     public string ConfirmDelete => "确定要删除吗?此操作无法撤销。";
+
+    // ============================================
+    // AppStats ViewModel
+    // ============================================
+    public string AllCategories => "全部分类";
+    public string LoadDataFailed => "加载数据失败";
+
+    // ============================================
+    // Report ViewModel
+    // ============================================
+    public string ReportReadyStatus => "准备生成报告";
+    public string AINotConfigured => "AI 分析未配置";
+    public string AINotConfiguredNeedKey => "AI 分析未配置(需要 API Key)";
+    public string AIConfigured => "AI 已配置";
+    public string DefaultConfigName => "OpenAI 官方";
+    public string NoDataInRange => "所选时间范围内没有数据";
+    public string RecordsAndApps => "共有 {0} 条记录,涉及 {1} 个应用";
+    public string GeneratingReport => "正在生成报告...";
+    public string PleaseWait => "请稍候,这可能需要几秒钟";
+    public string ReportSuccessWithAI => "✓ 报告生成成功(含 AI 分析)";
+    public string ProductivityScore => "效率评分";
+    public string FileLabel => "文件";
+    public string FileNameLabel => "文件名";
+    public string GenerateFailed => "✗ 生成失败";
+    public string PerformingAIAnalysis => "正在进行 AI 分析...";
+    public string PleaseEnterAPIKey => "⚠️ 请先输入 API Key";
+    public string TestingConnection => "🔄 正在测试连接...";
+    public string AIConnectionSuccess => "✅ AI 连接成功!配置已验证";
+    public string ConnectionFailed => "❌ 连接失败";
+    public string TestError => "❌ 测试出错";
+    public string ConfigNameExists => "❌ 配置名称 '{0}' 已存在或无效";
+    public string ConfigSaved => "✅ 配置已保存";
+    public string SaveFailed => "❌ 保存失败";
+    public string CannotDeleteLastConfig => "✗ 无法删除最后一个配置";
+    public string ConfigDeleted => "✓ 配置已删除";
+    public string DeleteFailed => "✗ 删除失败";
+    public string NewConfigPattern => "配置 {0}";
+    public string NewConfigCreated => "✓ 新配置已创建";
+    public string CreateFailed => "✗ 创建失败";
+    public string RenameNeedsDialog => "重命名功能需要对话框支持";
+    public string RenameFailed => "✗ 重命名失败";
+    public string ReportFileNotExists => "报告文件不存在";
+    public string ReportOpenedInBrowser => "已在浏览器中打开报告";
+    public string OpenFailed => "打开失败";
+    public string ReportFolderNotExists => "报告文件夹不存在";
+    public string ReportFolderOpened => "已打开报告文件夹";
+
+    // Chart strings
+    public string WeeklyTrendChartTitle => "7天使用趋势";
+    public string ActivityDistributionChartTitle => "活动类型分布";
+    public string DailyUsageSeriesName => "每日使用时长";
+    public string HoursAxisLabel => "小时";
+
+    // Activity type names
+    public string ActivityTypeVideo => "视频娱乐";
+    public string ActivityTypeGaming => "游戏";
+    public string ActivityTypeActiveTyping => "主动输入";
+    public string ActivityTypePassiveBrowsing => "被动浏览";
+    public string ActivityTypeIdle => "空闲";
+
+    // ============================================
+    // Settings ViewModel
+    // ============================================
+    public string SettingsLoadSuccess => "设置加载成功";
+    public string SettingsLoadFailed => "加载设置失败";
+    public string LanguageSwitchedToChinese => "语言已切换为简体中文";
+    public string LanguageSwitchedToEnglish => "Language switched to English";
+    public string AutoStartEnabled => "已启用开机自启动";
+    public string AutoStartDisabled => "已禁用开机自启动";
+    public string SettingsSaved => "设置已保存";
+    public string IdleTimeoutSet => "空闲超时已设置为 {0} 分钟";
+    public string DatabaseFolderOpened => "已打开数据库文件夹";
+    public string BackingUpDatabase => "正在备份数据库...";
+    public string DatabaseFileNotExists => "数据库文件不存在";
+    public string BackupSuccess => "备份成功";
+    public string BackupFailed => "备份失败";
+    public string ClearingOldData => "正在清除旧数据...";
+    public string OldDataCleared => "已清除 {0} 条旧数据";
+    public string ClearFailed => "清除失败";
+    public string LogsFolderOpened => "已打开日志文件夹";
 }

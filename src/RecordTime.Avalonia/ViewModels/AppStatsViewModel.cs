@@ -55,7 +55,16 @@ public partial class AppStatsViewModel : ViewModelBase
 
     public AppStatsViewModel()
     {
-        _ = LoadDataAsync();
+        // 不在构造函数中加载数据，避免时序问题
+        // 数据加载由 OnNavigatedTo() 触发
+    }
+
+    /// <summary>
+    /// 页面激活时调用 - 每次导航到此页面时刷新数据
+    /// </summary>
+    public async Task OnNavigatedToAsync()
+    {
+        await LoadDataAsync();
     }
 
     partial void OnSearchTextChanged(string value)

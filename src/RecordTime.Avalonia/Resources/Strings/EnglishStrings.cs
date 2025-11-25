@@ -77,6 +77,11 @@ public class EnglishStrings : IStringProvider
 
     public string NoAppsRecorded => "No application usage records today";
 
+    // Category Distribution and Top 10 section
+    public string CategoryDistribution => "Category Distribution";
+    public string Top10AppsTitle => "Top 10 Apps";
+    public string NoDataAvailable => "No data available";
+
     // ============================================
     // Report strings
     // ============================================
@@ -210,6 +215,24 @@ public class EnglishStrings : IStringProvider
     public string UXFeature4 => "🔧 Flexible Configuration - Support multiple AI configurations, custom naming, state persistence";
 
     // ============================================
+    // Error Dialog
+    // ============================================
+    public string Error => "Error";
+    public string ViewLogs => "View Logs";
+
+    // ============================================
+    // Main Window / Dashboard
+    // ============================================
+    public string MonitoringNotStarted => "Monitoring Not Started";
+    public string ShowHistoricalData => "Historical Data";
+    public string RealTimeData => "Real-time Data";
+    public string StartMonitoringFailed => "Failed to Start Monitoring";
+    public string NoData => "No Data";
+    public string DateFormatPattern => "MMM dd, yyyy";
+    public string UsageCountSuffix => " times";
+    public string StopFailedPrefix => "Stop failed: ";
+
+    // ============================================
     // Common Buttons
     // ============================================
     public string Apply => "Apply";
@@ -230,4 +253,84 @@ public class EnglishStrings : IStringProvider
     public string Failed => "Failed";
     public string Confirm => "Confirm";
     public string ConfirmDelete => "Are you sure you want to delete? This action cannot be undone.";
+
+    // ============================================
+    // AppStats ViewModel
+    // ============================================
+    public string AllCategories => "All Categories";
+    public string LoadDataFailed => "Failed to load data";
+
+    // ============================================
+    // Report ViewModel
+    // ============================================
+    public string ReportReadyStatus => "Ready to generate report";
+    public string AINotConfigured => "AI analysis not configured";
+    public string AINotConfiguredNeedKey => "AI analysis not configured (API Key required)";
+    public string AIConfigured => "AI configured";
+    public string DefaultConfigName => "OpenAI Official";
+    public string NoDataInRange => "No data in selected time range";
+    public string RecordsAndApps => "{0} records total, involving {1} apps";
+    public string GeneratingReport => "Generating report...";
+    public string PleaseWait => "Please wait, this may take a few seconds";
+    public string ReportSuccessWithAI => "✓ Report generated successfully (with AI analysis)";
+    public string ProductivityScore => "Productivity Score";
+    public string FileLabel => "File";
+    public string FileNameLabel => "File Name";
+    public string GenerateFailed => "✗ Generation failed";
+    public string PerformingAIAnalysis => "Performing AI analysis...";
+    public string PleaseEnterAPIKey => "⚠️ Please enter API Key first";
+    public string TestingConnection => "🔄 Testing connection...";
+    public string AIConnectionSuccess => "✅ AI connection successful! Configuration verified";
+    public string ConnectionFailed => "❌ Connection failed";
+    public string TestError => "❌ Test error";
+    public string ConfigNameExists => "❌ Configuration name '{0}' already exists or is invalid";
+    public string ConfigSaved => "✅ Configuration saved";
+    public string SaveFailed => "❌ Save failed";
+    public string CannotDeleteLastConfig => "✗ Cannot delete last configuration";
+    public string ConfigDeleted => "✓ Configuration deleted";
+    public string DeleteFailed => "✗ Delete failed";
+    public string NewConfigPattern => "Config {0}";
+    public string NewConfigCreated => "✓ New configuration created";
+    public string CreateFailed => "✗ Create failed";
+    public string RenameNeedsDialog => "Rename feature requires dialog support";
+    public string RenameFailed => "✗ Rename failed";
+    public string ReportFileNotExists => "Report file does not exist";
+    public string ReportOpenedInBrowser => "Report opened in browser";
+    public string OpenFailed => "Open failed";
+    public string ReportFolderNotExists => "Report folder does not exist";
+    public string ReportFolderOpened => "Report folder opened";
+
+    // Chart strings
+    public string WeeklyTrendChartTitle => "7-Day Usage Trend";
+    public string ActivityDistributionChartTitle => "Activity Type Distribution";
+    public string DailyUsageSeriesName => "Daily Usage Time";
+    public string HoursAxisLabel => "Hours";
+
+    // Activity type names
+    public string ActivityTypeVideo => "Video Entertainment";
+    public string ActivityTypeGaming => "Gaming";
+    public string ActivityTypeActiveTyping => "Active Typing";
+    public string ActivityTypePassiveBrowsing => "Passive Browsing";
+    public string ActivityTypeIdle => "Idle";
+
+    // ============================================
+    // Settings ViewModel
+    // ============================================
+    public string SettingsLoadSuccess => "Settings loaded successfully";
+    public string SettingsLoadFailed => "Failed to load settings";
+    public string LanguageSwitchedToChinese => "语言已切换为简体中文";
+    public string LanguageSwitchedToEnglish => "Language switched to English";
+    public string AutoStartEnabled => "Auto-start enabled";
+    public string AutoStartDisabled => "Auto-start disabled";
+    public string SettingsSaved => "Settings saved";
+    public string IdleTimeoutSet => "Idle timeout set to {0} minutes";
+    public string DatabaseFolderOpened => "Database folder opened";
+    public string BackingUpDatabase => "Backing up database...";
+    public string DatabaseFileNotExists => "Database file does not exist";
+    public string BackupSuccess => "Backup successful";
+    public string BackupFailed => "Backup failed";
+    public string ClearingOldData => "Clearing old data...";
+    public string OldDataCleared => "Cleared {0} old records";
+    public string ClearFailed => "Clear failed";
+    public string LogsFolderOpened => "Logs folder opened";
 }

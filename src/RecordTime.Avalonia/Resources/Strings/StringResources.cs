@@ -107,6 +107,15 @@ public class StringResources : INotifyPropertyChanged
 
     public string NoAppsRecorded => _provider.NoAppsRecorded;
 
+    // Category Distribution and Top 10 section
+    public string CategoryDistribution => _provider.CategoryDistribution;
+    public string Top10AppsTitle => _provider.Top10AppsTitle;
+    public string NoDataAvailable => _provider.NoDataAvailable;
+
+    // AppStats ViewModel
+    public string AllCategories => _provider.AllCategories;
+    public string LoadDataFailed => _provider.LoadDataFailed;
+
     // ============================================
     // Report strings
     // ============================================
@@ -153,6 +162,57 @@ public class StringResources : INotifyPropertyChanged
     public string ReportInfoFeature2 => _provider.ReportInfoFeature2;
     public string ReportInfoFeature3 => _provider.ReportInfoFeature3;
     public string ReportInfoFeature4 => _provider.ReportInfoFeature4;
+
+    // Report ViewModel
+    public string ReportReadyStatus => _provider.ReportReadyStatus;
+    public string AINotConfigured => _provider.AINotConfigured;
+    public string AINotConfiguredNeedKey => _provider.AINotConfiguredNeedKey;
+    public string AIConfigured => _provider.AIConfigured;
+    public string DefaultConfigName => _provider.DefaultConfigName;
+    public string NoDataInRange => _provider.NoDataInRange;
+    public string RecordsAndApps => _provider.RecordsAndApps;
+    public string GeneratingReport => _provider.GeneratingReport;
+    public string PleaseWait => _provider.PleaseWait;
+    public string ReportSuccessWithAI => _provider.ReportSuccessWithAI;
+    public string ProductivityScore => _provider.ProductivityScore;
+    public string FileLabel => _provider.FileLabel;
+    public string FileNameLabel => _provider.FileNameLabel;
+    public string GenerateFailed => _provider.GenerateFailed;
+    public string PerformingAIAnalysis => _provider.PerformingAIAnalysis;
+    public string PleaseEnterAPIKey => _provider.PleaseEnterAPIKey;
+    public string TestingConnection => _provider.TestingConnection;
+    public string AIConnectionSuccess => _provider.AIConnectionSuccess;
+    public string ConnectionFailed => _provider.ConnectionFailed;
+    public string TestError => _provider.TestError;
+    public string ConfigNameExists => _provider.ConfigNameExists;
+    public string ConfigSaved => _provider.ConfigSaved;
+    public string SaveFailed => _provider.SaveFailed;
+    public string CannotDeleteLastConfig => _provider.CannotDeleteLastConfig;
+    public string ConfigDeleted => _provider.ConfigDeleted;
+    public string DeleteFailed => _provider.DeleteFailed;
+    public string NewConfigPattern => _provider.NewConfigPattern;
+    public string NewConfigCreated => _provider.NewConfigCreated;
+    public string CreateFailed => _provider.CreateFailed;
+    public string RenameNeedsDialog => _provider.RenameNeedsDialog;
+    public string RenameFailed => _provider.RenameFailed;
+    public string ReportFileNotExists => _provider.ReportFileNotExists;
+    public string ReportOpenedInBrowser => _provider.ReportOpenedInBrowser;
+    public string OpenFailed => _provider.OpenFailed;
+    public string ReportFolderNotExists => _provider.ReportFolderNotExists;
+    public string ReportFolderOpened => _provider.ReportFolderOpened;
+
+    // Chart strings
+    public string WeeklyTrendChartTitle => _provider.WeeklyTrendChartTitle;
+    public string ActivityDistributionChartTitle => _provider.ActivityDistributionChartTitle;
+    public string DailyUsageSeriesName => _provider.DailyUsageSeriesName;
+    public string HoursAxisLabel => _provider.HoursAxisLabel;
+
+    // Activity type names
+    public string ActivityTypeVideo => _provider.ActivityTypeVideo;
+    public string ActivityTypeGaming => _provider.ActivityTypeGaming;
+    public string ActivityTypeActiveTyping => _provider.ActivityTypeActiveTyping;
+    public string ActivityTypePassiveBrowsing => _provider.ActivityTypePassiveBrowsing;
+    public string ActivityTypeIdle => _provider.ActivityTypeIdle;
 
     // ============================================
     // About strings
@@ -218,6 +278,25 @@ public class StringResources : INotifyPropertyChanged
     public string LogsDescription => _provider.LogsDescription;
     public string TotalRecordsFormat => _provider.TotalRecordsFormat;
 
+    // Settings ViewModel
+    public string SettingsLoadSuccess => _provider.SettingsLoadSuccess;
+    public string SettingsLoadFailed => _provider.SettingsLoadFailed;
+    public string LanguageSwitchedToChinese => _provider.LanguageSwitchedToChinese;
+    public string LanguageSwitchedToEnglish => _provider.LanguageSwitchedToEnglish;
+    public string AutoStartEnabled => _provider.AutoStartEnabled;
+    public string AutoStartDisabled => _provider.AutoStartDisabled;
+    public string SettingsSaved => _provider.SettingsSaved;
+    public string IdleTimeoutSet => _provider.IdleTimeoutSet;
+    public string DatabaseFolderOpened => _provider.DatabaseFolderOpened;
+    public string BackingUpDatabase => _provider.BackingUpDatabase;
+    public string DatabaseFileNotExists => _provider.DatabaseFileNotExists;
+    public string BackupSuccess => _provider.BackupSuccess;
+    public string BackupFailed => _provider.BackupFailed;
+    public string ClearingOldData => _provider.ClearingOldData;
+    public string OldDataCleared => _provider.OldDataCleared;
+    public string ClearFailed => _provider.ClearFailed;
+    public string LogsFolderOpened => _provider.LogsFolderOpened;
+
     // About Page Feature Lists
     public string CoreFeature1 => _provider.CoreFeature1;
     public string CoreFeature2 => _provider.CoreFeature2;
@@ -255,6 +334,24 @@ public class StringResources : INotifyPropertyChanged
     public string Failed => _provider.Failed;
     public string Confirm => _provider.Confirm;
     public string ConfirmDelete => _provider.ConfirmDelete;
+
+    // ============================================
+    // Error Dialog
+    // ============================================
+    public string Error => _provider.Error;
+    public string ViewLogs => _provider.ViewLogs;
+
+    // ============================================
+    // Main Window / Dashboard
+    // ============================================
+    public string MonitoringNotStarted => _provider.MonitoringNotStarted;
+    public string ShowHistoricalData => _provider.ShowHistoricalData;
+    public string RealTimeData => _provider.RealTimeData;
+    public string StartMonitoringFailed => _provider.StartMonitoringFailed;
+    public string NoData => _provider.NoData;
+    public string DateFormatPattern => _provider.DateFormatPattern;
+    public string UsageCountSuffix => _provider.UsageCountSuffix;
+    public string StopFailedPrefix => _provider.StopFailedPrefix;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -341,6 +438,15 @@ public interface IStringProvider
 
     string NoAppsRecorded { get; }
 
+    // Category Distribution and Top 10 section
+    string CategoryDistribution { get; }
+    string Top10AppsTitle { get; }
+    string NoDataAvailable { get; }
+
+    // AppStats ViewModel
+    string AllCategories { get; }
+    string LoadDataFailed { get; }
+
     // ============================================
     // Report strings
     // ============================================
@@ -387,6 +493,57 @@ public interface IStringProvider
     string ReportInfoFeature2 { get; }
     string ReportInfoFeature3 { get; }
     string ReportInfoFeature4 { get; }
+
+    // Report ViewModel
+    string ReportReadyStatus { get; }
+    string AINotConfigured { get; }
+    string AINotConfiguredNeedKey { get; }
+    string AIConfigured { get; }
+    string DefaultConfigName { get; }
+    string NoDataInRange { get; }
+    string RecordsAndApps { get; }
+    string GeneratingReport { get; }
+    string PleaseWait { get; }
+    string ReportSuccessWithAI { get; }
+    string ProductivityScore { get; }
+    string FileLabel { get; }
+    string FileNameLabel { get; }
+    string GenerateFailed { get; }
+    string PerformingAIAnalysis { get; }
+    string PleaseEnterAPIKey { get; }
+    string TestingConnection { get; }
+    string AIConnectionSuccess { get; }
+    string ConnectionFailed { get; }
+    string TestError { get; }
+    string ConfigNameExists { get; }
+    string ConfigSaved { get; }
+    string SaveFailed { get; }
+    string CannotDeleteLastConfig { get; }
+    string ConfigDeleted { get; }
+    string DeleteFailed { get; }
+    string NewConfigPattern { get; }
+    string NewConfigCreated { get; }
+    string CreateFailed { get; }
+    string RenameNeedsDialog { get; }
+    string RenameFailed { get; }
+    string ReportFileNotExists { get; }
+    string ReportOpenedInBrowser { get; }
+    string OpenFailed { get; }
+    string ReportFolderNotExists { get; }
+    string ReportFolderOpened { get; }
+
+    // Chart strings
+    string WeeklyTrendChartTitle { get; }
+    string ActivityDistributionChartTitle { get; }
+    string DailyUsageSeriesName { get; }
+    string HoursAxisLabel { get; }
+
+    // Activity type names
+    string ActivityTypeVideo { get; }
+    string ActivityTypeGaming { get; }
+    string ActivityTypeActiveTyping { get; }
+    string ActivityTypePassiveBrowsing { get; }
+    string ActivityTypeIdle { get; }
 
     // ============================================
     // About strings
@@ -452,6 +609,25 @@ public interface IStringProvider
     string LogsDescription { get; }
     string TotalRecordsFormat { get; }
 
+    // Settings ViewModel
+    string SettingsLoadSuccess { get; }
+    string SettingsLoadFailed { get; }
+    string LanguageSwitchedToChinese { get; }
+    string LanguageSwitchedToEnglish { get; }
+    string AutoStartEnabled { get; }
+    string AutoStartDisabled { get; }
+    string SettingsSaved { get; }
+    string IdleTimeoutSet { get; }
+    string DatabaseFolderOpened { get; }
+    string BackingUpDatabase { get; }
+    string DatabaseFileNotExists { get; }
+    string BackupSuccess { get; }
+    string BackupFailed { get; }
+    string ClearingOldData { get; }
+    string OldDataCleared { get; }
+    string ClearFailed { get; }
+    string LogsFolderOpened { get; }
+
     // About Page Feature Lists
     string CoreFeature1 { get; }
     string CoreFeature2 { get; }
@@ -489,4 +665,22 @@ public interface IStringProvider
     string Failed { get; }
     string Confirm { get; }
     string ConfirmDelete { get; }
+
+    // ============================================
+    // Error Dialog
+    // ============================================
+    string Error { get; }
+    string ViewLogs { get; }
+
+    // ============================================
+    // Main Window / Dashboard
+    // ============================================
+    string MonitoringNotStarted { get; }
+    string ShowHistoricalData { get; }
+    string RealTimeData { get; }
+    string StartMonitoringFailed { get; }
+    string NoData { get; }
+    string DateFormatPattern { get; }
+    string UsageCountSuffix { get; }
+    string StopFailedPrefix { get; }
 }

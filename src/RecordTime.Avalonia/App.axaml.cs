@@ -15,7 +15,9 @@ using RecordTime.Avalonia.ViewModels;
 using RecordTime.Avalonia.Views;
 using RecordTime.Avalonia.Services;
 using LiveChartsCore;
+using LiveChartsCore.Kernel;
 using LiveChartsCore.SkiaSharpView;
+using RecordTime.Core.Models;
 using Serilog;
 
 namespace RecordTime.Avalonia;
@@ -34,6 +36,8 @@ public partial class App : Application
                 .AddSkiaSharp()
                 .AddDefaultMappers()
                 .AddLightTheme()
+                // 为 DailyUsage 类型添加自定义映射
+                .HasMap<DailyUsage>((dailyUsage, index) => new Coordinate(index, dailyUsage.TotalHours))
         );
 
         // 初始化多语言系统

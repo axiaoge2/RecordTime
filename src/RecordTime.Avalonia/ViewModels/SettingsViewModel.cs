@@ -33,7 +33,7 @@ public partial class SettingsViewModel : ViewModelBase
     private int _idleTimeoutMinutes = 5;
 
     [ObservableProperty]
-    private string _statusText = "就绪";
+    private string _statusText = StringResources.Current.Ready;
 
     [ObservableProperty]
     private string? _databasePath;
@@ -109,12 +109,12 @@ public partial class SettingsViewModel : ViewModelBase
             // 统计会话数量
             TotalSessions = await dbContext.Sessions.CountAsync();
 
-            StatusText = "设置加载成功";
+            StatusText = StringResources.Current.SettingsLoadSuccess;
             Log.Information("设置已加载");
         }
         catch (Exception ex)
         {
-            StatusText = $"加载设置失败:{ex.Message}";
+            StatusText = $"{StringResources.Current.SettingsLoadFailed}:{ex.Message}";
             Log.Error(ex, "加载设置失败");
         }
     }
@@ -127,7 +127,7 @@ public partial class SettingsViewModel : ViewModelBase
         // 保存到配置
         _ = SaveLanguageSettingAsync(value);
 
-        StatusText = value == "zh-CN" ? "语言已切换为简体中文" : "Language switched to English";
+        StatusText = value == "zh-CN" ? StringResources.Current.LanguageSwitchedToChinese : StringResources.Current.LanguageSwitchedToEnglish;
         Log.Information("语言已切换: {Language}", value);
     }
 
@@ -161,7 +161,7 @@ public partial class SettingsViewModel : ViewModelBase
         // 同时也更新到配置文件
         await _settingsService.UpdateSettingsAsync(s => s.General.AutoStart = _trayService.AutoStartEnabled);
 
-        StatusText = _trayService.AutoStartEnabled ? "已启用开机自启动" : "已禁用开机自启动";
+        StatusText = _trayService.AutoStartEnabled ? StringResources.Current.AutoStartEnabled : StringResources.Current.AutoStartDisabled;
         Log.Information("开机自启动已{Status}", _trayService.AutoStartEnabled ? "启用" : "禁用");
     }
 
@@ -170,7 +170,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         MinimizeToTray = !MinimizeToTray;
         await _settingsService.UpdateSettingsAsync(s => s.General.MinimizeToTray = MinimizeToTray);
-        StatusText = "设置已保存";
+        StatusText = StringResources.Current.SettingsSaved;
         Log.Information("最小化到托盘已{Status}", MinimizeToTray ? "启用" : "禁用");
     }
 
@@ -179,7 +179,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         ShowNotifications = !ShowNotifications;
         await _settingsService.UpdateSettingsAsync(s => s.General.ShowNotifications = ShowNotifications);
-        StatusText = "设置已保存";
+        StatusText = StringResources.Current.SettingsSaved;
         Log.Information("显示通知已{Status}", ShowNotifications ? "启用" : "禁用");
     }
 
@@ -187,7 +187,7 @@ public partial class SettingsViewModel : ViewModelBase
     private async Task SaveIdleTimeoutAsync()
     {
         await _settingsService.UpdateSettingsAsync(s => s.Monitoring.IdleTimeoutMinutes = IdleTimeoutMinutes);
-        StatusText = $"空闲超时已设置为 {IdleTimeoutMinutes} 分钟";
+        StatusText = string.Format(StringResources.Current.IdleTimeoutSet, IdleTimeoutMinutes);
         Log.Information("空闲超时已设置为 {Minutes} 分钟", IdleTimeoutMinutes);
     }
 
@@ -205,11 +205,11 @@ public partial class SettingsViewModel : ViewModelBase
                 Arguments = dbFolder,
                 UseShellExecute = true
             });
-            StatusText = "已打开数据库文件夹";
+            StatusText = StringResources.Current.DatabaseFolderOpened;
         }
         catch (Exception ex)
         {
-            StatusText = $"打开失败:{ex.Message}";
+            StatusText = $"{StringResources.Current.OpenFailed}:{ex.Message}";
             Log.Error(ex, "打开数据库文件夹失败");
         }
     }
@@ -219,7 +219,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         try
         {
-            StatusText = "正在备份数据库...";
+            StatusText = StringResources.Current.BackingUpDatabase;
 
             var dbPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -228,7 +228,7 @@ public partial class SettingsViewModel : ViewModelBase
 
             if (!File.Exists(dbPath))
             {
-                StatusText = "数据库文件不存在";
+                StatusText = StringResources.Current.DatabaseFileNotExists;
                 return;
             }
 
@@ -243,12 +243,12 @@ public partial class SettingsViewModel : ViewModelBase
 
             await Task.Run(() => File.Copy(dbPath, backupPath));
 
-            StatusText = $"备份成功:{Path.GetFileName(backupPath)}";
+            StatusText = $"{StringResources.Current.BackupSuccess}:{Path.GetFileName(backupPath)}";
             Log.Information("数据库备份成功: {BackupPath}", backupPath);
         }
         catch (Exception ex)
         {
-            StatusText = $"备份失败:{ex.Message}";
+            StatusText = $"{StringResources.Current.BackupFailed}:{ex.Message}";
             Log.Error(ex, "备份数据库失败");
         }
     }
@@ -258,7 +258,7 @@ public partial class SettingsViewModel : ViewModelBase
     {
         try
         {
-            StatusText = "正在清除旧数据...";
+            StatusText = StringResources.Current.ClearingOldData;
 
             await using var dbContext = new RecordTimeDbContext();
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
@@ -272,14 +272,14 @@ public partial class SettingsViewModel : ViewModelBase
             dbContext.Sessions.RemoveRange(oldSessions);
             await dbContext.SaveChangesAsync();
 
-            StatusText = $"已清除 {deletedCount} 条旧数据";
+            StatusText = string.Format(StringResources.Current.OldDataCleared, deletedCount);
             Log.Information("已清除 {Count} 条旧数据", deletedCount);
 
             await LoadSettingsAsync(); // 重新加载统计
         }
         catch (Exception ex)
         {
-            StatusText = $"清除失败:{ex.Message}";
+            StatusText = $"{StringResources.Current.ClearFailed}:{ex.Message}";
             Log.Error(ex, "清除旧数据失败");
         }
     }
@@ -305,11 +305,11 @@ public partial class SettingsViewModel : ViewModelBase
                 Arguments = logsFolder,
                 UseShellExecute = true
             });
-            StatusText = "已打开日志文件夹";
+            StatusText = StringResources.Current.LogsFolderOpened;
         }
         catch (Exception ex)
         {
-            StatusText = $"打开失败:{ex.Message}";
+            StatusText = $"{StringResources.Current.OpenFailed}:{ex.Message}";
             Log.Error(ex, "打开日志文件夹失败");
         }
     }

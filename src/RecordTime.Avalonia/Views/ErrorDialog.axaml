@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
         x:Class="RecordTime.Avalonia.Views.ErrorDialog"
-        Title="错误"
+        Title="{Binding Error, Source={x:Static strings:StringResources.Current}}"
         Width="500"
         Height="250"
         CanResize="False"
@@ -73,7 +74,7 @@
                         Spacing="10">
                 <!-- 查看日志按钮 (可选) -->
                 <Button x:Name="ViewLogsButton"
-                        Content="查看日志"
+                        Content="{Binding ViewLogs, Source={x:Static strings:StringResources.Current}}"
                         Padding="20,8"
                         Background="#E5E5EA"
                         Foreground="#1D1D1F"
@@ -90,7 +91,7 @@
 
                 <!-- 确定按钮 -->
                 <Button x:Name="OkButton"
-                        Content="确定"
+                        Content="{Binding OK, Source={x:Static strings:StringResources.Current}}"
                         Padding="20,8"
                         Background="#007AFF"
                         Foreground="White"
