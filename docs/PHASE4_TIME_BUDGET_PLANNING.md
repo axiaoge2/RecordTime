@@ -146,7 +146,7 @@ RecordTime 目前能够准确记录用户的应用使用时间，但缺少帮助
 
 #### 通知样式
 
-使用 Windows 原生通知（Toast Notification）：
+使用托盘气泡通知（简单可靠，无需额外配置）：
 
 ```
 ┌─────────────────────────────────────────┐
@@ -157,10 +157,10 @@ RecordTime 目前能够准确记录用户的应用使用时间，但缺少帮助
 │                                         │
 │ 已使用 1.2 小时，接近今日上限 1.5 小时   │
 │                                         │
-│ [暂停提醒 1 小时]  [查看详情]  [忽略]   │
-│                                         │
 └─────────────────────────────────────────┘
 ```
+
+**技术方案**：使用现有 TrayIconService 的气泡通知能力，避免 Windows Toast 的 AUMID 注册复杂性。
 
 #### 免打扰设置
 
@@ -251,11 +251,17 @@ public class DailyBudgetProgress
     public DateTime Date { get; set; }            // 日期
     public int ActualMinutes { get; set; }        // 实际使用时长
     public int TargetMinutes { get; set; }        // 当日目标（快照）
+    public BudgetType BudgetType { get; set; }    // 目标类型（快照）
+    public int ReminderThreshold { get; set; }    // 提醒阈值（快照）
     public bool IsCompleted { get; set; }         // 是否达成
 
     public DateTime? LastReminderTime { get; set; } // 最后提醒时间
 }
 ```
+
+**索引设计**：
+- `IX_DailyBudgetProgress_TimeBudgetId_Date`（唯一索引）
+- `IX_DailyBudgetProgress_Date`（日期查询优化）
 
 ### 3.3 新增表：GoalSuggestion（目标建议缓存）
 
@@ -287,6 +293,8 @@ public class GoalSuggestion
 位置：
 - `MainWindowViewModel.cs:265-286`
 - `ReportViewModel.cs:226-233`
+- `SessionManager.cs:281-285`（心跳定时器）
+- `SessionManager.cs:329-334`（空闲检查定时器）
 
 修复方案：
 ```csharp
@@ -308,7 +316,7 @@ _timer = new Timer(_ =>
 
 位置：`InputMonitor.cs:370-373`
 
-修复方案：实现 IDisposable 接口
+修复方案：实现 IDisposable 接口，添加 GC.SuppressFinalize
 
 ### 4.2 阶段 1：数据模型与基础设施（2-3 小时）
 
@@ -363,18 +371,23 @@ _timer = new Timer(_ =>
    - `IBudgetTrackingService.cs`
    - `BudgetTrackingService.cs`
 
-2. 更新仪表盘
+2. **复用现有跨天会话分割逻辑**
+   - 参考 `SessionRepository.cs:117-176` 的 `GetWeeklyTrendAsync` 方法
+   - 该方法已实现跨天会话的正确分割（按天界切分，计算 effectiveStart/End）
+   - 抽取为共享方法，供预算进度计算复用
+
+3. 更新仪表盘
    - 添加目标进度区域
    - 实时更新进度条
 
-3. 与 SessionManager 集成
+4. 与 SessionManager 集成
    - 在会话结束时更新进度
 
 ### 4.6 阶段 5：提醒通知（2-3 小时）
 
-1. 创建通知服务
-   - `INotificationService.cs`
-   - `WindowsNotificationService.cs`
+1. 扩展 TrayIconService
+   - 添加气泡通知方法 `ShowBalloonTip(title, message)`
+   - 复用现有托盘图标基础设施
 
 2. 实现提醒逻辑
    - 阈值检测
@@ -511,6 +524,23 @@ public string AISmartSuggestion => "AI Smart Suggestions";
 
 ---
 
-**文档版本**: 1.0
+**文档版本**: 1.1
 **最后更新**: 2025-11-25
 **作者**: Claude + Codex
+
+---
+
+## 附录：Codex 审查修订记录
+
+### 审查日期：2025-11-25
+
+**发现的问题及处理**：
+
+| 问题 | Codex 建议 | 处理结果 |
+|------|-----------|---------|
+| SessionManager async void | 需要修复心跳/空闲检查定时器 | ✅ 已添加到修复列表 |
+| 数据模型唯一索引 | 添加 (ProcessName, Type) 唯一约束 | ❌ 暂不添加，保留多目标灵活性 |
+| DailyBudgetProgress 快照 | 需要保存 BudgetType 和 ReminderThreshold | ✅ 已添加字段 |
+| 跨天会话分割 | 复用 SessionRepository 现有逻辑 | ✅ 已添加到阶段 4 |
+| Windows Toast 复杂性 | 需要 AUMID 注册 | ✅ 改用托盘气泡通知 |
+| StringResources 接口 | 需要更新接口定义 | ✅ 在实现时处理 |
