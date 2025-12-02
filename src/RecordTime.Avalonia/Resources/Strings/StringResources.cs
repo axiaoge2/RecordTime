@@ -124,6 +124,7 @@ public class StringResources : INotifyPropertyChanged
     public string LastWeek => _provider.LastWeek;
     public string LastMonth => _provider.LastMonth;
     public string LastThreeMonths => _provider.LastThreeMonths;
+    public string CustomDateRange => _provider.CustomDateRange;
     public string StartDate => _provider.StartDate;
     public string EndDate => _provider.EndDate;
     public string ReportPreview => _provider.ReportPreview;
@@ -353,6 +354,60 @@ public class StringResources : INotifyPropertyChanged
     public string UsageCountSuffix => _provider.UsageCountSuffix;
     public string StopFailedPrefix => _provider.StopFailedPrefix;
 
+    // ============================================
+    // Time Budget (Phase 4)
+    // ============================================
+    public string NavigationTimeBudget => _provider.NavigationTimeBudget;
+    public string TimeBudgetTitle => _provider.TimeBudgetTitle;
+    public string RefreshButton => _provider.RefreshButton;
+    public string AddBudgetButton => _provider.AddBudgetButton;
+
+    // AI Suggestions
+    public string AISuggestionsTitle => _provider.AISuggestionsTitle;
+    public string AISuggestionsDesc => _provider.AISuggestionsDesc;
+    public string SuggestedTimeLabel => _provider.SuggestedTimeLabel;
+    public string AcceptButton => _provider.AcceptButton;
+    public string IgnoreButton => _provider.IgnoreButton;
+    public string NoSuggestionsTitle => _provider.NoSuggestionsTitle;
+    public string NoSuggestionsDesc => _provider.NoSuggestionsDesc;
+    public string GenerateSuggestionsButton => _provider.GenerateSuggestionsButton;
+
+    // Budget List
+    public string MyBudgetsTitle => _provider.MyBudgetsTitle;
+    public string NoBudgetsTitle => _provider.NoBudgetsTitle;
+    public string NoBudgetsDesc => _provider.NoBudgetsDesc;
+    public string TargetLabel => _provider.TargetLabel;
+    public string ReminderAtLabel => _provider.ReminderAtLabel;
+    public string DisabledLabel => _provider.DisabledLabel;
+    public string EditButton => _provider.EditButton;
+    public string EnableButton => _provider.EnableButton;
+    public string DisableButton => _provider.DisableButton;
+    public string DeleteButton => _provider.DeleteButton;
+
+    // Add/Edit Form
+    public string AddBudgetTitle => _provider.AddBudgetTitle;
+    public string EditBudgetTitle => _provider.EditBudgetTitle;
+    public string BudgetNameLabel => _provider.BudgetNameLabel;
+    public string BudgetNamePlaceholder => _provider.BudgetNamePlaceholder;
+    public string BudgetTypeLabel => _provider.BudgetTypeLabel;
+    public string MaximumBudget => _provider.MaximumBudget;
+    public string MinimumBudget => _provider.MinimumBudget;
+    public string BudgetTypeMaxDesc => _provider.BudgetTypeMaxDesc;
+    public string BudgetTypeMinDesc => _provider.BudgetTypeMinDesc;
+    public string TargetTypeLabel => _provider.TargetTypeLabel;
+    public string TargetTypeApp => _provider.TargetTypeApp;
+    public string TargetTypeCategory => _provider.TargetTypeCategory;
+    public string SelectAppLabel => _provider.SelectAppLabel;
+    public string SelectCategoryLabel => _provider.SelectCategoryLabel;
+    public string TargetDurationLabel => _provider.TargetDurationLabel;
+    public string HoursLabel => _provider.HoursLabel;
+    public string MinutesLabel => _provider.MinutesLabel;
+    public string ReminderEnabledLabel => _provider.ReminderEnabledLabel;
+    public string ReminderEnabledDesc => _provider.ReminderEnabledDesc;
+    public string ReminderThresholdLabel => _provider.ReminderThresholdLabel;
+    public string CancelButton => _provider.CancelButton;
+    public string SaveButton => _provider.SaveButton;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -455,6 +510,7 @@ public interface IStringProvider
     string LastWeek { get; }
     string LastMonth { get; }
     string LastThreeMonths { get; }
+    string CustomDateRange { get; }
     string StartDate { get; }
     string EndDate { get; }
     string ReportPreview { get; }
@@ -683,4 +739,58 @@ public interface IStringProvider
     string DateFormatPattern { get; }
     string UsageCountSuffix { get; }
     string StopFailedPrefix { get; }
+
+    // ============================================
+    // Time Budget (Phase 4)
+    // ============================================
+    string NavigationTimeBudget { get; }
+    string TimeBudgetTitle { get; }
+    string RefreshButton { get; }
+    string AddBudgetButton { get; }
+
+    // AI Suggestions
+    string AISuggestionsTitle { get; }
+    string AISuggestionsDesc { get; }
+    string SuggestedTimeLabel { get; }
+    string AcceptButton { get; }
+    string IgnoreButton { get; }
+    string NoSuggestionsTitle { get; }
+    string NoSuggestionsDesc { get; }
+    string GenerateSuggestionsButton { get; }
+
+    // Budget List
+    string MyBudgetsTitle { get; }
+    string NoBudgetsTitle { get; }
+    string NoBudgetsDesc { get; }
+    string TargetLabel { get; }
+    string ReminderAtLabel { get; }
+    string DisabledLabel { get; }
+    string EditButton { get; }
+    string EnableButton { get; }
+    string DisableButton { get; }
+    string DeleteButton { get; }
+
+    // Add/Edit Form
+    string AddBudgetTitle { get; }
+    string EditBudgetTitle { get; }
+    string BudgetNameLabel { get; }
+    string BudgetNamePlaceholder { get; }
+    string BudgetTypeLabel { get; }
+    string MaximumBudget { get; }
+    string MinimumBudget { get; }
+    string BudgetTypeMaxDesc { get; }
+    string BudgetTypeMinDesc { get; }
+    string TargetTypeLabel { get; }
+    string TargetTypeApp { get; }
+    string TargetTypeCategory { get; }
+    string SelectAppLabel { get; }
+    string SelectCategoryLabel { get; }
+    string TargetDurationLabel { get; }
+    string HoursLabel { get; }
+    string MinutesLabel { get; }
+    string ReminderEnabledLabel { get; }
+    string ReminderEnabledDesc { get; }
+    string ReminderThresholdLabel { get; }
+    string CancelButton { get; }
+    string SaveButton { get; }
 }

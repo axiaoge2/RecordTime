@@ -38,6 +38,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private AppStatsViewModel? _appStatsViewModel;
     private SettingsViewModel? _settingsViewModel;
     private AboutViewModel? _aboutViewModel;
+    private TimeBudgetViewModel? _timeBudgetViewModel;
 
     // 汇总数据
     [ObservableProperty]
@@ -231,6 +232,17 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentPageViewModel = _aboutViewModel;
     }
 
+    [RelayCommand]
+    private void NavigateToTimeBudget()
+    {
+        // 使用单例模式 - 保持时间目标页面状态
+        _timeBudgetViewModel ??= new TimeBudgetViewModel();
+        CurrentPageViewModel = _timeBudgetViewModel;
+
+        // 每次导航到此页面时刷新进度数据（异步执行，不阻塞UI）
+        _ = _timeBudgetViewModel.OnNavigatedToAsync();
+    }
+
     private async Task StartMonitoringAsync()
     {
         try
@@ -259,10 +271,17 @@ public partial class MainWindowViewModel : ViewModelBase
             // 启动监控
             _sessionManager.Start();
 
+            // 启动预算追踪服务和通知服务
+            var budgetTrackingService = BudgetTrackingService.Instance;
+            budgetTrackingService.Start();
+            NotificationService.Instance.Initialize(budgetTrackingService);
+            Log.Information("预算追踪和通知服务已启动");
+
             // 启动定时刷新（只在监控运行且查看今日数据时自动刷新）
+            // 注意：使用 Task.Run 包装避免 async void 导致异常无法捕获
             var refreshIntervalMs = config.Monitoring.DataRefreshIntervalMs;
             _updateTimer = new System.Threading.Timer(
-                async _ =>
+                _ => Task.Run(async () =>
                 {
                     // 防重入: 如果上一次执行还未完成,跳过本次
                     if (System.Threading.Interlocked.CompareExchange(ref _timerExecuting, 1, 0) == 0)
@@ -284,7 +303,7 @@ public partial class MainWindowViewModel : ViewModelBase
                             System.Threading.Interlocked.Exchange(ref _timerExecuting, 0);
                         }
                     }
-                },
+                }),
                 null,
                 TimeSpan.FromMilliseconds(refreshIntervalMs),
                 TimeSpan.FromMilliseconds(refreshIntervalMs)
@@ -320,6 +339,10 @@ public partial class MainWindowViewModel : ViewModelBase
             // 停止并销毁定时刷新
             _updateTimer?.Dispose();
             _updateTimer = null;
+
+            // 停止预算追踪服务
+            BudgetTrackingService.Instance.Stop();
+            Log.Information("预算追踪服务已停止");
 
             if (_sessionManager != null)
             {
@@ -359,6 +382,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OnSessionEnded(object? sender, AppSession session)
     {
         Log.Debug("会话结束: {DisplayName} (ID: {SessionId}, Duration: {DurationSeconds}s)", session.DisplayName, session.Id, session.DurationSeconds);
+
+        // 会话结束时立即触发预算进度更新（实时同步）
+        BudgetTrackingService.Instance.TriggerImmediateUpdate();
 
         // 会话结束时刷新数据（只在查看今日数据时）
         if (SelectedDate.Date == DateTime.Today)
@@ -863,6 +889,10 @@ public partial class MainWindowViewModel : ViewModelBase
     public void Dispose()
     {
         _updateTimer?.Dispose();
+
+        // 停止预算追踪服务和通知服务
+        BudgetTrackingService.Instance.Stop();
+        NotificationService.Instance.Dispose();
 
         // ✅ 修复: 先异步停止 SessionManager,确保当前会话被正确结束
         // 这样可以避免应用退出时会话 EndTime 为 null 导致时长异常的问题

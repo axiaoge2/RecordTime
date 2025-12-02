@@ -47,6 +47,9 @@ public partial class ReportViewModel : ViewModelBase
     private bool _isGenerating = false;
 
     [ObservableProperty]
+    private bool _isCustomDateMode = false;
+
+    [ObservableProperty]
     private string? _lastReportPath;
 
     [ObservableProperty]
@@ -223,12 +226,23 @@ public partial class ReportViewModel : ViewModelBase
         _chartLoadDebounceTimer?.Dispose();
 
         // 创建新的定时器（250ms 节流）
+        // 注意：使用 Task.Run 包装避免 async void 导致异常无法捕获
         _chartLoadDebounceTimer = new System.Timers.Timer(250);
-        _chartLoadDebounceTimer.Elapsed += async (s, e) =>
+        _chartLoadDebounceTimer.Elapsed += (s, e) =>
         {
             _chartLoadDebounceTimer?.Dispose();
             _chartLoadDebounceTimer = null;
-            await LoadChartDataAsync();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await LoadChartDataAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "图表数据加载定时器回调执行失败");
+                }
+            });
         };
         _chartLoadDebounceTimer.AutoReset = false;
         _chartLoadDebounceTimer.Start();
@@ -902,6 +916,7 @@ public partial class ReportViewModel : ViewModelBase
         EndDate = DateTime.Today;
         StartDateText = StartDate.ToString(StringResources.Current.DateFormatPattern);
         EndDateText = EndDate.ToString(StringResources.Current.DateFormatPattern);
+        IsCustomDateMode = false;
     }
 
     [RelayCommand]
@@ -909,6 +924,7 @@ public partial class ReportViewModel : ViewModelBase
     {
         StartDate = DateTime.Today.AddMonths(-1);
         EndDate = DateTime.Today;
+        IsCustomDateMode = false;
     }
 
     [RelayCommand]
@@ -916,6 +932,13 @@ public partial class ReportViewModel : ViewModelBase
     {
         StartDate = DateTime.Today.AddMonths(-3);
         EndDate = DateTime.Today;
+        IsCustomDateMode = false;
+    }
+
+    [RelayCommand]
+    private void ToggleCustomDate()
+    {
+        IsCustomDateMode = !IsCustomDateMode;
     }
 
     /// <summary>

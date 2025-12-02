@@ -278,8 +278,19 @@ public class SessionManager : IDisposable
         StopHeartbeatTimer();
 
         // 创建新的定时器，每30秒触发一次
+        // 注意：使用 Task.Run 包装避免 async void 导致异常无法捕获
         _heartbeatTimer = new System.Threading.Timer(
-            callback: async _ => await UpdateSessionHeartbeatAsync(),
+            callback: _ => Task.Run(async () =>
+            {
+                try
+                {
+                    await UpdateSessionHeartbeatAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "心跳定时器回调执行失败");
+                }
+            }),
             state: null,
             dueTime: TimeSpan.FromSeconds(_heartbeatIntervalSeconds),
             period: TimeSpan.FromSeconds(_heartbeatIntervalSeconds)
@@ -326,8 +337,19 @@ public class SessionManager : IDisposable
     {
         StopIdleCheckTimer();
 
+        // 注意：使用 Task.Run 包装避免 async void 导致异常无法捕获
         _idleCheckTimer = new System.Threading.Timer(
-            callback: async _ => await PerformIdleCheckAsync(),
+            callback: _ => Task.Run(async () =>
+            {
+                try
+                {
+                    await PerformIdleCheckAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "空闲检查定时器回调执行失败");
+                }
+            }),
             state: null,
             dueTime: TimeSpan.FromSeconds(_idleCheckIntervalSeconds),
             period: TimeSpan.FromSeconds(_idleCheckIntervalSeconds)

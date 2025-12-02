@@ -90,6 +90,7 @@ public class ChineseStrings : IStringProvider
     public string LastWeek => "最近一周";
     public string LastMonth => "最近一月";
     public string LastThreeMonths => "最近三月";
+    public string CustomDateRange => "自定义";
     public string StartDate => "开始日期";
     public string EndDate => "结束日期";
     public string ReportPreview => "📊 报告预览";
@@ -333,4 +334,58 @@ public class ChineseStrings : IStringProvider
     public string OldDataCleared => "已清除 {0} 条旧数据";
     public string ClearFailed => "清除失败";
     public string LogsFolderOpened => "已打开日志文件夹";
+
+    // ============================================
+    // Time Budget (Phase 4)
+    // ============================================
+    public string NavigationTimeBudget => "🎯 时间目标";
+    public string TimeBudgetTitle => "时间目标管理";
+    public string RefreshButton => "刷新";
+    public string AddBudgetButton => "添加目标";
+
+    // AI Suggestions
+    public string AISuggestionsTitle => "🤖 智能建议";
+    public string AISuggestionsDesc => "基于您的使用习惯,我们为您推荐以下时间目标";
+    public string SuggestedTimeLabel => "建议时长: ";
+    public string AcceptButton => "接受";
+    public string IgnoreButton => "忽略";
+    public string NoSuggestionsTitle => "生成个性化建议";
+    public string NoSuggestionsDesc => "分析您的历史使用数据,为您推荐合适的时间目标";
+    public string GenerateSuggestionsButton => "生成建议";
+
+    // Budget List
+    public string MyBudgetsTitle => "我的时间目标";
+    public string NoBudgetsTitle => "还没有设置时间目标";
+    public string NoBudgetsDesc => "点击上方\"添加目标\"按钮创建您的第一个时间目标";
+    public string TargetLabel => "目标: ";
+    public string ReminderAtLabel => "提醒于 ";
+    public string DisabledLabel => "已禁用";
+    public string EditButton => "编辑";
+    public string EnableButton => "启用";
+    public string DisableButton => "禁用";
+    public string DeleteButton => "删除";
+
+    // Add/Edit Form
+    public string AddBudgetTitle => "添加时间目标";
+    public string EditBudgetTitle => "编辑时间目标";
+    public string BudgetNameLabel => "目标名称";
+    public string BudgetNamePlaceholder => "例如: 每日编程时间";
+    public string BudgetTypeLabel => "目标类型";
+    public string MaximumBudget => "上限目标";
+    public string MinimumBudget => "下限目标";
+    public string BudgetTypeMaxDesc => "控制某应用或分类的使用时间不超过设定值";
+    public string BudgetTypeMinDesc => "确保某应用或分类的使用时间不低于设定值";
+    public string TargetTypeLabel => "应用于";
+    public string TargetTypeApp => "单个应用";
+    public string TargetTypeCategory => "应用分类";
+    public string SelectAppLabel => "选择应用";
+    public string SelectCategoryLabel => "选择分类";
+    public string TargetDurationLabel => "目标时长";
+    public string HoursLabel => "小时";
+    public string MinutesLabel => "分钟";
+    public string ReminderEnabledLabel => "启用提醒";
+    public string ReminderEnabledDesc => "当达到目标百分比时发送通知提醒";
+    public string ReminderThresholdLabel => "提醒阈值: ";
+    public string CancelButton => "取消";
+    public string SaveButton => "保存";
 }

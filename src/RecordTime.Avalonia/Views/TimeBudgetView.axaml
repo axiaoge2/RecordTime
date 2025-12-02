@@ -1,0 +1,446 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="RecordTime.Avalonia.Views.TimeBudgetView"
+             x:DataType="vm:TimeBudgetViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                  VerticalScrollBarVisibility="Auto">
+        <Grid RowDefinitions="Auto,*">
+            <!-- Main Content (when not editing) -->
+            <StackPanel Grid.Row="0"
+                       Spacing="24"
+                       MaxWidth="900"
+                       Margin="48,40,48,80"
+                       IsVisible="{Binding !IsEditing}">
+                <!-- Page Title -->
+                <TextBlock Text="{Binding TimeBudgetTitle, Source={x:Static strings:StringResources.Current}}"
+                          Classes="title"
+                          Margin="0,0,0,16"/>
+
+                <!-- Status Bar -->
+                <Border Padding="12"
+                       Background="{StaticResource HoverBackground}"
+                       CornerRadius="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0"
+                                  Text="{Binding StatusMessage}"
+                                  Classes="body"
+                                  VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1"
+                                   Orientation="Horizontal"
+                                   Spacing="8">
+                            <Button Content="{Binding RefreshButton, Source={x:Static strings:StringResources.Current}}"
+                                   Classes="secondary"
+                                   Command="{Binding LoadDataCommand}"
+                                   IsEnabled="{Binding !IsLoading}"/>
+                            <Button Content="{Binding AddBudgetButton, Source={x:Static strings:StringResources.Current}}"
+                                   Classes="primary"
+                                   Command="{Binding StartAddBudgetCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- AI Suggestions Section -->
+                <Border Classes="card"
+                       Padding="24,20,24,24"
+                       IsVisible="{Binding HasSuggestions}">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="{Binding AISuggestionsTitle, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="heading"/>
+                                <TextBlock Text="{Binding AISuggestionsDesc, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="caption"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Suggestions List -->
+                        <ItemsControl ItemsSource="{Binding Suggestions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="16"
+                                           Background="{StaticResource HoverBackground}"
+                                           CornerRadius="8"
+                                           Margin="0,0,0,8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="8">
+                                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                                    <TextBlock Text="{Binding DisplayName}"
+                                                              Classes="body"
+                                                              FontWeight="SemiBold"/>
+                                                    <Border Padding="6,2"
+                                                           CornerRadius="4"
+                                                           Background="#4ECDC4">
+                                                        <TextBlock Text="{Binding TypeLabel}"
+                                                                  FontSize="11"
+                                                                  Foreground="White"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Reason}"
+                                                          Classes="caption"
+                                                          TextWrapping="Wrap"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                                    <TextBlock Classes="caption" Opacity="0.8">
+                                                        <Run Text="{Binding SuggestedTimeLabel, Source={x:Static strings:StringResources.Current}}"/>
+                                                        <Run Text="{Binding SuggestedTimeText}" FontWeight="SemiBold"/>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding HistoricalTimeText}"
+                                                              Classes="caption"
+                                                              Opacity="0.6"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1"
+                                                       Orientation="Horizontal"
+                                                       Spacing="8"
+                                                       VerticalAlignment="Center">
+                                                <Button Content="{Binding AcceptButton, Source={x:Static strings:StringResources.Current}}"
+                                                       Classes="primary"
+                                                       Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).AcceptSuggestionCommand}"
+                                                       CommandParameter="{Binding}"/>
+                                                <Button Content="{Binding IgnoreButton, Source={x:Static strings:StringResources.Current}}"
+                                                       Classes="secondary"
+                                                       Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).IgnoreSuggestionCommand}"
+                                                       CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Generate Suggestions Button (when no suggestions) -->
+                <Border Classes="card"
+                       Padding="24,20,24,24"
+                       IsVisible="{Binding !HasSuggestions}">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding NoSuggestionsTitle, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="heading"
+                                  HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding NoSuggestionsDesc, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="caption"
+                                  HorizontalAlignment="Center"
+                                  TextAlignment="Center"
+                                  TextWrapping="Wrap"
+                                  MaxWidth="400"/>
+                        <Button Content="{Binding GenerateSuggestionsButton, Source={x:Static strings:StringResources.Current}}"
+                               Classes="primary"
+                               Command="{Binding GenerateSuggestionsCommand}"
+                               IsEnabled="{Binding !IsGeneratingSuggestions}"
+                               HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Existing Budgets Section -->
+                <Border Classes="card"
+                       Padding="24,20,24,24">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="{Binding MyBudgetsTitle, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="heading"/>
+
+                        <!-- Empty State -->
+                        <StackPanel IsVisible="{Binding !HasBudgets}"
+                                   Spacing="12"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,20">
+                            <TextBlock Text="{Binding NoBudgetsTitle, Source={x:Static strings:StringResources.Current}}"
+                                      Classes="body"
+                                      HorizontalAlignment="Center"
+                                      Opacity="0.7"/>
+                            <TextBlock Text="{Binding NoBudgetsDesc, Source={x:Static strings:StringResources.Current}}"
+                                      Classes="caption"
+                                      HorizontalAlignment="Center"
+                                      TextAlignment="Center"
+                                      Opacity="0.5"/>
+                        </StackPanel>
+
+                        <!-- Budgets List -->
+                        <ItemsControl ItemsSource="{Binding Budgets}"
+                                     IsVisible="{Binding HasBudgets}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="16"
+                                           Background="{StaticResource HoverBackground}"
+                                           CornerRadius="8"
+                                           Margin="0,0,0,12">
+                                        <StackPanel Spacing="12">
+                                            <!-- 第一行: 名称、标签、操作按钮 -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="8">
+                                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                                        <TextBlock Text="{Binding DisplayName}"
+                                                                  Classes="body"
+                                                                  FontWeight="SemiBold"/>
+                                                        <Border Padding="6,2"
+                                                               CornerRadius="4"
+                                                               Background="{Binding TypeColor}">
+                                                            <TextBlock Text="{Binding TypeLabel}"
+                                                                      FontSize="11"
+                                                                      Foreground="White"/>
+                                                        </Border>
+                                                        <Border Padding="6,2"
+                                                               CornerRadius="4"
+                                                               Background="#8E8E93"
+                                                               IsVisible="{Binding !IsEnabled}">
+                                                            <TextBlock Text="{Binding DisabledLabel, Source={x:Static strings:StringResources.Current}}"
+                                                                      FontSize="11"
+                                                                      Foreground="White"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1"
+                                                           Orientation="Horizontal"
+                                                           Spacing="8"
+                                                           VerticalAlignment="Center">
+                                                    <Button Content="{Binding EditButton, Source={x:Static strings:StringResources.Current}}"
+                                                           Classes="secondary"
+                                                           Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).StartEditBudgetCommand}"
+                                                           CommandParameter="{Binding}"/>
+                                                    <Button Classes="secondary"
+                                                           Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).ToggleBudgetEnabledCommand}"
+                                                           CommandParameter="{Binding}">
+                                                        <Button.Content>
+                                                            <Panel>
+                                                                <TextBlock Text="{Binding DisableButton, Source={x:Static strings:StringResources.Current}}"
+                                                                          IsVisible="{Binding IsEnabled}"/>
+                                                                <TextBlock Text="{Binding EnableButton, Source={x:Static strings:StringResources.Current}}"
+                                                                          IsVisible="{Binding !IsEnabled}"/>
+                                                            </Panel>
+                                                        </Button.Content>
+                                                    </Button>
+                                                    <Button Content="{Binding DeleteButton, Source={x:Static strings:StringResources.Current}}"
+                                                           Classes="secondary"
+                                                           Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).DeleteBudgetCommand}"
+                                                           CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- 第二行: 进度条 (仅启用的预算显示) -->
+                                            <StackPanel Spacing="6" IsVisible="{Binding IsEnabled}">
+                                                <!-- 进度信息 -->
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Classes="body" FontWeight="SemiBold"
+                                                                  Text="{Binding ActualDurationText}"/>
+                                                        <TextBlock Classes="caption" VerticalAlignment="Center" Opacity="0.7">
+                                                            <Run Text="/"/>
+                                                            <Run Text="{Binding TargetDurationText}"/>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1"
+                                                              Classes="body"
+                                                              FontWeight="SemiBold"
+                                                              Text="{Binding ProgressStatusText}"/>
+                                                </Grid>
+
+                                                <!-- 进度条 -->
+                                                <Grid>
+                                                    <ProgressBar Value="{Binding ProgressPercentage}"
+                                                                Maximum="100"
+                                                                Height="8"
+                                                                CornerRadius="4"
+                                                                Foreground="{Binding ProgressColorBrush}"/>
+                                                </Grid>
+
+                                                <!-- 状态提示 -->
+                                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                                    <!-- 超限警告 (上限目标) -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsOverBudget}">
+                                                        <TextBlock Text="⚠️" FontSize="12"/>
+                                                        <TextBlock Text="已超出上限" Classes="caption" Foreground="#FF6B6B"/>
+                                                    </StackPanel>
+                                                    <!-- 达标提示 (仅下限目标显示) -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding ShowGoalMetMessage}">
+                                                        <TextBlock Text="✓" FontSize="12" Foreground="#4ECDC4"/>
+                                                        <TextBlock Text="目标已达成" Classes="caption" Foreground="#4ECDC4"/>
+                                                    </StackPanel>
+                                                    <!-- 提醒阈值 -->
+                                                    <TextBlock Classes="caption" Opacity="0.5"
+                                                              IsVisible="{Binding ReminderEnabled}">
+                                                        <Run Text="{Binding ReminderAtLabel, Source={x:Static strings:StringResources.Current}}"/>
+                                                        <Run Text="{Binding ReminderThreshold}"/>
+                                                        <Run Text="%"/>
+                                                    </TextBlock>
+                                                </StackPanel>
+                                            </StackPanel>
+
+                                            <!-- 禁用状态下显示简单信息 -->
+                                            <StackPanel Orientation="Horizontal" Spacing="16" IsVisible="{Binding !IsEnabled}">
+                                                <TextBlock Classes="caption" Opacity="0.6">
+                                                    <Run Text="{Binding TargetLabel, Source={x:Static strings:StringResources.Current}}"/>
+                                                    <Run Text="{Binding TargetDurationText}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Edit/Add Form (shown when editing) -->
+            <Border Grid.Row="0"
+                   Margin="48,40,48,80"
+                   MaxWidth="600"
+                   HorizontalAlignment="Center"
+                   Classes="card"
+                   Padding="32"
+                   IsVisible="{Binding IsEditing}">
+                <StackPanel Spacing="24">
+                    <!-- Form Title -->
+                    <TextBlock Text="{Binding AddBudgetTitle, Source={x:Static strings:StringResources.Current}}"
+                              Classes="heading"
+                              IsVisible="{Binding EditingBudget, Converter={x:Static ObjectConverters.IsNull}}"/>
+                    <TextBlock Text="{Binding EditBudgetTitle, Source={x:Static strings:StringResources.Current}}"
+                              Classes="heading"
+                              IsVisible="{Binding EditingBudget, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+
+                    <!-- Budget Name -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding BudgetNameLabel, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="body"
+                                  FontWeight="SemiBold"/>
+                        <TextBox Text="{Binding EditDisplayName}"
+                                Watermark="{Binding BudgetNamePlaceholder, Source={x:Static strings:StringResources.Current}}"/>
+                    </StackPanel>
+
+                    <!-- Budget Type Selection -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding BudgetTypeLabel, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="body"
+                                  FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton Content="{Binding MaximumBudget, Source={x:Static strings:StringResources.Current}}"
+                                        IsChecked="{Binding EditIsMaximum}"
+                                        GroupName="BudgetType"/>
+                            <RadioButton Content="{Binding MinimumBudget, Source={x:Static strings:StringResources.Current}}"
+                                        IsChecked="{Binding EditIsMinimum}"
+                                        GroupName="BudgetType"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding BudgetTypeMaxDesc, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="caption"
+                                  Opacity="0.6"
+                                  IsVisible="{Binding EditIsMaximum}"/>
+                        <TextBlock Text="{Binding BudgetTypeMinDesc, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="caption"
+                                  Opacity="0.6"
+                                  IsVisible="{Binding EditIsMinimum}"/>
+                    </StackPanel>
+
+                    <!-- Target Type: App or Category -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding TargetTypeLabel, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="body"
+                                  FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton Content="{Binding TargetTypeApp, Source={x:Static strings:StringResources.Current}}"
+                                        IsChecked="{Binding EditIsAppBudget}"
+                                        GroupName="TargetType"/>
+                            <RadioButton Content="{Binding TargetTypeCategory, Source={x:Static strings:StringResources.Current}}"
+                                        IsChecked="{Binding !EditIsAppBudget}"
+                                        GroupName="TargetType"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- App Selection (when IsAppBudget) -->
+                    <StackPanel Spacing="8" IsVisible="{Binding EditIsAppBudget}">
+                        <TextBlock Text="{Binding SelectAppLabel, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="body"
+                                  FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableApps}"
+                                 SelectedItem="{Binding EditProcessName}"
+                                 Width="300"
+                                 HorizontalAlignment="Left"/>
+                    </StackPanel>
+
+                    <!-- Category Selection (when not IsAppBudget) -->
+                    <StackPanel Spacing="8" IsVisible="{Binding !EditIsAppBudget}">
+                        <TextBlock Text="{Binding SelectCategoryLabel, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="body"
+                                  FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableCategories}"
+                                 SelectedItem="{Binding EditCategory}"
+                                 Width="300"
+                                 HorizontalAlignment="Left"/>
+                    </StackPanel>
+
+                    <!-- Target Duration -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding TargetDurationLabel, Source={x:Static strings:StringResources.Current}}"
+                                  Classes="body"
+                                  FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <NumericUpDown Value="{Binding EditTargetHours}"
+                                              Minimum="0"
+                                              Maximum="24"
+                                              Width="100"/>
+                                <TextBlock Text="{Binding HoursLabel, Source={x:Static strings:StringResources.Current}}"
+                                          VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <NumericUpDown Value="{Binding EditTargetMinutes}"
+                                              Minimum="0"
+                                              Maximum="59"
+                                              Increment="15"
+                                              Width="100"/>
+                                <TextBlock Text="{Binding MinutesLabel, Source={x:Static strings:StringResources.Current}}"
+                                          VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Reminder Settings -->
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="{Binding ReminderEnabledLabel, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="body"
+                                          FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding ReminderEnabledDesc, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="caption"/>
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1"
+                                         IsChecked="{Binding EditReminderEnabled}"
+                                         VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <StackPanel Spacing="8" IsVisible="{Binding EditReminderEnabled}">
+                            <TextBlock Classes="body">
+                                <Run Text="{Binding ReminderThresholdLabel, Source={x:Static strings:StringResources.Current}}"/>
+                                <Run Text="{Binding EditReminderThreshold}"/>
+                                <Run Text="%"/>
+                            </TextBlock>
+                            <Slider Value="{Binding EditReminderThreshold}"
+                                   Minimum="50"
+                                   Maximum="100"
+                                   TickFrequency="10"
+                                   IsSnapToTickEnabled="True"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Form Actions -->
+                    <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,16,0,0">
+                        <Button Grid.Column="1"
+                               Content="{Binding CancelButton, Source={x:Static strings:StringResources.Current}}"
+                               Classes="secondary"
+                               Command="{Binding CancelEditCommand}"
+                               Margin="0,0,12,0"/>
+                        <Button Grid.Column="2"
+                               Content="{Binding SaveButton, Source={x:Static strings:StringResources.Current}}"
+                               Classes="primary"
+                               Command="{Binding SaveBudgetCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

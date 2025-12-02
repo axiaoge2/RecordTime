@@ -57,6 +57,11 @@
                            Command="{Binding NavigateToReportsCommand}"
                            HorizontalAlignment="Stretch"/>
 
+                    <Button Classes="sidebar-item"
+                           Content="{Binding NavigationTimeBudget, Source={x:Static strings:StringResources.Current}}"
+                           Command="{Binding NavigateToTimeBudgetCommand}"
+                           HorizontalAlignment="Stretch"/>
+
                     <Separator Margin="0,20"
                               Background="{StaticResource DividerBrush}"
                               Height="0.5"/>
@@ -91,6 +96,10 @@
                     <!-- AboutViewModel -> AboutView -->
                     <DataTemplate DataType="vm:AboutViewModel">
                         <local:AboutView/>
+                    </DataTemplate>
+                    <!-- TimeBudgetViewModel -> TimeBudgetView -->
+                    <DataTemplate DataType="vm:TimeBudgetViewModel">
+                        <local:TimeBudgetView/>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>

@@ -25,7 +25,7 @@
                               Classes="heading"/>
 
                     <!-- Quick Date Range Buttons -->
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,*">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
                         <Button Grid.Column="0"
                                Content="{Binding LastWeek, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
@@ -39,11 +39,52 @@
                         <Button Grid.Column="2"
                                Content="{Binding LastThreeMonths, Source={x:Static strings:StringResources.Current}}"
                                Classes="secondary"
-                               Command="{Binding SetLastThreeMonthsCommand}"/>
+                               Command="{Binding SetLastThreeMonthsCommand}"
+                               Margin="0,0,8,0"/>
+                        <Button Grid.Column="3"
+                               Content="{Binding CustomDateRange, Source={x:Static strings:StringResources.Current}}"
+                               Classes="secondary"
+                               Command="{Binding ToggleCustomDateCommand}"/>
                     </Grid>
 
-                    <!-- Date Display -->
-                    <Border Padding="16"
+                    <!-- Custom Date Pickers (Collapsible) -->
+                    <Border IsVisible="{Binding IsCustomDateMode}"
+                            Padding="16"
+                            Background="{StaticResource HoverBackground}"
+                            CornerRadius="12">
+                        <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,12,Auto">
+                            <!-- Start Date -->
+                            <StackPanel Grid.Column="0" Grid.Row="0">
+                                <TextBlock Text="{Binding StartDate, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="caption"
+                                          Margin="0,0,0,4"/>
+                                <CalendarDatePicker SelectedDate="{Binding StartDate}"
+                                                   HorizontalAlignment="Stretch"
+                                                   IsTodayHighlighted="True"/>
+                            </StackPanel>
+
+                            <!-- Arrow -->
+                            <TextBlock Grid.Column="1" Grid.Row="0"
+                                      Text="→"
+                                      FontSize="20"
+                                      VerticalAlignment="Center"
+                                      Margin="16,16,16,0"/>
+
+                            <!-- End Date -->
+                            <StackPanel Grid.Column="2" Grid.Row="0">
+                                <TextBlock Text="{Binding EndDate, Source={x:Static strings:StringResources.Current}}"
+                                          Classes="caption"
+                                          Margin="0,0,0,4"/>
+                                <CalendarDatePicker SelectedDate="{Binding EndDate}"
+                                                   HorizontalAlignment="Stretch"
+                                                   IsTodayHighlighted="True"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Date Display (when not in custom mode) -->
+                    <Border IsVisible="{Binding !IsCustomDateMode}"
+                            Padding="16"
                            Background="{StaticResource HoverBackground}"
                            CornerRadius="12">
                         <Grid ColumnDefinitions="*,Auto,*">

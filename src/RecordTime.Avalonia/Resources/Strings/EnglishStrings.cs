@@ -90,6 +90,7 @@ public class EnglishStrings : IStringProvider
     public string LastWeek => "Last Week";
     public string LastMonth => "Last Month";
     public string LastThreeMonths => "Last Three Months";
+    public string CustomDateRange => "Custom";
     public string StartDate => "Start Date";
     public string EndDate => "End Date";
     public string ReportPreview => "📊 Report Preview";
@@ -333,4 +334,58 @@ public class EnglishStrings : IStringProvider
     public string OldDataCleared => "Cleared {0} old records";
     public string ClearFailed => "Clear failed";
     public string LogsFolderOpened => "Logs folder opened";
+
+    // ============================================
+    // Time Budget (Phase 4)
+    // ============================================
+    public string NavigationTimeBudget => "🎯 Time Budget";
+    public string TimeBudgetTitle => "Time Budget Management";
+    public string RefreshButton => "Refresh";
+    public string AddBudgetButton => "Add Budget";
+
+    // AI Suggestions
+    public string AISuggestionsTitle => "🤖 Smart Suggestions";
+    public string AISuggestionsDesc => "Based on your usage habits, we recommend the following time budgets";
+    public string SuggestedTimeLabel => "Suggested: ";
+    public string AcceptButton => "Accept";
+    public string IgnoreButton => "Ignore";
+    public string NoSuggestionsTitle => "Generate Personalized Suggestions";
+    public string NoSuggestionsDesc => "Analyze your historical usage data to recommend suitable time budgets";
+    public string GenerateSuggestionsButton => "Generate Suggestions";
+
+    // Budget List
+    public string MyBudgetsTitle => "My Time Budgets";
+    public string NoBudgetsTitle => "No time budgets set yet";
+    public string NoBudgetsDesc => "Click the \"Add Budget\" button above to create your first time budget";
+    public string TargetLabel => "Target: ";
+    public string ReminderAtLabel => "Reminder at ";
+    public string DisabledLabel => "Disabled";
+    public string EditButton => "Edit";
+    public string EnableButton => "Enable";
+    public string DisableButton => "Disable";
+    public string DeleteButton => "Delete";
+
+    // Add/Edit Form
+    public string AddBudgetTitle => "Add Time Budget";
+    public string EditBudgetTitle => "Edit Time Budget";
+    public string BudgetNameLabel => "Budget Name";
+    public string BudgetNamePlaceholder => "e.g., Daily Programming Time";
+    public string BudgetTypeLabel => "Budget Type";
+    public string MaximumBudget => "Maximum Budget";
+    public string MinimumBudget => "Minimum Budget";
+    public string BudgetTypeMaxDesc => "Limit usage time for an app or category to not exceed the set value";
+    public string BudgetTypeMinDesc => "Ensure usage time for an app or category is not less than the set value";
+    public string TargetTypeLabel => "Apply to";
+    public string TargetTypeApp => "Single App";
+    public string TargetTypeCategory => "App Category";
+    public string SelectAppLabel => "Select App";
+    public string SelectCategoryLabel => "Select Category";
+    public string TargetDurationLabel => "Target Duration";
+    public string HoursLabel => "Hours";
+    public string MinutesLabel => "Minutes";
+    public string ReminderEnabledLabel => "Enable Reminder";
+    public string ReminderEnabledDesc => "Send notification when reaching the target percentage";
+    public string ReminderThresholdLabel => "Reminder Threshold: ";
+    public string CancelButton => "Cancel";
+    public string SaveButton => "Save";
 }
