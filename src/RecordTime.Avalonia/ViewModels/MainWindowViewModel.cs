@@ -18,6 +18,8 @@ using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using Serilog;
+using Avalonia.Media;
+using System.Collections.Generic;
 
 namespace RecordTime.Avalonia.ViewModels;
 
@@ -112,6 +114,44 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _topCategoryDuration = "--";
 
+    // ========== Phase 4: 预算进度面板 ==========
+
+    /// <summary>
+    /// 预算进度列表
+    /// </summary>
+    public ObservableCollection<BudgetProgressDisplayItem> BudgetProgressItems { get; } = new();
+
+    /// <summary>
+    /// 总预算数量
+    /// </summary>
+    [ObservableProperty]
+    private int _totalBudgetCount = 0;
+
+    /// <summary>
+    /// 已完成/达标的预算数量
+    /// </summary>
+    [ObservableProperty]
+    private int _completedBudgetCount = 0;
+
+    /// <summary>
+    /// 超标的预算数量
+    /// </summary>
+    [ObservableProperty]
+    private int _overBudgetCount = 0;
+
+    /// <summary>
+    /// 是否有预算
+    /// </summary>
+    public bool HasBudgets => TotalBudgetCount > 0;
+
+    /// <summary>
+    /// 是否有超标预算
+    /// </summary>
+    public bool HasOverBudget => OverBudgetCount > 0;
+
+    partial void OnTotalBudgetCountChanged(int value) => OnPropertyChanged(nameof(HasBudgets));
+    partial void OnOverBudgetCountChanged(int value) => OnPropertyChanged(nameof(HasOverBudget));
+
     // 当前页面内容
     [ObservableProperty]
     private ViewModelBase? _currentPageViewModel;
@@ -148,8 +188,14 @@ public partial class MainWindowViewModel : ViewModelBase
         // Phase 1 Task 1.2: 检测并修复心跳过期的会话
         _ = FixStaleSessionsAsync();
 
+        // Phase 4: 订阅预算进度更新事件
+        BudgetTrackingService.Instance.ProgressUpdated += OnBudgetProgressUpdated;
+
         // 加载今日数据（只加载一次，不自动刷新）
         _ = LoadDataForDateAsync(SelectedDate);
+
+        // Phase 4: 加载预算进度
+        _ = LoadBudgetProgressAsync();
 
         // 注意：定时刷新将在启动监控时创建，停止监控时销毁
     }
@@ -886,9 +932,137 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Phase 4: 加载预算进度数据
+    /// </summary>
+    private async Task LoadBudgetProgressAsync()
+    {
+        try
+        {
+            var progressItems = await BudgetTrackingService.Instance.GetCurrentProgressAsync();
+            UpdateBudgetProgressUI(progressItems);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "加载预算进度失败");
+        }
+    }
+
+    /// <summary>
+    /// Phase 4: 处理预算进度更新事件
+    /// </summary>
+    private void OnBudgetProgressUpdated(object? sender, List<BudgetProgressItem> progressItems)
+    {
+        Log.Debug("MainWindow: 收到预算进度更新, {Count} 个预算", progressItems.Count);
+        global::Avalonia.Threading.Dispatcher.UIThread.Post(() => UpdateBudgetProgressUI(progressItems));
+    }
+
+    /// <summary>
+    /// Phase 4: 更新预算进度 UI
+    /// </summary>
+    private void UpdateBudgetProgressUI(List<BudgetProgressItem> progressItems)
+    {
+        BudgetProgressItems.Clear();
+
+        int completed = 0;
+        int overBudget = 0;
+
+        foreach (var item in progressItems)
+        {
+            var displayItem = new BudgetProgressDisplayItem
+            {
+                DisplayName = item.Budget.DisplayName,
+                TypeLabel = item.Budget.Type == BudgetType.Maximum
+                    ? StringResources.Current.UpperLimitLabel
+                    : StringResources.Current.LowerLimitLabel,
+                BudgetType = item.Budget.Type,
+                ProgressPercentage = item.ProgressPercentage,
+                ProgressText = FormatProgressText(item.TodayActualMinutes, item.Budget.TargetMinutes),
+                StatusText = FormatStatusText(item),
+                IsOverBudget = item.IsOverBudget,
+                IsGoalMet = item.IsGoalMet
+            };
+
+            // 设置进度条颜色
+            displayItem.UpdateProgressColor();
+
+            BudgetProgressItems.Add(displayItem);
+
+            // 统计完成和超标数量
+            if (item.IsGoalMet) completed++;
+            if (item.IsOverBudget) overBudget++;
+        }
+
+        TotalBudgetCount = progressItems.Count;
+        CompletedBudgetCount = completed;
+        OverBudgetCount = overBudget;
+
+        Log.Debug("预算进度UI更新完成: {Total}个预算, {Completed}个达标, {Over}个超标",
+            TotalBudgetCount, CompletedBudgetCount, OverBudgetCount);
+    }
+
+    /// <summary>
+    /// 格式化进度文本 (例如: "45分钟 / 2小时")
+    /// </summary>
+    private static string FormatProgressText(int actualMinutes, int targetMinutes)
+    {
+        var actualText = FormatDuration(actualMinutes);
+        var targetText = FormatDuration(targetMinutes);
+        return $"{actualText} / {targetText}";
+    }
+
+    /// <summary>
+    /// 格式化状态文本 (例如: "剩余1小时15分钟" 或 "已超出30分钟")
+    /// </summary>
+    private static string FormatStatusText(BudgetProgressItem item)
+    {
+        if (item.Budget.Type == BudgetType.Maximum)
+        {
+            // 上限目标
+            if (item.IsOverBudget)
+            {
+                var overMinutes = item.TodayActualMinutes - item.Budget.TargetMinutes;
+                return string.Format(StringResources.Current.OverTimeFormat, FormatDuration(overMinutes));
+            }
+            else
+            {
+                return string.Format(StringResources.Current.RemainingTimeFormat, FormatDuration(item.RemainingMinutes));
+            }
+        }
+        else
+        {
+            // 下限目标
+            if (item.IsGoalMet)
+            {
+                return StringResources.Current.GoalMetLabel;
+            }
+            else
+            {
+                return string.Format(StringResources.Current.RemainingTimeFormat, FormatDuration(item.RemainingMinutes));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 格式化时长 (分钟转为可读格式)
+    /// </summary>
+    private static string FormatDuration(int minutes)
+    {
+        if (minutes >= 60)
+        {
+            var hours = minutes / 60;
+            var mins = minutes % 60;
+            return mins > 0 ? $"{hours}h{mins}m" : $"{hours}h";
+        }
+        return $"{minutes}m";
+    }
+
     public void Dispose()
     {
         _updateTimer?.Dispose();
+
+        // Phase 4: 取消预算进度更新事件订阅
+        BudgetTrackingService.Instance.ProgressUpdated -= OnBudgetProgressUpdated;
 
         // 停止预算追踪服务和通知服务
         BudgetTrackingService.Instance.Stop();
@@ -959,4 +1133,87 @@ public partial class TopAppItem : ObservableObject
     public string DurationText => $"{(int)Duration.TotalHours:D2}:{Duration.Minutes:D2}:{Duration.Seconds:D2}";
     public string SessionCountText => $"{SessionCount}{StringResources.Current.UsageCountSuffix}";
     public string PercentageText => $"{Percentage:F1}%";
+}
+
+/// <summary>
+/// Phase 4: 预算进度显示项 - 用于仪表盘显示
+/// </summary>
+public partial class BudgetProgressDisplayItem : ObservableObject
+{
+    /// <summary>
+    /// 显示名称
+    /// </summary>
+    [ObservableProperty]
+    private string _displayName = string.Empty;
+
+    /// <summary>
+    /// 类型标签 (上限/下限)
+    /// </summary>
+    [ObservableProperty]
+    private string _typeLabel = string.Empty;
+
+    /// <summary>
+    /// 预算类型
+    /// </summary>
+    [ObservableProperty]
+    private BudgetType _budgetType;
+
+    /// <summary>
+    /// 完成百分比 (0-100)
+    /// </summary>
+    [ObservableProperty]
+    private double _progressPercentage;
+
+    /// <summary>
+    /// 进度文本 (例如: "45分钟 / 2小时")
+    /// </summary>
+    [ObservableProperty]
+    private string _progressText = string.Empty;
+
+    /// <summary>
+    /// 状态文本 (例如: "剩余1小时15分钟")
+    /// </summary>
+    [ObservableProperty]
+    private string _statusText = string.Empty;
+
+    /// <summary>
+    /// 是否超出预算
+    /// </summary>
+    [ObservableProperty]
+    private bool _isOverBudget;
+
+    /// <summary>
+    /// 是否已达标
+    /// </summary>
+    [ObservableProperty]
+    private bool _isGoalMet;
+
+    /// <summary>
+    /// 进度条颜色
+    /// </summary>
+    [ObservableProperty]
+    private IBrush _progressColor = new SolidColorBrush(Color.Parse("#4ECDC4"));
+
+    /// <summary>
+    /// 根据状态更新进度条颜色
+    /// </summary>
+    public void UpdateProgressColor()
+    {
+        string colorHex;
+        if (BudgetType == BudgetType.Maximum)
+        {
+            // 上限目标：绿色表示在范围内，红色表示超出
+            if (IsOverBudget) colorHex = "#FF6B6B"; // 红色
+            else if (ProgressPercentage >= 80) colorHex = "#FFB347"; // 橙色警告
+            else colorHex = "#4ECDC4"; // 绿色
+        }
+        else
+        {
+            // 下限目标：绿色表示达标，橙色表示未达标
+            if (IsGoalMet) colorHex = "#4ECDC4"; // 绿色
+            else if (ProgressPercentage >= 50) colorHex = "#FFB347"; // 橙色
+            else colorHex = "#8E8E93"; // 灰色
+        }
+        ProgressColor = new SolidColorBrush(Color.Parse(colorHex));
+    }
 }

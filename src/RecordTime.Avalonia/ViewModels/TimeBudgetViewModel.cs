@@ -710,8 +710,12 @@ public partial class TimeBudgetViewModel : ViewModelBase
     /// 开始新增目标
     /// </summary>
     [RelayCommand]
-    private void StartAddBudget()
+    private async Task StartAddBudgetAsync()
     {
+        // 刷新可用应用列表
+        await using var context = new RecordTimeDbContext();
+        await LoadAvailableOptionsAsync(context);
+
         EditingBudget = null;
         EditDisplayName = string.Empty;
         EditIsAppBudget = true;
@@ -730,8 +734,12 @@ public partial class TimeBudgetViewModel : ViewModelBase
     /// 开始编辑目标
     /// </summary>
     [RelayCommand]
-    private void StartEditBudget(TimeBudgetItem budget)
+    private async Task StartEditBudgetAsync(TimeBudgetItem budget)
     {
+        // 刷新可用应用列表
+        await using var context = new RecordTimeDbContext();
+        await LoadAvailableOptionsAsync(context);
+
         EditingBudget = budget;
         EditDisplayName = budget.DisplayName;
         EditIsAppBudget = budget.IsAppBudget;
@@ -788,6 +796,9 @@ public partial class TimeBudgetViewModel : ViewModelBase
             return;
         }
 
+        // 在清空 EditingBudget 之前记录编辑状态
+        var isEditingExisting = EditingBudget != null;
+
         try
         {
             await using var context = new RecordTimeDbContext();
@@ -842,7 +853,9 @@ public partial class TimeBudgetViewModel : ViewModelBase
 
             IsEditing = false;
             EditingBudget = null;
-            StatusMessage = EditingBudget != null ? "目标已更新" : "目标已添加";
+            StatusMessage = isEditingExisting
+                ? Resources.Strings.StringResources.Current.BudgetUpdatedMessage
+                : Resources.Strings.StringResources.Current.BudgetAddedMessage;
         }
         catch (Exception ex)
         {

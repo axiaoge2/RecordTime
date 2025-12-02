@@ -388,4 +388,22 @@ public class EnglishStrings : IStringProvider
     public string ReminderThresholdLabel => "Reminder Threshold: ";
     public string CancelButton => "Cancel";
     public string SaveButton => "Save";
+
+    // Status Messages
+    public string BudgetAddedMessage => "✓ Budget added";
+    public string BudgetUpdatedMessage => "✓ Budget updated";
+    public string BudgetDeletedMessage => "✓ Budget deleted";
+    public string BudgetEnabledMessage => "✓ Budget enabled";
+    public string BudgetDisabledMessage => "✓ Budget disabled";
+
+    // Dashboard Budget Panel
+    public string TodayBudgetTitle => "🎯 Today's Budget";
+    public string BudgetCompletedLabel => "Completed";
+    public string BudgetOverLimitWarning => "⚠️ Over";
+    public string NoBudgetsHint => "No time budgets set. Click the menu to add one.";
+    public string RemainingTimeFormat => "{0} remaining";
+    public string OverTimeFormat => "{0} over";
+    public string GoalMetLabel => "✓ Goal met";
+    public string UpperLimitLabel => "Max";
+    public string LowerLimitLabel => "Min";
 }

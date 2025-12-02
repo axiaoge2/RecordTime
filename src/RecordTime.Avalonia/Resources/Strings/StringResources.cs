@@ -408,6 +408,24 @@ public class StringResources : INotifyPropertyChanged
     public string CancelButton => _provider.CancelButton;
     public string SaveButton => _provider.SaveButton;
 
+    // Budget Status Messages
+    public string BudgetAddedMessage => _provider.BudgetAddedMessage;
+    public string BudgetUpdatedMessage => _provider.BudgetUpdatedMessage;
+    public string BudgetDeletedMessage => _provider.BudgetDeletedMessage;
+    public string BudgetEnabledMessage => _provider.BudgetEnabledMessage;
+    public string BudgetDisabledMessage => _provider.BudgetDisabledMessage;
+
+    // Dashboard Budget Panel
+    public string TodayBudgetTitle => _provider.TodayBudgetTitle;
+    public string BudgetCompletedLabel => _provider.BudgetCompletedLabel;
+    public string BudgetOverLimitWarning => _provider.BudgetOverLimitWarning;
+    public string NoBudgetsHint => _provider.NoBudgetsHint;
+    public string RemainingTimeFormat => _provider.RemainingTimeFormat;
+    public string OverTimeFormat => _provider.OverTimeFormat;
+    public string GoalMetLabel => _provider.GoalMetLabel;
+    public string UpperLimitLabel => _provider.UpperLimitLabel;
+    public string LowerLimitLabel => _provider.LowerLimitLabel;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
@@ -793,4 +811,22 @@ public interface IStringProvider
     string ReminderThresholdLabel { get; }
     string CancelButton { get; }
     string SaveButton { get; }
+
+    // Budget Status Messages
+    string BudgetAddedMessage { get; }
+    string BudgetUpdatedMessage { get; }
+    string BudgetDeletedMessage { get; }
+    string BudgetEnabledMessage { get; }
+    string BudgetDisabledMessage { get; }
+
+    // Dashboard Budget Panel
+    string TodayBudgetTitle { get; }
+    string BudgetCompletedLabel { get; }
+    string BudgetOverLimitWarning { get; }
+    string NoBudgetsHint { get; }
+    string RemainingTimeFormat { get; }
+    string OverTimeFormat { get; }
+    string GoalMetLabel { get; }
+    string UpperLimitLabel { get; }
+    string LowerLimitLabel { get; }
 }

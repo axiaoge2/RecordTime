@@ -388,4 +388,22 @@ public class ChineseStrings : IStringProvider
     public string ReminderThresholdLabel => "提醒阈值: ";
     public string CancelButton => "取消";
     public string SaveButton => "保存";
+
+    // Status Messages
+    public string BudgetAddedMessage => "✓ 目标已添加";
+    public string BudgetUpdatedMessage => "✓ 目标已更新";
+    public string BudgetDeletedMessage => "✓ 目标已删除";
+    public string BudgetEnabledMessage => "✓ 目标已启用";
+    public string BudgetDisabledMessage => "✓ 目标已禁用";
+
+    // Dashboard Budget Panel
+    public string TodayBudgetTitle => "🎯 今日预算";
+    public string BudgetCompletedLabel => "已完成";
+    public string BudgetOverLimitWarning => "⚠️ 超标";
+    public string NoBudgetsHint => "暂无时间目标，点击左侧菜单添加";
+    public string RemainingTimeFormat => "剩余 {0}";
+    public string OverTimeFormat => "已超出 {0}";
+    public string GoalMetLabel => "✓ 已达标";
+    public string UpperLimitLabel => "上限";
+    public string LowerLimitLabel => "下限";
 }

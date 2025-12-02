@@ -23,6 +23,25 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _autoStart = false;
 
+    // 当 AutoStart 属性变化时，更新注册表
+    partial void OnAutoStartChanged(bool value)
+    {
+        // 避免初始化时触发
+        if (_trayService == null) return;
+
+        // 同步到托盘服务（会更新注册表）
+        if (_trayService.AutoStartEnabled != value)
+        {
+            _trayService.AutoStartEnabled = value;
+
+            // 保存到配置文件
+            _ = _settingsService.UpdateSettingsAsync(s => s.General.AutoStart = value);
+
+            StatusText = value ? StringResources.Current.AutoStartEnabled : StringResources.Current.AutoStartDisabled;
+            Log.Information("开机自启动已{Status}", value ? "启用" : "禁用");
+        }
+    }
+
     [ObservableProperty]
     private bool _minimizeToTray = true;
 
@@ -149,20 +168,6 @@ public partial class SettingsViewModel : ViewModelBase
         {
             Log.Error(ex, "保存语言设置失败");
         }
-    }
-
-    [RelayCommand]
-    private async Task ToggleAutoStartAsync()
-    {
-        // 切换托盘服务的自启动状态(会自动更新注册表)
-        _trayService.AutoStartEnabled = !_trayService.AutoStartEnabled;
-
-        // AutoStart 会通过 PropertyChanged 事件自动更新
-        // 同时也更新到配置文件
-        await _settingsService.UpdateSettingsAsync(s => s.General.AutoStart = _trayService.AutoStartEnabled);
-
-        StatusText = _trayService.AutoStartEnabled ? StringResources.Current.AutoStartEnabled : StringResources.Current.AutoStartDisabled;
-        Log.Information("开机自启动已{Status}", _trayService.AutoStartEnabled ? "启用" : "禁用");
     }
 
     [RelayCommand]

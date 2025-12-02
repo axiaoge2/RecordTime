@@ -42,8 +42,7 @@
                                       Classes="caption"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
-                                     IsChecked="{Binding AutoStart}"
-                                     Command="{Binding ToggleAutoStartCommand}"
+                                     IsChecked="{Binding AutoStart, Mode=TwoWay}"
                                      VerticalAlignment="Center"/>
                     </Grid>
 
