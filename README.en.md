@@ -36,16 +36,14 @@
 <div align="center">
 
 ### Main Dashboard
-<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
+![Dashboard](docs/screenshots/dashboard.png)
 *Real-time app tracking, TOP 10 apps ranking, category distribution*
 
 ### Analytics
-<!-- ![Analytics](docs/screenshots/analytics.png) -->
+![Analytics](docs/screenshots/analytics.png)
+![Report Generation](docs/screenshots/analytics1.png)
+![AI Configuration](docs/screenshots/analytics2.png)
 *HTML report generation, AI analysis, custom date range*
-
-### Time Budget
-<!-- ![Time Budget](docs/screenshots/time-budget.png) -->
-*Set goals, smart reminders, progress tracking*
 
 </div>
 

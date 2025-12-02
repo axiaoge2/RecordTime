@@ -36,16 +36,14 @@
 <div align="center">
 
 ### 主仪表盘
-<!-- ![主仪表盘](docs/screenshots/dashboard.png) -->
+![主仪表盘](docs/screenshots/dashboard.png)
 *实时追踪应用使用情况，TOP 10 应用排行，分类时长分布*
 
 ### 数据分析
-<!-- ![数据分析](docs/screenshots/analytics.png) -->
+![数据分析](docs/screenshots/analytics.png)
+![报告生成](docs/screenshots/analytics1.png)
+![AI分析配置](docs/screenshots/analytics2.png)
 *HTML报告生成、AI分析、自定义日期范围*
-
-### 时间预算
-<!-- ![时间预算](docs/screenshots/time-budget.png) -->
-*设定使用目标、智能提醒、进度追踪*
 
 </div>
 
