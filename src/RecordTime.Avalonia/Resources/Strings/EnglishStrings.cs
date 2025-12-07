@@ -169,6 +169,14 @@ public class EnglishStrings : IStringProvider
     public string Language => "Language";
     public string LanguageDesc => "Select interface language";
 
+    // Theme settings
+    public string Theme => "Theme";
+    public string ThemeDesc => "Select application appearance theme";
+    public string ThemeLight => "Light";
+    public string ThemeDark => "Dark";
+    public string ThemeAuto => "System";
+    public string ThemeSwitched => "Theme switched to {0}";
+
     public string IdleTimeout => "Idle Timeout";
     public string IdleTimeoutDesc => "Minutes of inactivity before considered idle";
     public string RecordWindowTitles => "Record Window Titles";

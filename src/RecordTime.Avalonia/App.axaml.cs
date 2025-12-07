@@ -3,21 +3,14 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
-using Avalonia.Platform.Storage;
-using Avalonia.Platform;
 using Avalonia.Media.Imaging;
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia.Markup.Xaml;
 using RecordTime.Avalonia.ViewModels;
 using RecordTime.Avalonia.Views;
 using RecordTime.Avalonia.Services;
-using LiveChartsCore;
-using LiveChartsCore.Kernel;
-using LiveChartsCore.SkiaSharpView;
-using RecordTime.Core.Models;
 using Serilog;
 
 namespace RecordTime.Avalonia;
@@ -30,15 +23,8 @@ public partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
 
-        // 配置 LiveCharts 主题
-        LiveCharts.Configure(config =>
-            config
-                .AddSkiaSharp()
-                .AddDefaultMappers()
-                .AddLightTheme()
-                // 为 DailyUsage 类型添加自定义映射
-                .HasMap<DailyUsage>((dailyUsage, index) => new Coordinate(index, dailyUsage.TotalHours))
-        );
+        // 初始化主题服务 (包含 LiveCharts 主题配置)
+        ThemeService.Instance.Initialize();
 
         // 初始化多语言系统
         InitializeLanguageSystem();

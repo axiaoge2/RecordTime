@@ -254,6 +254,14 @@ public class StringResources : INotifyPropertyChanged
     public string Language => _provider.Language;
     public string LanguageDesc => _provider.LanguageDesc;
 
+    // Theme settings
+    public string Theme => _provider.Theme;
+    public string ThemeDesc => _provider.ThemeDesc;
+    public string ThemeLight => _provider.ThemeLight;
+    public string ThemeDark => _provider.ThemeDark;
+    public string ThemeAuto => _provider.ThemeAuto;
+    public string ThemeSwitched => _provider.ThemeSwitched;
+
     public string IdleTimeout => _provider.IdleTimeout;
     public string IdleTimeoutDesc => _provider.IdleTimeoutDesc;
     public string RecordWindowTitles => _provider.RecordWindowTitles;
@@ -657,6 +665,14 @@ public interface IStringProvider
     string ShowNotificationsDesc { get; }
     string Language { get; }
     string LanguageDesc { get; }
+
+    // Theme settings
+    string Theme { get; }
+    string ThemeDesc { get; }
+    string ThemeLight { get; }
+    string ThemeDark { get; }
+    string ThemeAuto { get; }
+    string ThemeSwitched { get; }
 
     string IdleTimeout { get; }
     string IdleTimeoutDesc { get; }

@@ -169,6 +169,14 @@ public class ChineseStrings : IStringProvider
     public string Language => "语言";
     public string LanguageDesc => "选择界面显示语言";
 
+    // Theme settings
+    public string Theme => "主题";
+    public string ThemeDesc => "选择应用外观主题";
+    public string ThemeLight => "浅色";
+    public string ThemeDark => "深色";
+    public string ThemeAuto => "跟随系统";
+    public string ThemeSwitched => "主题已切换为 {0}";
+
     public string IdleTimeout => "空闲超时时间";
     public string IdleTimeoutDesc => "无操作多久后视为空闲(分钟)";
     public string RecordWindowTitles => "记录窗口标题";

@@ -69,11 +69,23 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private LanguageOption? _selectedLanguageOption;
 
+    // 主题相关属性
+    [ObservableProperty]
+    private int _selectedThemeIndex = 2; // 默认 Auto (索引 2)
+
     // 语言选项
     public List<LanguageOption> LanguageOptions { get; } = new()
     {
         new LanguageOption { Code = "zh-CN", Name = "简体中文" },
         new LanguageOption { Code = "en-US", Name = "English" }
+    };
+
+    // 主题选项
+    public List<ThemeOption> ThemeOptions { get; } = new()
+    {
+        new ThemeOption { Mode = ThemeService.ThemeMode.Light, NameZh = "浅色", NameEn = "Light" },
+        new ThemeOption { Mode = ThemeService.ThemeMode.Dark, NameZh = "深色", NameEn = "Dark" },
+        new ThemeOption { Mode = ThemeService.ThemeMode.Auto, NameZh = "跟随系统", NameEn = "System" }
     };
 
     public SettingsViewModel()
@@ -106,6 +118,16 @@ public partial class SettingsViewModel : ViewModelBase
             ShowNotifications = settings.General.ShowNotifications;
             SelectedLanguage = settings.General.Language;
             IdleTimeoutMinutes = settings.Monitoring.IdleTimeoutMinutes;
+
+            // 加载主题设置
+            var themeMode = ThemeService.Instance.CurrentMode;
+            SelectedThemeIndex = themeMode switch
+            {
+                ThemeService.ThemeMode.Light => 0,
+                ThemeService.ThemeMode.Dark => 1,
+                ThemeService.ThemeMode.Auto => 2,
+                _ => 2
+            };
 
             // 设置选中的语言选项
             SelectedLanguageOption = LanguageOptions.FirstOrDefault(l => l.Code == SelectedLanguage)
@@ -155,6 +177,19 @@ public partial class SettingsViewModel : ViewModelBase
         if (value != null && value.Code != SelectedLanguage)
         {
             SelectedLanguage = value.Code;
+        }
+    }
+
+    partial void OnSelectedThemeIndexChanged(int value)
+    {
+        if (value >= 0 && value < ThemeOptions.Count)
+        {
+            var themeOption = ThemeOptions[value];
+            ThemeService.Instance.SetTheme(themeOption.Mode);
+
+            var themeName = SelectedLanguage == "zh-CN" ? themeOption.NameZh : themeOption.NameEn;
+            StatusText = string.Format(StringResources.Current.ThemeSwitched, themeName);
+            Log.Information("主题已切换: {Theme}", themeOption.Mode);
         }
     }
 
@@ -340,4 +375,12 @@ public class LanguageOption
 {
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+}
+
+// 主题选项模型
+public class ThemeOption
+{
+    public ThemeService.ThemeMode Mode { get; set; }
+    public string NameZh { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
 }
