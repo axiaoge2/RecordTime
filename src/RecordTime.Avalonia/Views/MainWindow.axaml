@@ -92,7 +92,6 @@
                                            VerticalAlignment="Center"
                                            FontSize="15"
                                            FontFamily="{DynamicResource EditorialSerifFont}"
-                                           FontWeight="Medium"
                                            Margin="16,0,0,0"/>
                             </ListBoxItem>
 
@@ -102,7 +101,6 @@
                                            VerticalAlignment="Center"
                                            FontSize="15"
                                            FontFamily="{DynamicResource EditorialSerifFont}"
-                                           FontWeight="Medium"
                                            Margin="16,0,0,0"/>
                             </ListBoxItem>
 
@@ -112,7 +110,6 @@
                                            VerticalAlignment="Center"
                                            FontSize="15"
                                            FontFamily="{DynamicResource EditorialSerifFont}"
-                                           FontWeight="Medium"
                                            Margin="16,0,0,0"/>
                             </ListBoxItem>
 
@@ -122,7 +119,6 @@
                                            VerticalAlignment="Center"
                                            FontSize="15"
                                            FontFamily="{DynamicResource EditorialSerifFont}"
-                                           FontWeight="Medium"
                                            Margin="16,0,0,0"/>
                             </ListBoxItem>
 
@@ -132,7 +128,6 @@
                                            VerticalAlignment="Center"
                                            FontSize="15"
                                            FontFamily="{DynamicResource EditorialSerifFont}"
-                                           FontWeight="Medium"
                                            Margin="16,0,0,0"/>
                             </ListBoxItem>
 
@@ -142,7 +137,6 @@
                                            VerticalAlignment="Center"
                                            FontSize="15"
                                            FontFamily="{DynamicResource EditorialSerifFont}"
-                                           FontWeight="Medium"
                                            Margin="16,0,0,0"/>
                             </ListBoxItem>
                         </ListBox>

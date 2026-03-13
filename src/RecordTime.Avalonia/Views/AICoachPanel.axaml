@@ -53,7 +53,7 @@
             </Button.Styles>
             <TextBlock Text="AI" 
                        FontFamily="{DynamicResource EditorialSerifFont}" 
-                       FontWeight="Bold" 
+                       FontWeight="Normal" 
                        FontSize="20"/>
         </Button>
 
@@ -88,7 +88,7 @@
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="AI Time Coach"
                                       FontFamily="{DynamicResource EditorialSerifFont}"
-                                      FontWeight="SemiBold"
+                                      FontWeight="Normal"
                                       FontSize="18"
                                       Foreground="{DynamicResource LinearBgPrimaryBrush}"
                                       VerticalAlignment="Center"/>
@@ -127,7 +127,7 @@
                             <StackPanel Spacing="12">
                                 <TextBlock Text="⚠️ 请先配置 API Key"
                                           FontFamily="{DynamicResource EditorialSerifFont}"
-                                          FontWeight="SemiBold"
+                                          FontWeight="Normal"
                                           FontSize="16"
                                           Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
                                 <Button Command="{Binding OpenSettingsCommand}"

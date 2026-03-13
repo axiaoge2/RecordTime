@@ -41,21 +41,21 @@
     <ControlTheme x:Key="LinearTextH1" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource EditorialSerifFont}"/>
         <Setter Property="FontSize" Value="{DynamicResource LinearFontSize4xl}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
     </ControlTheme>
 
     <ControlTheme x:Key="LinearTextH2" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource EditorialSerifFont}"/>
         <Setter Property="FontSize" Value="{DynamicResource LinearFontSize3xl}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
     </ControlTheme>
 
     <ControlTheme x:Key="LinearTextH3" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{DynamicResource EditorialSerifFont}"/>
         <Setter Property="FontSize" Value="{DynamicResource LinearFontSize2xl}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Normal"/>
         <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
     </ControlTheme>
 

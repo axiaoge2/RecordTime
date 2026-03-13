@@ -43,7 +43,7 @@
                         <TextBlock Text="{Binding TotalDuration}"
                                    FontSize="64"
                                    FontFamily="{DynamicResource EditorialSerifFont}"
-                                   FontWeight="SemiBold"
+                                   FontWeight="Normal"
                                    Foreground="{DynamicResource LinearFgPrimaryBrush}"
                                    Margin="0,8,0,12"/>
                         
@@ -126,7 +126,7 @@
                     <TextBlock Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
                                FontSize="20"
                                FontFamily="{DynamicResource EditorialSerifFont}"
-                               FontWeight="SemiBold"
+                               FontWeight="Normal"
                                Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
                     <lvc:PieChart Series="{Binding PieChartSeries}"
                                   LegendPosition="Right"
@@ -140,7 +140,7 @@
                     <TextBlock Text="{Binding CategoryDistribution, Source={x:Static strings:StringResources.Current}}"
                                FontSize="20"
                                FontFamily="{DynamicResource EditorialSerifFont}"
-                               FontWeight="SemiBold"
+                               FontWeight="Normal"
                                Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
                     <lvc:CartesianChart Series="{Binding BarChartSeries}"
                                         XAxes="{Binding BarChartXAxes}"
@@ -159,7 +159,7 @@
                     <TextBlock Text="{Binding Top10AppsTitle, Source={x:Static strings:StringResources.Current}}"
                                FontSize="24"
                                FontFamily="{DynamicResource EditorialSerifFont}"
-                               FontWeight="SemiBold"
+                               FontWeight="Normal"
                                Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
 
                     <DataGrid ItemsSource="{Binding TopApps}"

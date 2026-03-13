@@ -16,7 +16,7 @@
             <TextBlock Text="{Binding Settings, Source={x:Static strings:StringResources.Current}}"
                       FontSize="32" 
                       FontFamily="{DynamicResource EditorialSerifFont}"
-                      FontWeight="SemiBold"
+                      FontWeight="Normal"
                       Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
 
             <!-- Status Bar - Editorial Style -->
