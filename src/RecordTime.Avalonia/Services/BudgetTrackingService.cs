@@ -188,7 +188,6 @@ public class BudgetTrackingService : IDisposable
     {
         await using var context = new RecordTimeDbContext();
 
-        // 获取所有启用的预算
         var budgets = await context.TimeBudgets
             .AsNoTracking()
             .Where(b => b.IsEnabled)
@@ -198,19 +197,39 @@ public class BudgetTrackingService : IDisposable
             return new List<BudgetProgressItem>();
 
         var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+
+        // 批量获取所有今日进度
+        var allProgress = await context.DailyBudgetProgresses
+            .AsNoTracking()
+            .Where(p => p.Date >= today && p.Date < tomorrow)
+            .ToDictionaryAsync(p => p.TimeBudgetId);
+
+        // 批量获取今日使用时间（按 ProcessName 和 Category 聚合）
+        var usageByProcess = await context.Sessions.AsNoTracking()
+            .Where(s => s.StartTime >= today && s.StartTime < tomorrow)
+            .GroupBy(s => s.ProcessName)
+            .Select(g => new { ProcessName = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
+            .ToDictionaryAsync(x => x.ProcessName, x => x.TotalSeconds);
+
+        var usageByCategory = await context.Sessions.AsNoTracking()
+            .Where(s => s.StartTime >= today && s.StartTime < tomorrow && s.Category != null)
+            .GroupBy(s => s.Category!)
+            .Select(g => new { Category = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
+            .ToDictionaryAsync(x => x.Category, x => x.TotalSeconds);
+
         var progressItems = new List<BudgetProgressItem>();
 
         foreach (var budget in budgets)
         {
-            // 获取今日进度
-            var todayProgress = await context.DailyBudgetProgresses
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.TimeBudgetId == budget.Id && p.Date.Date == today);
+            int todayMinutes = 0;
+            if (!string.IsNullOrEmpty(budget.ProcessName) && usageByProcess.TryGetValue(budget.ProcessName, out var procSecs))
+                todayMinutes = procSecs / 60;
+            else if (!string.IsNullOrEmpty(budget.Category) && usageByCategory.TryGetValue(budget.Category, out var catSecs))
+                todayMinutes = catSecs / 60;
 
-            // 计算今日实际使用时间
-            int todayMinutes = await CalculateTodayUsageAsync(context, budget);
+            allProgress.TryGetValue(budget.Id, out var todayProgress);
 
-            // 如果没有进度记录或者使用时间有变化，需要更新
             if (todayProgress == null || todayProgress.ActualMinutes != todayMinutes)
             {
                 todayProgress = new DailyBudgetProgress
@@ -223,11 +242,7 @@ public class BudgetTrackingService : IDisposable
                 };
             }
 
-            progressItems.Add(new BudgetProgressItem
-            {
-                Budget = budget,
-                TodayProgress = todayProgress
-            });
+            progressItems.Add(new BudgetProgressItem { Budget = budget, TodayProgress = todayProgress });
         }
 
         return progressItems;
@@ -288,16 +303,37 @@ public class BudgetTrackingService : IDisposable
             if (budgets.Count == 0)
                 return;
 
+            var tomorrow = today.AddDays(1);
+
+            // 批量查询今日使用数据
+            var usageByProcess = await context.Sessions.AsNoTracking()
+                .Where(s => s.StartTime >= today && s.StartTime < tomorrow)
+                .GroupBy(s => s.ProcessName)
+                .Select(g => new { ProcessName = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
+                .ToDictionaryAsync(x => x.ProcessName, x => x.TotalSeconds);
+
+            var usageByCategory = await context.Sessions.AsNoTracking()
+                .Where(s => s.StartTime >= today && s.StartTime < tomorrow && s.Category != null)
+                .GroupBy(s => s.Category!)
+                .Select(g => new { Category = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
+                .ToDictionaryAsync(x => x.Category, x => x.TotalSeconds);
+
+            // 批量获取今日进度
+            var allProgress = await context.DailyBudgetProgresses
+                .Where(p => p.Date >= today && p.Date < tomorrow)
+                .ToDictionaryAsync(p => p.TimeBudgetId);
+
             var progressItems = new List<BudgetProgressItem>();
 
             foreach (var budget in budgets)
             {
-                // 计算今日使用时间
-                int todayMinutes = await CalculateTodayUsageAsync(context, budget);
+                int todayMinutes = 0;
+                if (!string.IsNullOrEmpty(budget.ProcessName) && usageByProcess.TryGetValue(budget.ProcessName, out var procSecs))
+                    todayMinutes = procSecs / 60;
+                else if (!string.IsNullOrEmpty(budget.Category) && usageByCategory.TryGetValue(budget.Category, out var catSecs))
+                    todayMinutes = catSecs / 60;
 
-                // 获取或创建今日进度记录
-                var progress = await context.DailyBudgetProgresses
-                    .FirstOrDefaultAsync(p => p.TimeBudgetId == budget.Id && p.Date.Date == today);
+                allProgress.TryGetValue(budget.Id, out var progress);
 
                 if (progress == null)
                 {
@@ -315,27 +351,14 @@ public class BudgetTrackingService : IDisposable
                 {
                     progress.ActualMinutes = todayMinutes;
                     progress.LastUpdated = DateTime.Now;
-
-                    // 检查是否达标
-                    if (budget.Type == BudgetType.Maximum)
-                    {
-                        progress.GoalReached = todayMinutes <= progress.TargetMinutes;
-                    }
-                    else
-                    {
-                        progress.GoalReached = todayMinutes >= progress.TargetMinutes;
-                    }
+                    progress.GoalReached = budget.Type == BudgetType.Maximum
+                        ? todayMinutes <= progress.TargetMinutes
+                        : todayMinutes >= progress.TargetMinutes;
                 }
 
-                var item = new BudgetProgressItem
-                {
-                    Budget = budget,
-                    TodayProgress = progress
-                };
-
+                var item = new BudgetProgressItem { Budget = budget, TodayProgress = progress };
                 progressItems.Add(item);
 
-                // 检查是否需要发送提醒
                 if (item.NeedsReminder)
                 {
                     progress.ReminderSent = true;

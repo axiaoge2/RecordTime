@@ -118,9 +118,8 @@ public partial class ReportViewModel : ViewModelBase
     private CancellationTokenSource? _chartLoadCancellationTokenSource;
     private System.Timers.Timer? _chartLoadDebounceTimer;
 
-    // 数据缓存
-    private readonly Dictionary<string, (DateTime CacheTime, List<DailyUsage> Data)> _trendCache = new();
-    private readonly Dictionary<string, (DateTime CacheTime, Dictionary<ActivityType, TimeSpan> Data)> _distributionCache = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime CacheTime, List<DailyUsage> Data)> _trendCache = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime CacheTime, Dictionary<ActivityType, TimeSpan> Data)> _distributionCache = new();
     private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5); // 5分钟缓存过期
 
     public ReportViewModel()
@@ -205,15 +204,15 @@ public partial class ReportViewModel : ViewModelBase
     partial void OnStartDateChanged(DateTime value)
     {
         StartDateText = value.ToString(StringResources.Current.DateFormatPattern);
-        _ = LoadPreviewDataAsync();
-        ScheduleChartDataLoad(); // 使用节流加载
+        SchedulePreviewLoad();
+        ScheduleChartDataLoad();
     }
 
     partial void OnEndDateChanged(DateTime value)
     {
         EndDateText = value.ToString(StringResources.Current.DateFormatPattern);
-        _ = LoadPreviewDataAsync();
-        ScheduleChartDataLoad(); // 使用节流加载
+        SchedulePreviewLoad();
+        ScheduleChartDataLoad();
     }
 
     /// <summary>
@@ -248,21 +247,41 @@ public partial class ReportViewModel : ViewModelBase
         _chartLoadDebounceTimer.Start();
     }
 
+    private System.Threading.Timer? _previewDebounceTimer;
+
+    private void SchedulePreviewLoad()
+    {
+        _previewDebounceTimer?.Dispose();
+        _previewDebounceTimer = new System.Threading.Timer(
+            _ => _ = LoadPreviewDataCoreAsync(),
+            null, dueTime: 200, period: Timeout.Infinite);
+    }
+
     private async Task LoadPreviewDataAsync()
+    {
+        await LoadPreviewDataCoreAsync();
+    }
+
+    private async Task LoadPreviewDataCoreAsync()
     {
         try
         {
             await using var dbContext = new RecordTimeDbContext();
 
-            var sessions = await dbContext.Sessions
-                .Where(s => s.StartTime >= StartDate && s.StartTime < EndDate.AddDays(1))
-                .ToListAsync();
+            var start = StartDate;
+            var endPlusOne = EndDate.AddDays(1);
+
+            var totalSessions = await dbContext.Sessions
+                .CountAsync(s => s.StartTime >= start && s.StartTime < endPlusOne);
+            var totalApps = await dbContext.Sessions
+                .Where(s => s.StartTime >= start && s.StartTime < endPlusOne)
+                .Select(s => s.ProcessName).Distinct().CountAsync();
 
             TotalDays = (int)(EndDate - StartDate).TotalDays + 1;
-            TotalSessions = sessions.Count;
-            TotalApps = sessions.Select(s => s.ProcessName).Distinct().Count();
+            TotalSessions = totalSessions;
+            TotalApps = totalApps;
 
-            if (sessions.Count == 0)
+            if (totalSessions == 0)
             {
                 StatusDetail = StringResources.Current.NoDataInRange;
             }
@@ -273,7 +292,7 @@ public partial class ReportViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"加载预览数据失败: {ex.Message}");
+            Log.Warning(ex, "加载预览数据失败");
         }
     }
 
@@ -484,55 +503,32 @@ public partial class ReportViewModel : ViewModelBase
     {
         var now = DateTime.Now;
 
-        // 清理趋势缓存
-        var expiredTrendKeys = _trendCache
-            .Where(kv => (now - kv.Value.CacheTime) > _cacheExpiration)
-            .Select(kv => kv.Key)
-            .ToList();
-
-        foreach (var key in expiredTrendKeys)
+        foreach (var key in _trendCache.Keys)
         {
-            _trendCache.Remove(key);
+            if (_trendCache.TryGetValue(key, out var val) &&
+                (now - val.CacheTime) > _cacheExpiration)
+                _trendCache.TryRemove(key, out _);
         }
 
-        // 清理分布缓存
-        var expiredDistKeys = _distributionCache
-            .Where(kv => (now - kv.Value.CacheTime) > _cacheExpiration)
-            .Select(kv => kv.Key)
-            .ToList();
-
-        foreach (var key in expiredDistKeys)
+        foreach (var key in _distributionCache.Keys)
         {
-            _distributionCache.Remove(key);
+            if (_distributionCache.TryGetValue(key, out var val) &&
+                (now - val.CacheTime) > _cacheExpiration)
+                _distributionCache.TryRemove(key, out _);
         }
 
-        // 如果缓存仍然过大，保留最近的10个
         if (_trendCache.Count > 10)
         {
-            var keysToRemove = _trendCache
-                .OrderBy(kv => kv.Value.CacheTime)
-                .Take(_trendCache.Count - 10)
-                .Select(kv => kv.Key)
-                .ToList();
-
-            foreach (var key in keysToRemove)
-            {
-                _trendCache.Remove(key);
-            }
+            foreach (var key in _trendCache.OrderBy(kv => kv.Value.CacheTime)
+                .Take(_trendCache.Count - 10).Select(kv => kv.Key).ToList())
+                _trendCache.TryRemove(key, out _);
         }
 
         if (_distributionCache.Count > 10)
         {
-            var keysToRemove = _distributionCache
-                .OrderBy(kv => kv.Value.CacheTime)
-                .Take(_distributionCache.Count - 10)
-                .Select(kv => kv.Key)
-                .ToList();
-
-            foreach (var key in keysToRemove)
-            {
-                _distributionCache.Remove(key);
-            }
+            foreach (var key in _distributionCache.OrderBy(kv => kv.Value.CacheTime)
+                .Take(_distributionCache.Count - 10).Select(kv => kv.Key).ToList())
+                _distributionCache.TryRemove(key, out _);
         }
     }
 

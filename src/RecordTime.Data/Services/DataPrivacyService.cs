@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace RecordTime.Data.Services;
 
@@ -10,50 +11,31 @@ public class DataPrivacyService
 {
     private static readonly string Salt = GenerateSalt();
 
-    /// <summary>
-    /// 对窗口标题进行哈希处理（保护隐私）
-    /// </summary>
+    private static readonly Regex UrlRegex = new(@"https?://[^\s]+", RegexOptions.Compiled);
+    private static readonly Regex EmailRegex = new(@"[\w\.-]+@[\w\.-]+\.\w+", RegexOptions.Compiled);
+    private static readonly Regex IpRegex = new(@"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", RegexOptions.Compiled);
+
+    [ThreadStatic]
+    private static SHA256? t_sha256;
+
     public static string HashWindowTitle(string title)
     {
         if (string.IsNullOrEmpty(title))
             return string.Empty;
 
-        // 移除敏感信息（URL、邮箱等）
         var sanitized = RemoveSensitiveInfo(title);
 
-        // 生成稳定哈希
-        using var sha256 = SHA256.Create();
+        var sha256 = t_sha256 ??= SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(sanitized + Salt);
         var hash = sha256.ComputeHash(bytes);
         return Convert.ToHexString(hash);
     }
 
-    /// <summary>
-    /// 移除敏感信息
-    /// </summary>
     private static string RemoveSensitiveInfo(string text)
     {
-        // 移除URL
-        text = System.Text.RegularExpressions.Regex.Replace(
-            text,
-            @"https?://[^\s]+",
-            "[URL]"
-        );
-
-        // 移除邮箱
-        text = System.Text.RegularExpressions.Regex.Replace(
-            text,
-            @"[\w\.-]+@[\w\.-]+\.\w+",
-            "[EMAIL]"
-        );
-
-        // 移除IP地址
-        text = System.Text.RegularExpressions.Regex.Replace(
-            text,
-            @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
-            "[IP]"
-        );
-
+        text = UrlRegex.Replace(text, "[URL]");
+        text = EmailRegex.Replace(text, "[EMAIL]");
+        text = IpRegex.Replace(text, "[IP]");
         return text;
     }
 

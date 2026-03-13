@@ -81,22 +81,20 @@ public class ActivityDetector : IActivityDetector
             return ActivityType.Video; // 浏览器视频播放
         }
 
-        // 优先级3: 在线会议检测（会议应用 + 音频活动）
-        string processLower = window.ProcessName.ToLowerInvariant();
         if (IsOnlineMeeting(window.ProcessName) && state.AudioActive)
         {
-            return ActivityType.Meeting; // 会议应用且有音频活动，高可信度
+            return ActivityType.Meeting;
         }
 
-        // 优先级4: 游戏检测
         if (window.IsFullscreen && state.FrequentInput)
         {
-            // 全屏且频繁输入，很可能是游戏
             return ActivityType.Gaming;
         }
 
-        if ((processLower.Contains("game") || processLower.Contains("steam") ||
-             processLower.Contains("epic") || processLower.Contains("origin")) &&
+        if ((window.ProcessName.Contains("game", StringComparison.OrdinalIgnoreCase) ||
+             window.ProcessName.Contains("steam", StringComparison.OrdinalIgnoreCase) ||
+             window.ProcessName.Contains("epic", StringComparison.OrdinalIgnoreCase) ||
+             window.ProcessName.Contains("origin", StringComparison.OrdinalIgnoreCase)) &&
             state.FrequentInput)
         {
             return ActivityType.Gaming;
@@ -180,67 +178,55 @@ public class ActivityDetector : IActivityDetector
             return category;
         }
 
-        var lowerProcessName = processName.ToLowerInvariant();
         string result;
+        var ci = StringComparison.OrdinalIgnoreCase;
 
-        // 视频娱乐
-        if (VideoAppProcesses.Contains(lowerProcessName))
+        if (VideoAppProcesses.Contains(processName))
             result = "视频娱乐";
-        // 浏览器
-        else if (BrowserProcesses.Contains(lowerProcessName))
+        else if (BrowserProcesses.Contains(processName))
             result = "浏览器";
-        // 在线会议
-        else if (OnlineMeetingApps.Contains(lowerProcessName))
+        else if (OnlineMeetingApps.Contains(processName))
             result = "在线会议";
-        // 音乐
-        else if (MusicPlayerApps.Contains(lowerProcessName))
+        else if (MusicPlayerApps.Contains(processName))
             result = "音乐";
-        // 桌面
-        else if (DesktopProcesses.Contains(lowerProcessName))
+        else if (DesktopProcesses.Contains(processName))
             result = "系统桌面";
-        // 开发工具
-        else if (lowerProcessName.Contains("code") || lowerProcessName.Contains("studio") ||
-            lowerProcessName.Contains("idea") || lowerProcessName.Contains("eclipse") ||
-            lowerProcessName.Contains("rider") || lowerProcessName.Contains("pycharm") ||
-            lowerProcessName.Contains("webstorm") || lowerProcessName.Contains("cursor") ||
-            lowerProcessName.Contains("sublime") || lowerProcessName.Contains("vim") ||
-            lowerProcessName.Contains("emacs") || lowerProcessName.Contains("atom"))
+        else if (processName.Contains("code", ci) || processName.Contains("studio", ci) ||
+            processName.Contains("idea", ci) || processName.Contains("eclipse", ci) ||
+            processName.Contains("rider", ci) || processName.Contains("pycharm", ci) ||
+            processName.Contains("webstorm", ci) || processName.Contains("cursor", ci) ||
+            processName.Contains("sublime", ci) || processName.Contains("vim", ci) ||
+            processName.Contains("emacs", ci) || processName.Contains("atom", ci))
             result = "开发工具";
-        // 办公软件
-        else if (lowerProcessName.Contains("word") || lowerProcessName.Contains("excel") ||
-            lowerProcessName.Contains("powerpoint") || lowerProcessName.Contains("notion") ||
-            lowerProcessName.Contains("onenote") || lowerProcessName.Contains("outlook") ||
-            lowerProcessName.Contains("winword") || lowerProcessName.Contains("wps") ||
-            lowerProcessName.Contains("evernote") || lowerProcessName.Contains("obsidian"))
+        else if (processName.Contains("word", ci) || processName.Contains("excel", ci) ||
+            processName.Contains("powerpoint", ci) || processName.Contains("notion", ci) ||
+            processName.Contains("onenote", ci) || processName.Contains("outlook", ci) ||
+            processName.Contains("winword", ci) || processName.Contains("wps", ci) ||
+            processName.Contains("evernote", ci) || processName.Contains("obsidian", ci))
             result = "办公软件";
-        // 社交通讯
-        else if (lowerProcessName.Contains("wechat") || lowerProcessName.Contains("qq") ||
-            lowerProcessName.Contains("telegram") || lowerProcessName.Contains("discord") ||
-            lowerProcessName.Contains("slack") || lowerProcessName.Contains("teams") ||
-            lowerProcessName.Contains("zoom") || lowerProcessName.Contains("dingtalk") ||
-            lowerProcessName.Contains("feishu") || lowerProcessName.Contains("skype"))
+        else if (processName.Contains("wechat", ci) || processName.Contains("qq", ci) ||
+            processName.Contains("telegram", ci) || processName.Contains("discord", ci) ||
+            processName.Contains("slack", ci) || processName.Contains("teams", ci) ||
+            processName.Contains("zoom", ci) || processName.Contains("dingtalk", ci) ||
+            processName.Contains("feishu", ci) || processName.Contains("skype", ci))
             result = "社交通讯";
-        // 游戏
-        else if (lowerProcessName.Contains("game") || lowerProcessName.Contains("steam") ||
-            lowerProcessName.Contains("origin") || lowerProcessName.Contains("epic") ||
-            lowerProcessName.Contains("league") || lowerProcessName.Contains("dota") ||
-            lowerProcessName.Contains("minecraft") || lowerProcessName.Contains("genshin") ||
-            lowerProcessName.Contains("yuanshen") || lowerProcessName.Contains("wegame"))
+        else if (processName.Contains("game", ci) || processName.Contains("steam", ci) ||
+            processName.Contains("origin", ci) || processName.Contains("epic", ci) ||
+            processName.Contains("league", ci) || processName.Contains("dota", ci) ||
+            processName.Contains("minecraft", ci) || processName.Contains("genshin", ci) ||
+            processName.Contains("yuanshen", ci) || processName.Contains("wegame", ci))
             result = "游戏";
-        // 音乐
-        else if (lowerProcessName.Contains("spotify") || lowerProcessName.Contains("music") ||
-            lowerProcessName.Contains("cloudmusic") || lowerProcessName.Contains("qqmusic") ||
-            lowerProcessName.Contains("foobar") || lowerProcessName.Contains("aimp"))
+        else if (processName.Contains("spotify", ci) || processName.Contains("music", ci) ||
+            processName.Contains("cloudmusic", ci) || processName.Contains("qqmusic", ci) ||
+            processName.Contains("foobar", ci) || processName.Contains("aimp", ci))
             result = "音乐";
-        // 图形设计
-        else if (lowerProcessName.Contains("photoshop") || lowerProcessName.Contains("illustrator") ||
-            lowerProcessName.Contains("figma") || lowerProcessName.Contains("sketch") ||
-            lowerProcessName.Contains("blender") || lowerProcessName.Contains("gimp"))
+        else if (processName.Contains("photoshop", ci) || processName.Contains("illustrator", ci) ||
+            processName.Contains("figma", ci) || processName.Contains("sketch", ci) ||
+            processName.Contains("blender", ci) || processName.Contains("gimp", ci))
             result = "图形设计";
-        // 系统工具
-        else if (lowerProcessName.Contains("terminal") || lowerProcessName.Contains("cmd") ||
-            lowerProcessName.Contains("powershell") || lowerProcessName.Contains("explorer") ||
-            lowerProcessName.Contains("taskmgr") || lowerProcessName.Contains("settings"))
+        else if (processName.Contains("terminal", ci) || processName.Contains("cmd", ci) ||
+            processName.Contains("powershell", ci) || processName.Contains("explorer", ci) ||
+            processName.Contains("taskmgr", ci) || processName.Contains("settings", ci))
             result = "系统工具";
         else
             result = "其他应用";

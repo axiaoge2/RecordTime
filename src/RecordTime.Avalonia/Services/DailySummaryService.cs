@@ -192,13 +192,20 @@ public class DailySummaryService : IDisposable
             var targetDate = date.Date;
             var nextDay = targetDate.AddDays(1);
 
-            // 获取当日所有会话
-            var sessions = await context.Sessions
-                .AsNoTracking()
-                .Where(s => s.StartTime >= targetDate && s.StartTime < nextDay)
-                .ToListAsync();
+            var baseQuery = context.Sessions.AsNoTracking()
+                .Where(s => s.StartTime >= targetDate && s.StartTime < nextDay);
 
-            if (sessions.Count == 0)
+            var stats = await baseQuery
+                .GroupBy(_ => 1)
+                .Select(g => new
+                {
+                    TotalSeconds = g.Sum(s => s.DurationSeconds),
+                    Count = g.Count(),
+                    AppCount = g.Select(s => s.ProcessName).Distinct().Count()
+                })
+                .FirstOrDefaultAsync();
+
+            if (stats == null || stats.Count == 0)
             {
                 Log.Debug("日期 {Date} 没有使用记录，跳过总结", targetDate);
                 return null;
@@ -207,13 +214,12 @@ public class DailySummaryService : IDisposable
             var summary = new DailySummaryData
             {
                 Date = targetDate,
-                TotalMinutes = sessions.Sum(s => s.DurationSeconds) / 60,
-                SessionCount = sessions.Count,
-                AppCount = sessions.Select(s => s.ProcessName).Distinct().Count()
+                TotalMinutes = stats.TotalSeconds / 60,
+                SessionCount = stats.Count,
+                AppCount = stats.AppCount
             };
 
-            // TOP 3 应用
-            var topApps = sessions
+            var topApps = await baseQuery
                 .GroupBy(s => new { s.ProcessName, s.DisplayName })
                 .Select(g => new
                 {
@@ -222,7 +228,7 @@ public class DailySummaryService : IDisposable
                 })
                 .OrderByDescending(x => x.Minutes)
                 .Take(3)
-                .ToList();
+                .ToListAsync();
 
             var totalMinutes = summary.TotalMinutes > 0 ? summary.TotalMinutes : 1;
             summary.TopApps = topApps.Select(a => new AppUsageSummary

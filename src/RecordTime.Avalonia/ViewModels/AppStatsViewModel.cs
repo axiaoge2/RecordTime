@@ -71,9 +71,14 @@ public partial class AppStatsViewModel : ViewModelBase
         await LoadDataAsync();
     }
 
+    private System.Threading.Timer? _searchDebounceTimer;
+
     partial void OnSearchTextChanged(string value)
     {
-        FilterApps();
+        _searchDebounceTimer?.Dispose();
+        _searchDebounceTimer = new System.Threading.Timer(
+            _ => global::Avalonia.Threading.Dispatcher.UIThread.Post(FilterApps),
+            null, dueTime: 150, period: Timeout.Infinite);
     }
 
     partial void OnSelectedCategoryChanged(string? value)
