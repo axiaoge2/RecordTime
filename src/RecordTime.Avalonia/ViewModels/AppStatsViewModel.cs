@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RecordTime.Avalonia.ViewModels;
@@ -42,16 +43,19 @@ public partial class AppStatsViewModel : ViewModelBase
     private bool _hasNoApps = true;
 
     // 应用列表
-    public ObservableCollection<AppDetailItem> Apps { get; } = new();
+    public BulkObservableCollection<AppDetailItem> Apps { get; } = new();
 
     // 所有应用（用于过滤）
     private List<AppDetailItem> _allApps = new();
 
     // 分类列表
-    public ObservableCollection<string> Categories { get; } = new();
+    public BulkObservableCollection<string> Categories { get; } = new();
 
     // 图标提取服务
     private readonly IIconExtractor _iconExtractor = new IconExtractor();
+
+    private CancellationTokenSource? _loadCancellationTokenSource;
+    private CancellationTokenSource? _iconLoadCancellationTokenSource;
 
     public AppStatsViewModel()
     {
@@ -75,6 +79,14 @@ public partial class AppStatsViewModel : ViewModelBase
     partial void OnSelectedCategoryChanged(string? value)
     {
         FilterApps();
+    }
+
+    partial void OnStartDateChanged(DateTime value)
+    {
+        // 当用户通过日期选择器更改日期时，同步更新 EndDate 并重新加载数据
+        EndDate = value;
+        DateRangeText = value.ToString("yyyy-MM-dd");
+        _ = LoadDataAsync();
     }
 
     [RelayCommand]
@@ -130,11 +142,27 @@ public partial class AppStatsViewModel : ViewModelBase
 
     private async Task LoadDataAsync()
     {
+        _loadCancellationTokenSource?.Cancel();
+        _loadCancellationTokenSource?.Dispose();
+        _loadCancellationTokenSource = new CancellationTokenSource();
+
+        _iconLoadCancellationTokenSource?.Cancel();
+        _iconLoadCancellationTokenSource?.Dispose();
+        _iconLoadCancellationTokenSource = new CancellationTokenSource();
+
+        var loadToken = _loadCancellationTokenSource.Token;
+        var iconToken = _iconLoadCancellationTokenSource.Token;
+
         try
         {
             // 使用共享的 AppDataService 获取快照
             var appDataService = AppDataService.Instance;
-            var snapshot = await appDataService.GetSnapshotAsync(StartDate, EndDate);
+            var snapshot = await appDataService.GetSnapshotAsync(StartDate, EndDate).ConfigureAwait(false);
+
+            if (loadToken.IsCancellationRequested)
+            {
+                return;
+            }
 
             System.Diagnostics.Debug.WriteLine($"=== AppStatsViewModel: 获取快照 [{snapshot.GetDebugInfo()}] ===");
 
@@ -146,10 +174,10 @@ public partial class AppStatsViewModel : ViewModelBase
                     TotalSessions = 0;
                     TotalAppCount = 0;
                     _allApps = new List<AppDetailItem>();
-                    Apps.Clear();
-                    Categories.Clear();
+                    Apps.ReplaceWith(Array.Empty<AppDetailItem>());
+                    Categories.ReplaceWith(Array.Empty<string>());
                     HasNoApps = true;
-                });
+                }, DispatcherPriority.Background);
                 return;
             }
 
@@ -169,7 +197,7 @@ public partial class AppStatsViewModel : ViewModelBase
                 FirstUsed = a.FirstUsed,
                 LastUsed = a.LastUsed,
                 TotalPercentage = a.TotalPercentage,
-                Icon = _iconExtractor.ExtractIcon(a.ProcessName, a.Category)
+                Icon = _iconExtractor.ExtractIcon(string.Empty, a.Category)
             }).ToList();
 
             await Dispatcher.UIThread.InvokeAsync(() =>
@@ -191,12 +219,42 @@ public partial class AppStatsViewModel : ViewModelBase
 
                 // 应用过滤
                 FilterApps();
-            });
+            }, DispatcherPriority.Background);
 
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await LoadIconsAsync(appItems, iconToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }, iconToken);
+
+        }
+        catch (OperationCanceledException)
+        {
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"加载数据失败: {ex.Message}");
+        }
+    }
+
+    private async Task LoadIconsAsync(List<AppDetailItem> items, CancellationToken cancellationToken)
+    {
+        foreach (var item in items)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var icon = _iconExtractor.ExtractIcon(item.ProcessName, item.Category);
+            if (icon == null)
+            {
+                continue;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(() => item.Icon = icon, DispatcherPriority.Background);
         }
     }
 
@@ -226,11 +284,7 @@ public partial class AppStatsViewModel : ViewModelBase
 
         var filteredList = filtered.ToList();
 
-        Apps.Clear();
-        foreach (var app in filteredList)
-        {
-            Apps.Add(app);
-        }
+        Apps.ReplaceWith(filteredList);
 
         TotalSessions = filteredList.Count;
         HasNoApps = filteredList.Count == 0;

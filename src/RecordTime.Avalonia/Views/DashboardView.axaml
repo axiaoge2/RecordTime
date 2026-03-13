@@ -1,0 +1,216 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+             xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="RecordTime.Avalonia.Views.DashboardView"
+             x:DataType="vm:MainWindowViewModel">
+
+    <UserControl.Resources>
+        <!-- Lucide Icons for Dashboard -->
+        <StreamGeometry x:Key="IconPlay">M5 3l14 9-14 9V3z</StreamGeometry>
+        <StreamGeometry x:Key="IconPause">M6 4h4v16H6V4zm8 0h4v16h-4V4z</StreamGeometry>
+        <StreamGeometry x:Key="IconActivity">M22 12h-4l-3 9L9 3l-3 9H2</StreamGeometry>
+        <StreamGeometry x:Key="IconClock">M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 6v6l4 2</StreamGeometry>
+    </UserControl.Resources>
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="20" Margin="24,20,24,32">
+
+            <!-- Header Card - Linear Style -->
+            <Border Background="{DynamicResource LinearCardBgBrush}"
+                    BorderBrush="{DynamicResource LinearCardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="28">
+                <Grid ColumnDefinitions="*, Auto">
+                    <StackPanel Spacing="8">
+                        <!-- Date -->
+                        <TextBlock Text="{Binding SelectedDateText}"
+                                   FontSize="14"
+                                   FontWeight="Medium"
+                                   Foreground="{DynamicResource LinearFgSecondaryBrush}"/>
+                        <!-- Total Duration - Big Number -->
+                        <TextBlock Text="{Binding TotalDuration}"
+                                   FontSize="56"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource LinearFgPrimaryBrush}"
+                                   Margin="0,4,0,8"/>
+                        <!-- Status -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Ellipse Width="8" Height="8"
+                                     Fill="{DynamicResource LinearAccentGradient}"
+                                     IsVisible="{Binding IsMonitoring}"/>
+                            <Ellipse Width="8" Height="8"
+                                     Fill="{DynamicResource LinearFgMutedBrush}"
+                                     IsVisible="{Binding !IsMonitoring}"/>
+                            <TextBlock Text="{Binding MonitoringStatusText}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource LinearFgTertiaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Start/Stop Button - Linear Style -->
+                    <Button Grid.Column="1"
+                            Command="{Binding ToggleMonitoringCommand}"
+                            VerticalAlignment="Center"
+                            Padding="24,14"
+                            CornerRadius="8"
+                            Cursor="Hand">
+                        <Button.Styles>
+                            <Style Selector="Button">
+                                <Setter Property="Background" Value="{DynamicResource LinearButtonPrimaryBgBrush}"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                            </Style>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource LinearButtonPrimaryHoverBrush}"/>
+                            </Style>
+                        </Button.Styles>
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Panel Width="16" Height="16">
+                                <PathIcon Data="{StaticResource IconPlay}"
+                                          IsVisible="{Binding !IsMonitoring}"
+                                          Width="16" Height="16"
+                                          Foreground="#FFFFFF"/>
+                                <PathIcon Data="{StaticResource IconPause}"
+                                          IsVisible="{Binding IsMonitoring}"
+                                          Width="16" Height="16"
+                                          Foreground="#FFFFFF"/>
+                            </Panel>
+                            <TextBlock Text="{Binding StartButtonText}"
+                                       FontWeight="SemiBold"
+                                       FontSize="14"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Charts Row - Linear Style -->
+            <Grid ColumnDefinitions="*, 20, *">
+                <!-- Activity Type Distribution - Pie Chart -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource LinearCardBgBrush}"
+                        BorderBrush="{DynamicResource LinearCardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="24">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                        <lvc:PieChart Series="{Binding PieChartSeries}"
+                                      LegendPosition="Right"
+                                      Height="280"
+                                      Background="{DynamicResource LinearCardBgBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Category Distribution - Bar Chart -->
+                <Border Grid.Column="2"
+                        Background="{DynamicResource LinearCardBgBrush}"
+                        BorderBrush="{DynamicResource LinearCardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="24">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="{Binding CategoryDistribution, Source={x:Static strings:StringResources.Current}}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                        <lvc:CartesianChart Series="{Binding BarChartSeries}"
+                                            XAxes="{Binding BarChartXAxes}"
+                                            Height="280"
+                                            Background="{DynamicResource LinearCardBgBrush}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Top Apps Table - Linear Style -->
+            <Border Background="{DynamicResource LinearCardBgBrush}"
+                    BorderBrush="{DynamicResource LinearCardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="24">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="{Binding Top10AppsTitle, Source={x:Static strings:StringResources.Current}}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+
+                    <DataGrid ItemsSource="{Binding TopApps}"
+                              IsReadOnly="True"
+                              HeadersVisibility="Column"
+                              RowBackground="Transparent"
+                              BorderThickness="1"
+                              BorderBrush="{DynamicResource LinearBorderSubtleBrush}"
+                              CornerRadius="8"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource LinearBorderSubtleBrush}">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridColumnHeader">
+                                <Setter Property="Background" Value="{DynamicResource LinearBgTertiaryBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource LinearFgSecondaryBrush}"/>
+                                <Setter Property="FontWeight" Value="Medium"/>
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="Padding" Value="16,12"/>
+                            </Style>
+                            <Style Selector="DataGridRow">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                            <Style Selector="DataGridRow:pointerover">
+                                <Setter Property="Background" Value="{DynamicResource LinearBgHoverBrush}"/>
+                            </Style>
+                            <Style Selector="DataGridCell">
+                                <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
+                                <Setter Property="FontSize" Value="13"/>
+                            </Style>
+                        </DataGrid.Styles>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="{Binding ColumnAppName, Source={x:Static strings:StringResources.Current}}" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="16,8">
+                                            <Image Source="{Binding Icon}" Width="24" Height="24"/>
+                                            <TextBlock Text="{Binding AppName}"
+                                                       VerticalAlignment="Center"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="{Binding ColumnUsageTime, Source={x:Static strings:StringResources.Current}}"
+                                                Binding="{Binding DurationText}"
+                                                Width="140"/>
+                            <DataGridTemplateColumn Header="{Binding ColumnPercentage, Source={x:Static strings:StringResources.Current}}" Width="220">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="16,8">
+                                            <ProgressBar Value="{Binding Percentage}"
+                                                         Maximum="100"
+                                                         Height="8"
+                                                         CornerRadius="4"
+                                                         Background="{DynamicResource LinearProgressBgBrush}"
+                                                         Foreground="{DynamicResource LinearProgressFillBrush}"/>
+                                            <TextBlock Text="{Binding Percentage, StringFormat={}{0:F1}%}"
+                                                       HorizontalAlignment="Right"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource LinearFgSecondaryBrush}"
+                                                       Margin="0,-20,0,0"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

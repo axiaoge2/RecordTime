@@ -29,6 +29,11 @@ public class AppSettings
     /// 界面设置
     /// </summary>
     public UISettings UI { get; set; } = new();
+
+    /// <summary>
+    /// AI Coach 设置
+    /// </summary>
+    public AICoachAppSettings? AICoach { get; set; }
 }
 
 /// <summary>
@@ -159,4 +164,40 @@ public class UISettings
     /// 强调色
     /// </summary>
     public string AccentColor { get; set; } = "#0078D4";
+}
+
+/// <summary>
+/// AI Coach 设置
+/// </summary>
+public class AICoachAppSettings
+{
+    /// <summary>
+    /// API 基础 URL (支持 OpenAI 兼容的 API)
+    /// </summary>
+    public string ApiBaseUrl { get; set; } = "https://api.openai.com/v1/";
+
+    /// <summary>
+    /// API Key
+    /// </summary>
+    public string ApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 模型名称
+    /// </summary>
+    public string Model { get; set; } = "gpt-4o-mini";
+
+    /// <summary>
+    /// 最大 Token 数
+    /// </summary>
+    public int MaxTokens { get; set; } = 1000;
+
+    /// <summary>
+    /// 温度参数 (0.0-1.0)
+    /// </summary>
+    public double Temperature { get; set; } = 0.7;
+
+    /// <summary>
+    /// 超时时间 (秒)
+    /// </summary>
+    public int TimeoutSeconds { get; set; } = 60;
 }

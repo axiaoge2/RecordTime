@@ -1,4 +1,4 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:RecordTime.Avalonia.ViewModels"
         xmlns:local="using:RecordTime.Avalonia.Views"
@@ -12,510 +12,191 @@
         Icon="/Assets/Icons/AppIcon.ico"
         Title="{Binding AppTitle, Source={x:Static strings:StringResources.Current}}"
         WindowStartupLocation="CenterScreen"
-        Width="1250"
-        Height="750"
+        Width="1280"
+        Height="800"
         MinWidth="1100"
-        MinHeight="650">
+        MinHeight="650"
+        Background="{DynamicResource LinearBgPrimaryBrush}">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <!-- Main Content Area with Apple-style generous spacing -->
-    <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="220"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+    <Window.Resources>
+        <!-- Lucide Icons - Linear Style -->
+        <StreamGeometry x:Key="IconDashboard">M3 3h7v9H3V3zm11 0h7v5h-7V3zm0 9h7v9h-7v-9zM3 16h7v5H3v-5z</StreamGeometry>
+        <StreamGeometry x:Key="IconStats">M3 3v18h18M7 16v-4m4 4v-8m4 8v-5m4 5v-9</StreamGeometry>
+        <StreamGeometry x:Key="IconReports">M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2zM14 2v6h6m-8 4H8m8 4H8m2-8H8</StreamGeometry>
+        <StreamGeometry x:Key="IconTimeBudget">M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 6v6l4 2</StreamGeometry>
+        <StreamGeometry x:Key="IconSettings">M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z</StreamGeometry>
+        <StreamGeometry x:Key="IconAbout">M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 5v.01M12 12v5</StreamGeometry>
+    </Window.Resources>
 
-            <!-- Left Sidebar Navigation (Apple macOS Style) -->
-            <Border Grid.Column="0"
-                    Background="{StaticResource CardBackground}"
-                    BorderBrush="{StaticResource DividerBrush}"
-                    BorderThickness="0,0,0.5,0"
-                    Padding="16,32,16,24">
-                <StackPanel Spacing="6">
-                    <!-- App Title -->
-                    <TextBlock Text="RecordTime"
-                              Classes="heading"
-                              Margin="8,0,0,24"
-                              Foreground="{StaticResource PrimaryText}"/>
-
-                    <!-- Navigation Items -->
-                    <Button Classes="sidebar-item"
-                           Content="{Binding NavigationDashboard, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding NavigateToDashboardCommand}"
-                           HorizontalAlignment="Stretch"/>
-
-                    <Button Classes="sidebar-item"
-                           Content="{Binding NavigationAppStats, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding NavigateToAppStatsCommand}"
-                           HorizontalAlignment="Stretch"/>
-
-                    <Button Classes="sidebar-item"
-                           Content="{Binding NavigationReports, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding NavigateToReportsCommand}"
-                           HorizontalAlignment="Stretch"/>
-
-                    <Button Classes="sidebar-item"
-                           Content="{Binding NavigationTimeBudget, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding NavigateToTimeBudgetCommand}"
-                           HorizontalAlignment="Stretch"/>
-
-                    <Separator Margin="0,20"
-                              Background="{StaticResource DividerBrush}"
-                              Height="0.5"/>
-
-                    <Button Classes="sidebar-item"
-                           Content="{Binding NavigationSettings, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding NavigateToSettingsCommand}"
-                           HorizontalAlignment="Stretch"/>
-
-                    <Button Classes="sidebar-item"
-                           Content="{Binding NavigationAbout, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding NavigateToAboutCommand}"
-                           HorizontalAlignment="Stretch"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Main Content Area with Page Switching -->
-            <ContentControl Grid.Column="1" Content="{Binding CurrentPageViewModel}">
-                <ContentControl.DataTemplates>
-                    <!-- AppStatsViewModel -> AppStatsView -->
-                    <DataTemplate DataType="vm:AppStatsViewModel">
-                        <local:AppStatsView/>
-                    </DataTemplate>
-                    <!-- ReportViewModel -> ReportView -->
-                    <DataTemplate DataType="vm:ReportViewModel">
-                        <local:ReportView/>
-                    </DataTemplate>
-                    <!-- SettingsViewModel -> SettingsView -->
-                    <DataTemplate DataType="vm:SettingsViewModel">
-                        <local:SettingsView/>
-                    </DataTemplate>
-                    <!-- AboutViewModel -> AboutView -->
-                    <DataTemplate DataType="vm:AboutViewModel">
-                        <local:AboutView/>
-                    </DataTemplate>
-                    <!-- TimeBudgetViewModel -> TimeBudgetView -->
-                    <DataTemplate DataType="vm:TimeBudgetViewModel">
-                        <local:TimeBudgetView/>
-                    </DataTemplate>
-                </ContentControl.DataTemplates>
-            </ContentControl>
-
-            <!-- Dashboard Content (shown when CurrentPageViewModel is null) -->
-            <ScrollViewer Grid.Column="1"
-                         HorizontalScrollBarVisibility="Auto"
-                         VerticalScrollBarVisibility="Auto"
-                         IsVisible="{Binding ShowDashboard}">
-                <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
-                    <!-- Page Title with Apple-style large heading -->
-                    <TextBlock Text="{Binding DashboardTitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="title"
-                              Margin="0,0,0,16"/>
-
-                    <!-- Date Navigator with Apple-style spacing -->
-                    <Border Classes="card"
-                           Padding="20,16">
-                        <Grid ColumnDefinitions="Auto,*,Auto"
-                             VerticalAlignment="Center">
-                            <!-- Previous Day Button -->
-                            <Button Grid.Column="0"
-                                   Classes="secondary"
-                                   Content="{Binding PreviousDayButton, Source={x:Static strings:StringResources.Current}}"
-                                   Command="{Binding PreviousDayCommand}"
-                                   VerticalAlignment="Center"/>
-
-                            <!-- Current Date Display -->
-                            <StackPanel Grid.Column="1"
-                                       Orientation="Horizontal"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Spacing="8">
-                                <TextBlock Text="📅"
-                                          FontSize="20"
-                                          VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding SelectedDateText}"
-                                          Classes="heading"
-                                          VerticalAlignment="Center"/>
-                                <Button Content="{Binding TodayButton, Source={x:Static strings:StringResources.Current}}"
-                                       Classes="secondary"
-                                       Command="{Binding TodayCommand}"
-                                       Padding="8,4"
-                                       FontSize="12"/>
-                            </StackPanel>
-
-                            <!-- Next Day Button -->
-                            <Button Grid.Column="2"
-                                   Classes="secondary"
-                                   Content="{Binding NextDayButton, Source={x:Static strings:StringResources.Current}}"
-                                   Command="{Binding NextDayCommand}"
-                                   VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Summary Cards Grid (Apple Widget Style with generous spacing) -->
-                    <Grid ColumnDefinitions="*,24,*"
-                         RowDefinitions="Auto"
-                         Margin="0,8,0,0">
-                        <!-- Card 1: Total Time -->
-                        <Border Grid.Column="0"
-                               Classes="widget-card">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="⏱️"
-                                          FontSize="28"
-                                          Opacity="0.9"/>
-                                <TextBlock Text="{Binding TotalDuration}"
-                                          Classes="number-widget"
-                                          Margin="0,4,0,0"/>
-                                <TextBlock Classes="caption" Opacity="0.85">
-                                    <Run Text="{Binding TotalActivityTime, Source={x:Static strings:StringResources.Current}}"/>
-                                    <Run Text=" ("/>
-                                    <Run Text="{Binding DataStatusHint}"/>
-                                    <Run Text=")"/>
-                                </TextBlock>
-                                <TextBlock Classes="caption"
-                                          Opacity="0.65"
-                                          FontSize="11"
-                                          Margin="0,2,0,0">
-                                    <Run Text="{Binding UpdatedAt, Source={x:Static strings:StringResources.Current}}"/>
-                                    <Run Text=" "/>
-                                    <Run Text="{Binding DataUpdateTime}"/>
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Card 2: Session Count -->
-                        <Border Grid.Column="2"
-                               Classes="widget-card">
-                            <StackPanel Spacing="6">
-                                <TextBlock Text="📝"
-                                          FontSize="28"
-                                          Opacity="0.9"/>
-                                <TextBlock Text="{Binding SessionCount}"
-                                          Classes="number-widget"
-                                          Margin="0,4,0,0"/>
-                                <TextBlock Text="{Binding SessionCount, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
-                                          Opacity="0.85"/>
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-
-                    <!-- Monitoring Status Card - Centered Position -->
-                    <Border Classes="card"
-                           Padding="24,20">
-                        <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                             RowDefinitions="Auto">
-                            <StackPanel Grid.Column="0"
-                                       Spacing="8"
-                                       VerticalAlignment="Center">
-                                <TextBlock Text="{Binding MonitoringStatus, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="heading"/>
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <!-- 监控运行中指示器 -->
-                                    <Border Width="8" Height="8" CornerRadius="4"
-                                           Background="#34C759"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding IsMonitoring}"/>
-                                    <!-- 监控未启动指示器 -->
-                                    <Border Width="8" Height="8" CornerRadius="4"
-                                           Background="#FF9500"
-                                           VerticalAlignment="Center"
-                                           IsVisible="{Binding !IsMonitoring}"/>
-                                    <TextBlock Classes="caption" Opacity="0.85">
-                                        <Run Text="{Binding MonitoringStatusText}"/>
-                                    </TextBlock>
-                                </StackPanel>
-                                <TextBlock Classes="caption" Opacity="0.65" FontSize="12" IsVisible="{Binding !IsMonitoring}">
-                                    <Run Text="⚠️ "/>
-                                    <Run Text="{Binding DataStatusHint}"/>
-                                </TextBlock>
-                            </StackPanel>
-
-                            <Button Grid.Column="3"
-                                   Classes="primary"
-                                   Content="{Binding StartButtonText}"
-                                   Command="{Binding ToggleMonitoringCommand}"
-                                   MinWidth="120"
-                                   VerticalAlignment="Center"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Phase 4: 今日预算进度面板 -->
-                    <Border Classes="card"
-                           Padding="24,20,24,24"
-                           IsVisible="{Binding HasBudgets}">
-                        <StackPanel Spacing="16">
-                            <!-- 标题栏 -->
-                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                <TextBlock Grid.Column="0"
-                                          Text="{Binding TodayBudgetTitle, Source={x:Static strings:StringResources.Current}}"
-                                          FontSize="16"
-                                          FontWeight="SemiBold"/>
-
-                                <!-- 统计信息 -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                                    <!-- 完成数量 -->
-                                    <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold"/>
-                                        <TextBlock Text="{Binding CompletedBudgetCount}" Classes="caption"/>
-                                        <TextBlock Text="/" Classes="caption" Opacity="0.5"/>
-                                        <TextBlock Text="{Binding TotalBudgetCount}" Classes="caption"/>
-                                    </StackPanel>
-
-                                    <!-- 超标警告 -->
-                                    <Border Background="#FFEEEE"
-                                           CornerRadius="8"
-                                           Padding="8,4"
-                                           IsVisible="{Binding HasOverBudget}">
-                                        <StackPanel Orientation="Horizontal" Spacing="4">
-                                            <TextBlock Text="{Binding BudgetOverLimitWarning, Source={x:Static strings:StringResources.Current}}"
-                                                      Foreground="#FF6B6B"
-                                                      FontSize="12"
-                                                      FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding OverBudgetCount}"
-                                                      Foreground="#FF6B6B"
-                                                      FontSize="12"/>
-                                        </StackPanel>
-                                    </Border>
-                                </StackPanel>
-                            </Grid>
-
-                            <!-- 预算列表 -->
-                            <ItemsControl ItemsSource="{Binding BudgetProgressItems}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Padding="12,10"
-                                               CornerRadius="8"
-                                               Margin="0,0,0,8"
-                                               Background="{StaticResource HoverBackground}">
-                                            <Grid RowDefinitions="Auto,Auto,Auto">
-                                                <!-- 第一行：名称 + 类型 + 状态 -->
-                                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
-                                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                                        <TextBlock Text="{Binding DisplayName}"
-                                                                  Classes="body"
-                                                                  FontWeight="SemiBold"/>
-                                                        <!-- 类型标签 -->
-                                                        <Border Background="{StaticResource CardBackground}"
-                                                               CornerRadius="4"
-                                                               Padding="6,2">
-                                                            <TextBlock Text="{Binding TypeLabel}"
-                                                                      FontSize="10"
-                                                                      Opacity="0.7"/>
-                                                        </Border>
-                                                    </StackPanel>
-
-                                                    <!-- 状态文本 -->
-                                                    <TextBlock Grid.Column="2"
-                                                              Text="{Binding StatusText}"
-                                                              Classes="caption"
-                                                              FontWeight="SemiBold"
-                                                              VerticalAlignment="Center"/>
-                                                </Grid>
-
-                                                <!-- 第二行：进度条 -->
-                                                <ProgressBar Grid.Row="1"
-                                                            Value="{Binding ProgressPercentage}"
-                                                            Maximum="100"
-                                                            Height="8"
-                                                            CornerRadius="4"
-                                                            Foreground="{Binding ProgressColor}"
-                                                            Margin="0,8,0,4"/>
-
-                                                <!-- 第三行：进度文本 -->
-                                                <TextBlock Grid.Row="2"
-                                                          Text="{Binding ProgressText}"
-                                                          Classes="caption"
-                                                          Opacity="0.65"
-                                                          FontSize="11"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- App Type Distribution & Top Apps - Moved Down -->
-                    <Border Classes="card"
-                           Padding="24,20,24,24">
-                        <Grid ColumnDefinitions="*,24,*">
-
-                            <!-- 左侧：应用类型分布 -->
-                            <StackPanel Grid.Column="0" Spacing="16">
-                                <TextBlock Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
-                                          FontSize="16"
-                                          FontWeight="SemiBold"/>
-
-                                <ItemsControl ItemsSource="{Binding CategoryStats}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Spacing="6" Margin="0,0,0,12">
-                                                <!-- 类别名称 + 百分比 -->
-                                                <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0"
-                                                              Text="{Binding Category}"
-                                                              Classes="body"/>
-                                                    <TextBlock Grid.Column="1"
-                                                              Text="{Binding PercentageText}"
-                                                              Classes="caption"
-                                                              FontWeight="SemiBold"/>
-                                                </Grid>
-                                                <!-- 进度条 -->
-                                                <ProgressBar Value="{Binding Percentage}"
-                                                            Maximum="100"
-                                                            Height="8"
-                                                            CornerRadius="4"/>
-                                                <!-- 时长 -->
-                                                <TextBlock Text="{Binding DurationText}"
-                                                          Classes="caption"
-                                                          Opacity="0.7"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-
-                                <!-- 空数据提示 -->
-                                <TextBlock Text="{Binding NoDataAvailable, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
-                                          HorizontalAlignment="Center"
-                                          Opacity="0.6"
-                                          IsVisible="{Binding ShowEmptyState}"/>
-                            </StackPanel>
-
-                            <!-- 右侧：Top 10 应用 -->
-                            <StackPanel Grid.Column="2" Spacing="16">
-                                <TextBlock Text="{Binding TopAppsTitle, Source={x:Static strings:StringResources.Current}}"
-                                          FontSize="16"
-                                          FontWeight="SemiBold"/>
-
-                                <ItemsControl ItemsSource="{Binding TopApps}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Padding="8,6"
-                                                   CornerRadius="6"
-                                                   Margin="0,0,0,4">
-                                                <Border.Styles>
-                                                    <Style Selector="Border:pointerover">
-                                                        <Setter Property="Background"
-                                                                Value="{StaticResource HoverBackground}"/>
-                                                    </Style>
-                                                </Border.Styles>
-
-                                                <Grid ColumnDefinitions="30,32,*,100,80">
-                                                    <!-- 排名 -->
-                                                    <TextBlock Grid.Column="0"
-                                                              Text="{Binding RankText}"
-                                                              Classes="body"
-                                                              FontWeight="SemiBold"
-                                                              Foreground="{StaticResource SecondaryText}"/>
-
-                                                    <!-- 图标 -->
-                                                    <Image Grid.Column="1"
-                                                          Source="{Binding Icon}"
-                                                          Width="24"
-                                                          Height="24"
-                                                          Margin="0,0,8,0"/>
-
-                                                    <!-- 应用名 -->
-                                                    <TextBlock Grid.Column="2"
-                                                              Text="{Binding AppName}"
-                                                              Classes="body"
-                                                              TextTrimming="CharacterEllipsis"/>
-
-                                                    <!-- 时长 -->
-                                                    <TextBlock Grid.Column="3"
-                                                              Text="{Binding DurationText}"
-                                                              Classes="body"
-                                                              Margin="12,0,0,0"
-                                                              TextAlignment="Right"/>
-
-                                                    <!-- 百分比 -->
-                                                    <TextBlock Grid.Column="4"
-                                                              Text="{Binding PercentageText}"
-                                                              Classes="caption"
-                                                              Foreground="{StaticResource PrimaryGradient}"
-                                                              Margin="8,0,0,0"
-                                                              TextAlignment="Right"/>
-                                                </Grid>
+    <Panel>
+        <!-- Main Layout - Linear Style -->
+        <SplitView DisplayMode="CompactInline"
+                   IsPaneOpen="True"
+                   OpenPaneLength="240"
+                   CompactPaneLength="56"
+                   PaneBackground="{DynamicResource LinearSidebarBgBrush}">
+                <SplitView.Pane>
+                    <Border BorderThickness="0,0,1,0"
+                            BorderBrush="{DynamicResource LinearBorderSubtleBrush}"
+                            Padding="12,16">
+                        <ListBox SelectionMode="Single"
+                                 SelectedIndex="{Binding SelectedTabIndex}"
+                                 Background="Transparent">
+                            <ListBox.Styles>
+                                <Style Selector="ListBoxItem">
+                                    <Setter Property="Padding" Value="12,10"/>
+                                    <Setter Property="CornerRadius" Value="8"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource LinearFgSecondaryBrush}"/>
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <ControlTemplate>
+                                            <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="{TemplateBinding CornerRadius}"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
                                             </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                        </ControlTemplate>
+                                    </Setter>
+                                    <Setter Property="Transitions">
+                                        <Transitions>
+                                            <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                                            <BrushTransition Property="Foreground" Duration="0:0:0.15"/>
+                                        </Transitions>
+                                    </Setter>
+                                </Style>
+                                <Style Selector="ListBoxItem:pointerover">
+                                    <Setter Property="Background" Value="{DynamicResource LinearSidebarItemHoverBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
+                                </Style>
+                                <Style Selector="ListBoxItem:selected">
+                                    <Setter Property="Background" Value="{DynamicResource LinearSidebarItemActiveBrush}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource LinearSidebarItemActiveTextBrush}"/>
+                                </Style>
+                                <Style Selector="ListBoxItem:selected PathIcon">
+                                    <Setter Property="Foreground" Value="{DynamicResource LinearSidebarItemActiveTextBrush}"/>
+                                </Style>
+                            </ListBox.Styles>
 
-                                <!-- 空数据提示 -->
-                                <TextBlock Text="{Binding NoDataAvailable, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
-                                          HorizontalAlignment="Center"
-                                          Opacity="0.6"
-                                          IsVisible="{Binding ShowEmptyState}"/>
-                            </StackPanel>
+                            <!-- Dashboard -->
+                            <ListBoxItem>
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <PathIcon Data="{StaticResource IconDashboard}" Width="18" Height="18"/>
+                                    <TextBlock Text="{Binding NavigationDashboard, Source={x:Static strings:StringResources.Current}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </ListBoxItem>
 
-                        </Grid>
+                            <!-- App Stats -->
+                            <ListBoxItem>
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <PathIcon Data="{StaticResource IconStats}" Width="18" Height="18"/>
+                                    <TextBlock Text="{Binding NavigationAppStats, Source={x:Static strings:StringResources.Current}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Reports -->
+                            <ListBoxItem>
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <PathIcon Data="{StaticResource IconReports}" Width="18" Height="18"/>
+                                    <TextBlock Text="{Binding NavigationReports, Source={x:Static strings:StringResources.Current}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Time Budget -->
+                            <ListBoxItem>
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <PathIcon Data="{StaticResource IconTimeBudget}" Width="18" Height="18"/>
+                                    <TextBlock Text="{Binding NavigationTimeBudget, Source={x:Static strings:StringResources.Current}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- Settings -->
+                            <ListBoxItem>
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <PathIcon Data="{StaticResource IconSettings}" Width="18" Height="18"/>
+                                    <TextBlock Text="{Binding NavigationSettings, Source={x:Static strings:StringResources.Current}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </ListBoxItem>
+
+                            <!-- About -->
+                            <ListBoxItem>
+                                <StackPanel Orientation="Horizontal" Spacing="14">
+                                    <PathIcon Data="{StaticResource IconAbout}" Width="18" Height="18"/>
+                                    <TextBlock Text="{Binding NavigationAbout, Source={x:Static strings:StringResources.Current}}"
+                                               VerticalAlignment="Center"
+                                               FontSize="14"
+                                               FontWeight="Medium"/>
+                                </StackPanel>
+                            </ListBoxItem>
+                        </ListBox>
                     </Border>
+                </SplitView.Pane>
 
-                    <!-- Empty State - Welcome Guide -->
-                    <Border IsVisible="{Binding ShowEmptyState}"
-                           Classes="card"
-                           Padding="32"
-                           Margin="0,20,0,20">
-                        <StackPanel Spacing="20" HorizontalAlignment="Center" MaxWidth="400">
-                            <!-- Icon -->
-                            <TextBlock Text="📊"
-                                      FontSize="56"
-                                      HorizontalAlignment="Center"
-                                      Opacity="0.9"/>
-
-                            <!-- Title -->
-                            <TextBlock Text="{Binding EmptyStateTitle, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="heading"
-                                      FontSize="20"
-                                      HorizontalAlignment="Center"
-                                      TextAlignment="Center"/>
-
-                            <!-- Description -->
-                            <TextBlock Text="{Binding EmptyStateDescription, Source={x:Static strings:StringResources.Current}}"
-                                      TextWrapping="Wrap"
-                                      TextAlignment="Center"
-                                      Classes="caption"
-                                      Opacity="0.75"
-                                      LineHeight="22"/>
-
-                            <!-- Features -->
-                            <StackPanel Spacing="12" Margin="0,8,0,0">
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                    <TextBlock Text="{Binding EmptyStateFeature1, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                    <TextBlock Text="{Binding EmptyStateFeature2, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="12">
-                                    <TextBlock Text="✓" Foreground="#34C759" FontWeight="Bold" VerticalAlignment="Top"/>
-                                    <TextBlock Text="{Binding EmptyStateFeature3, Source={x:Static strings:StringResources.Current}}" Classes="caption" Opacity="0.85" TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </StackPanel>
-
-                            <!-- Hint -->
-                            <TextBlock Text="{Binding EmptyStateHint, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"
-                                      FontSize="11"
-                                      Opacity="0.65"
-                                      HorizontalAlignment="Center"
-                                      TextAlignment="Center"
-                                      TextWrapping="Wrap"
-                                      Margin="0,8,0,0"/>
-                        </StackPanel>
+                <SplitView.Content>
+                    <Border Margin="0"
+                            Background="{DynamicResource LinearBgSecondaryBrush}"
+                            ClipToBounds="True">
+                        <TransitioningContentControl Content="{Binding CurrentPageViewModel}">
+                            <TransitioningContentControl.PageTransition>
+                                <CrossFade Duration="0:0:0.2" />
+                            </TransitioningContentControl.PageTransition>
+                            <TransitioningContentControl.DataTemplates>
+                                <!-- MainWindowViewModel -> DashboardView -->
+                                <DataTemplate DataType="vm:MainWindowViewModel">
+                                    <local:DashboardView/>
+                                </DataTemplate>
+                                <!-- AppStatsViewModel -> AppStatsView -->
+                                <DataTemplate DataType="vm:AppStatsViewModel">
+                                    <local:AppStatsView/>
+                                </DataTemplate>
+                                <!-- ReportViewModel -> ReportView -->
+                                <DataTemplate DataType="vm:ReportViewModel">
+                                    <local:ReportView/>
+                                </DataTemplate>
+                                <!-- SettingsViewModel -> SettingsView -->
+                                <DataTemplate DataType="vm:SettingsViewModel">
+                                    <local:SettingsView/>
+                                </DataTemplate>
+                                <!-- AboutViewModel -> AboutView -->
+                                <DataTemplate DataType="vm:AboutViewModel">
+                                    <local:AboutView/>
+                                </DataTemplate>
+                                <!-- TimeBudgetViewModel -> TimeBudgetView -->
+                                <DataTemplate DataType="vm:TimeBudgetViewModel">
+                                    <local:TimeBudgetView/>
+                                </DataTemplate>
+                            </TransitioningContentControl.DataTemplates>
+                        </TransitioningContentControl>
                     </Border>
+                </SplitView.Content>
+            </SplitView>
 
-                    <!-- 底部占位元素,确保滚动空间充足 -->
-                    <Border Height="1" Background="Transparent"/>
-                </StackPanel>
-            </ScrollViewer>
-    </Grid>
+        <!-- AI Coach 悬浮面板 -->
+        <local:AICoachPanel DataContext="{Binding AICoachVM}"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"/>
+    </Panel>
 </Window>
-

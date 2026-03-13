@@ -1,0 +1,371 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RecordTime.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="RecordTime.Avalonia.Views.AICoachPanel"
+             x:DataType="vm:AICoachViewModel">
+
+    <UserControl.Styles>
+        <!-- 消息气泡样式 -->
+        <Style Selector="Border.UserMessage">
+            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}"/>
+            <Setter Property="CornerRadius" Value="12,12,4,12"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="48,4,8,4"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <Style Selector="Border.AssistantMessage">
+            <Setter Property="Background" Value="{DynamicResource SemiColorFillTertiary}"/>
+            <Setter Property="CornerRadius" Value="12,12,12,4"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="8,4,48,4"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+        <Style Selector="Border.UserMessage TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- 使用 Canvas 实现自由定位 -->
+    <Canvas x:Name="RootCanvas">
+
+        <!-- 悬浮按钮 (可拖动) -->
+        <Button x:Name="FloatingButton"
+                Classes="Primary"
+                Width="56" Height="56"
+                CornerRadius="28"
+                Command="{Binding TogglePanelCommand}"
+                IsVisible="{Binding !IsPanelOpen}"
+                ToolTip.Tip="AI 助手 (可拖动)"
+                Cursor="Hand"
+                PointerPressed="OnButtonPointerPressed"
+                PointerMoved="OnButtonPointerMoved"
+                PointerReleased="OnButtonPointerReleased">
+            <TextBlock Text="🤖" FontSize="24"/>
+        </Button>
+
+        <!-- AI 面板 (可拖动) -->
+        <Border x:Name="AIPanelBorder"
+                IsVisible="{Binding IsPanelOpen}"
+                Width="380"
+                Background="{DynamicResource SemiColorBgElevated}"
+                BorderBrush="{DynamicResource SemiColorBorder}"
+                BorderThickness="1"
+                CornerRadius="16"
+                ClipToBounds="True"
+                BoxShadow="0 8 32 0 #40000000">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+
+                <!-- 标题栏 (可拖动) -->
+                <Border x:Name="DragHandle"
+                        Grid.Row="0"
+                        Background="{DynamicResource SemiColorPrimary}"
+                        Padding="16,12"
+                        Cursor="SizeAll"
+                        PointerPressed="OnPanelPointerPressed"
+                        PointerMoved="OnPanelPointerMoved"
+                        PointerReleased="OnPanelPointerReleased">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <TextBlock Text="⋮⋮"
+                                   FontSize="12"
+                                   Foreground="#80FFFFFF"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🤖" FontSize="20"/>
+                            <TextBlock Text="AI Time Coach"
+                                      FontWeight="SemiBold"
+                                      FontSize="16"
+                                      Foreground="White"
+                                      VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <!-- 设置按钮 -->
+                        <Button Grid.Column="2"
+                                Classes="Tertiary"
+                                Padding="4"
+                                Margin="0,0,4,0"
+                                Command="{Binding OpenSettingsCommand}"
+                                ToolTip.Tip="API 设置">
+                            <TextBlock Text="⚙️" Foreground="White" FontSize="14"/>
+                        </Button>
+                        <Button Grid.Column="3"
+                                Classes="Tertiary"
+                                Padding="4"
+                                Command="{Binding ClosePanelCommand}">
+                            <TextBlock Text="✕" Foreground="White" FontSize="14"/>
+                        </Button>
+                    </Grid>
+                </Border>
+
+                <!-- 快捷按钮 (非设置模式时显示) -->
+                <Border Grid.Row="1"
+                        Padding="12,12,12,8"
+                        IsVisible="{Binding !IsSettingsOpen}">
+                    <StackPanel Spacing="8" IsVisible="{Binding !IsLoading}">
+                        <!-- 配置状态提示 -->
+                        <Border IsVisible="{Binding !IsConfigured}"
+                                Background="{DynamicResource SemiColorWarningLight}"
+                                CornerRadius="8"
+                                Padding="10"
+                                Margin="0,0,0,8">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="⚠️ 请先配置 API Key"
+                                          FontWeight="SemiBold"
+                                          Foreground="{DynamicResource SemiColorWarning}"/>
+                                <Button Classes="Secondary"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding OpenSettingsCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="⚙️"/>
+                                        <TextBlock Text="打开设置"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="快捷操作"
+                                  Classes="Tertiary"
+                                  FontSize="12"
+                                  Margin="4,0,0,4"
+                                  IsVisible="{Binding IsConfigured}"/>
+                        <WrapPanel IsVisible="{Binding IsConfigured}">
+                            <Button Classes="Secondary"
+                                    Margin="0,0,8,8"
+                                    Command="{Binding DailySummaryCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="📊"/>
+                                    <TextBlock Text="今日总结"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="Secondary"
+                                    Margin="0,0,8,8"
+                                    Command="{Binding QuickAdviceCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="💡"/>
+                                    <TextBlock Text="给我建议"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Classes="Secondary"
+                                    Margin="0,0,8,8"
+                                    Command="{Binding TomorrowPlanCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="🎯"/>
+                                    <TextBlock Text="规划明天"/>
+                                </StackPanel>
+                            </Button>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- 设置面板 (设置模式时显示) -->
+                <Border Grid.Row="1"
+                        Grid.RowSpan="2"
+                        Padding="16"
+                        IsVisible="{Binding IsSettingsOpen}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="16">
+                            <!-- 标题 -->
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="⚙️" FontSize="18"/>
+                                <TextBlock Text="API 设置"
+                                          FontWeight="SemiBold"
+                                          FontSize="16"
+                                          VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- 配置选择 -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="配置"
+                                          Classes="Tertiary"
+                                          FontSize="12"/>
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding AvailableConfigs}"
+                                              SelectedItem="{Binding CurrentConfigName}"
+                                              HorizontalAlignment="Stretch"/>
+                                    <Button Grid.Column="1"
+                                            Classes="Secondary"
+                                            Margin="8,0,0,0"
+                                            Padding="8"
+                                            ToolTip.Tip="添加配置"
+                                            Command="{Binding AddNewConfigCommand}">
+                                        <TextBlock Text="+" FontSize="14"/>
+                                    </Button>
+                                    <Button Grid.Column="2"
+                                            Classes="Secondary"
+                                            Margin="4,0,0,0"
+                                            Padding="8"
+                                            ToolTip.Tip="删除配置"
+                                            Command="{Binding DeleteConfigCommand}">
+                                        <TextBlock Text="🗑️" FontSize="12"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- API Key -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="API Key"
+                                          Classes="Tertiary"
+                                          FontSize="12"/>
+                                <TextBox Text="{Binding SettingsApiKey}"
+                                        PasswordChar="•"
+                                        Watermark="输入你的 API Key"/>
+                            </StackPanel>
+
+                            <!-- API Base URL -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="API 地址"
+                                          Classes="Tertiary"
+                                          FontSize="12"/>
+                                <TextBox Text="{Binding SettingsBaseUrl}"
+                                        Watermark="https://api.openai.com/v1"/>
+                            </StackPanel>
+
+                            <!-- Model -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="模型"
+                                          Classes="Tertiary"
+                                          FontSize="12"/>
+                                <ComboBox SelectedItem="{Binding SettingsModel}"
+                                          IsEditable="True"
+                                          HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="gpt-4o-mini"/>
+                                    <ComboBoxItem Content="gpt-4o"/>
+                                    <ComboBoxItem Content="gpt-4-turbo"/>
+                                    <ComboBoxItem Content="gpt-3.5-turbo"/>
+                                    <ComboBoxItem Content="claude-3-5-sonnet-20241022"/>
+                                    <ComboBoxItem Content="deepseek-chat"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- 连接状态 -->
+                            <Border Background="{DynamicResource SemiColorFillTertiary}"
+                                    CornerRadius="8"
+                                    Padding="12">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding ConnectionStatusIcon}" FontSize="16"/>
+                                    <TextBlock Text="{Binding ConnectionStatus}"
+                                              VerticalAlignment="Center"
+                                              TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- 按钮 -->
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <Button Grid.Column="0"
+                                        Classes="Secondary"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding TestConnectionCommand}"
+                                        IsEnabled="{Binding !IsTestingConnection}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="🔗"/>
+                                        <TextBlock Text="测试连接"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="1"
+                                        Classes="Secondary"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding CloseSettingsCommand}">
+                                    <TextBlock Text="取消"/>
+                                </Button>
+                                <Button Grid.Column="2"
+                                        Classes="Primary"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding SaveSettingsCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="💾"/>
+                                        <TextBlock Text="保存"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- 对话区域 (非设置模式时显示) -->
+                <ScrollViewer Grid.Row="2"
+                             MinHeight="200"
+                             MaxHeight="350"
+                             Padding="8"
+                             VerticalScrollBarVisibility="Auto"
+                             IsVisible="{Binding !IsSettingsOpen}">
+                    <StackPanel Spacing="4">
+                        <!-- 加载指示器 -->
+                        <Border IsVisible="{Binding IsLoading}"
+                                HorizontalAlignment="Center"
+                                Margin="0,20">
+                            <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                <ProgressBar IsIndeterminate="True"
+                                            Width="100"
+                                            Height="4"/>
+                                <TextBlock Text="思考中..."
+                                          Classes="Tertiary"
+                                          HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 错误提示 -->
+                        <Border IsVisible="{Binding HasError}"
+                                Background="{DynamicResource SemiColorDangerLight}"
+                                CornerRadius="8"
+                                Padding="12"
+                                Margin="8">
+                            <TextBlock Text="{Binding ErrorMessage}"
+                                      Foreground="{DynamicResource SemiColorDanger}"
+                                      TextWrapping="Wrap"/>
+                        </Border>
+
+                        <!-- 对话消息列表 -->
+                        <ItemsControl ItemsSource="{Binding Messages}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes.UserMessage="{Binding Role, Converter={x:Static vm:AICoachViewModel.IsUserRole}}"
+                                            Classes.AssistantMessage="{Binding Role, Converter={x:Static vm:AICoachViewModel.IsAssistantRole}}">
+                                        <TextBlock Text="{Binding Content}"
+                                                  TextWrapping="Wrap"
+                                                  MaxWidth="280"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- 当前回复（如果有） -->
+                        <Border IsVisible="{Binding CurrentResponse, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                Classes="AssistantMessage">
+                            <TextBlock Text="{Binding CurrentResponse}"
+                                      TextWrapping="Wrap"
+                                      MaxWidth="280"/>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- 输入区域 (非设置模式时显示) -->
+                <Border Grid.Row="3"
+                        BorderThickness="0,1,0,0"
+                        BorderBrush="{DynamicResource SemiColorBorder}"
+                        Padding="12"
+                        IsVisible="{Binding !IsSettingsOpen}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox Grid.Column="0"
+                                Text="{Binding UserInput}"
+                                Watermark="有什么想问的..."
+                                CornerRadius="20"
+                                Padding="16,10"
+                                KeyDown="OnInputKeyDown"/>
+                        <Button Grid.Column="1"
+                                Classes="Primary"
+                                Margin="8,0,0,0"
+                                CornerRadius="20"
+                                Padding="16,10"
+                                Command="{Binding SendMessageCommand}"
+                                IsEnabled="{Binding !IsLoading}">
+                            <TextBlock Text="发送"/>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Canvas>
+</UserControl>

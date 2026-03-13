@@ -7,7 +7,7 @@
         Height="250"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        Background="#FFFFFF">
+        Background="{DynamicResource SemiColorBackground0}">
 
     <Grid Margin="0">
         <Grid.RowDefinitions>
@@ -18,7 +18,7 @@
 
         <!-- 标题栏 -->
         <Border Grid.Row="0"
-                Background="#F5F5F7"
+                Background="{DynamicResource SemiColorFill0}"
                 Padding="20,15">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -31,7 +31,7 @@
                         Width="40"
                         Height="40"
                         CornerRadius="20"
-                        Background="#FFEBEE"
+                        Background="{DynamicResource SemiColorDangerLight}"
                         Margin="0,0,15,0">
                     <TextBlock Text="⚠️"
                                FontSize="24"
@@ -44,10 +44,10 @@
                     <TextBlock x:Name="TitleText"
                                FontSize="18"
                                FontWeight="SemiBold"
-                               Foreground="#1D1D1F"/>
+                               Foreground="{DynamicResource SemiColorText0}"/>
                     <TextBlock x:Name="SubtitleText"
                                FontSize="12"
-                               Foreground="#86868B"
+                               Foreground="{DynamicResource SemiColorText2}"
                                Margin="0,4,0,0"/>
                 </StackPanel>
             </Grid>
@@ -59,15 +59,15 @@
             <TextBlock x:Name="MessageText"
                        TextWrapping="Wrap"
                        FontSize="14"
-                       Foreground="#1D1D1F"
+                       Foreground="{DynamicResource SemiColorText1}"
                        LineHeight="22"/>
         </ScrollViewer>
 
         <!-- 按钮区域 -->
         <Border Grid.Row="2"
-                Background="#F5F5F7"
+                Background="{DynamicResource SemiColorFill0}"
                 Padding="20,15"
-                BorderBrush="#E5E5EA"
+                BorderBrush="{DynamicResource SemiColorBorder}"
                 BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal"
                         HorizontalAlignment="Right"
@@ -75,35 +75,15 @@
                 <!-- 查看日志按钮 (可选) -->
                 <Button x:Name="ViewLogsButton"
                         Content="{Binding ViewLogs, Source={x:Static strings:StringResources.Current}}"
-                        Padding="20,8"
-                        Background="#E5E5EA"
-                        Foreground="#1D1D1F"
-                        BorderThickness="0"
-                        CornerRadius="8"
+                        Theme="{DynamicResource SemiButtonSecondary}"
                         IsVisible="False"
-                        Click="OnViewLogsClick">
-                    <Button.Styles>
-                        <Style Selector="Button:pointerover">
-                            <Setter Property="Background" Value="#D1D1D6"/>
-                        </Style>
-                    </Button.Styles>
-                </Button>
+                        Click="OnViewLogsClick"/>
 
                 <!-- 确定按钮 -->
                 <Button x:Name="OkButton"
                         Content="{Binding OK, Source={x:Static strings:StringResources.Current}}"
-                        Padding="20,8"
-                        Background="#007AFF"
-                        Foreground="White"
-                        BorderThickness="0"
-                        CornerRadius="8"
-                        Click="OnOkClick">
-                    <Button.Styles>
-                        <Style Selector="Button:pointerover">
-                            <Setter Property="Background" Value="#0051D5"/>
-                        </Style>
-                    </Button.Styles>
-                </Button>
+                        Theme="{DynamicResource SemiButtonPrimary}"
+                        Click="OnOkClick"/>
             </StackPanel>
         </Border>
     </Grid>

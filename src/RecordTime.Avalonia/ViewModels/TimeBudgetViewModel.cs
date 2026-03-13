@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -308,12 +309,12 @@ public partial class TimeBudgetViewModel : ViewModelBase
     /// <summary>
     /// 所有时间目标
     /// </summary>
-    public ObservableCollection<TimeBudgetItem> Budgets { get; } = new();
+    public BulkObservableCollection<TimeBudgetItem> Budgets { get; } = new();
 
     /// <summary>
     /// AI 建议列表
     /// </summary>
-    public ObservableCollection<SuggestionItem> Suggestions { get; } = new();
+    public BulkObservableCollection<SuggestionItem> Suggestions { get; } = new();
 
     /// <summary>
     /// 可用的应用列表（用于选择）- 存储 ProcessName 和 DisplayName 的映射
@@ -323,12 +324,12 @@ public partial class TimeBudgetViewModel : ViewModelBase
     /// <summary>
     /// 可用的应用列表（用于下拉框显示）
     /// </summary>
-    public ObservableCollection<string> AvailableApps { get; } = new();
+    public BulkObservableCollection<string> AvailableApps { get; } = new();
 
     /// <summary>
     /// 可用的分类列表（用于选择）
     /// </summary>
-    public ObservableCollection<string> AvailableCategories { get; } = new();
+    public BulkObservableCollection<string> AvailableCategories { get; } = new();
 
     [ObservableProperty]
     private bool _isLoading = false;
@@ -404,12 +405,13 @@ public partial class TimeBudgetViewModel : ViewModelBase
     private readonly GoalSuggestionEngine _suggestionEngine = new();
     private readonly BudgetTrackingService _trackingService = BudgetTrackingService.Instance;
 
+    private CancellationTokenSource? _loadCancellationTokenSource;
+
     public TimeBudgetViewModel()
     {
         // 订阅预算进度更新事件
         _trackingService.ProgressUpdated += OnProgressUpdated;
 
-        _ = LoadDataAsync();
     }
 
     /// <summary>
@@ -470,49 +472,65 @@ public partial class TimeBudgetViewModel : ViewModelBase
         IsLoading = true;
         StatusMessage = "正在加载...";
 
+        _loadCancellationTokenSource?.Cancel();
+        _loadCancellationTokenSource?.Dispose();
+        _loadCancellationTokenSource = new CancellationTokenSource();
+        var loadToken = _loadCancellationTokenSource.Token;
+
         try
         {
             await using var context = new RecordTimeDbContext();
 
             // 使用 BudgetTrackingService 获取带进度的预算数据
-            var progressItems = await _trackingService.GetCurrentProgressAsync();
-
-            Budgets.Clear();
-            foreach (var progressItem in progressItems)
+            var progressItems = await _trackingService.GetCurrentProgressAsync().ConfigureAwait(false);
+            if (loadToken.IsCancellationRequested)
             {
-                Budgets.Add(TimeBudgetItem.FromProgressItem(progressItem));
+                return;
             }
+            var budgetItems = progressItems.Select(TimeBudgetItem.FromProgressItem).ToList();
 
             // 也加载未启用的预算（不显示进度）
             var disabledBudgets = await context.TimeBudgets
                 .AsNoTracking()
                 .Where(b => !b.IsEnabled)
                 .OrderBy(b => b.DisplayName)
-                .ToListAsync();
+                .ToListAsync()
+                .ConfigureAwait(false);
 
-            foreach (var budget in disabledBudgets)
+            budgetItems.AddRange(disabledBudgets.Select(TimeBudgetItem.FromModel));
+
+            await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Budgets.Add(TimeBudgetItem.FromModel(budget));
-            }
-
-            HasBudgets = Budgets.Count > 0;
+                Budgets.ReplaceWith(budgetItems);
+                HasBudgets = Budgets.Count > 0;
+                StatusMessage = $"已加载 {budgetItems.Count} 个时间目标";
+            }, global::Avalonia.Threading.DispatcherPriority.Background);
 
             // 加载可用应用和分类
+            if (loadToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             await LoadAvailableOptionsAsync(context);
 
             // 加载建议（如果有）
+            if (loadToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             await LoadSuggestionsAsync(context);
 
-            StatusMessage = $"已加载 {Budgets.Count} 个时间目标";
         }
         catch (Exception ex)
         {
             Log.Error(ex, "加载时间目标失败");
-            StatusMessage = "加载失败: " + ex.Message;
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() => StatusMessage = "加载失败: " + ex.Message);
         }
         finally
         {
-            IsLoading = false;
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() => IsLoading = false);
         }
     }
 
@@ -530,15 +548,13 @@ public partial class TimeBudgetViewModel : ViewModelBase
             .Select(s => new { s.ProcessName, s.DisplayName })
             .Distinct()
             .OrderBy(a => a.DisplayName)
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
 
-        AvailableApps.Clear();
-        _appDisplayNameToProcessNameMap.Clear();
-        foreach (var app in apps)
-        {
-            AvailableApps.Add(app.DisplayName);
-            _appDisplayNameToProcessNameMap[app.DisplayName] = app.ProcessName;
-        }
+        var appNames = apps.Select(a => a.DisplayName).ToList();
+        var appMap = apps
+            .GroupBy(a => a.DisplayName)
+            .ToDictionary(g => g.Key, g => g.First().ProcessName);
 
         // 获取所有分类
         var categories = await context.Sessions
@@ -547,13 +563,15 @@ public partial class TimeBudgetViewModel : ViewModelBase
             .Select(s => s.Category!)
             .Distinct()
             .OrderBy(c => c)
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
 
-        AvailableCategories.Clear();
-        foreach (var category in categories)
+        await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            AvailableCategories.Add(category);
-        }
+            AvailableApps.ReplaceWith(appNames);
+            _appDisplayNameToProcessNameMap = appMap;
+            AvailableCategories.ReplaceWith(categories);
+        }, global::Avalonia.Threading.DispatcherPriority.Background);
     }
 
     /// <summary>
@@ -565,15 +583,16 @@ public partial class TimeBudgetViewModel : ViewModelBase
             .AsNoTracking()
             .Where(s => !s.IsProcessed && s.ExpiresAt > DateTime.Now)
             .OrderByDescending(s => s.Priority)
-            .ToListAsync();
+            .ToListAsync()
+            .ConfigureAwait(false);
 
-        Suggestions.Clear();
-        foreach (var suggestion in suggestions)
+        var suggestionItems = suggestions.Select(SuggestionItem.FromModel).ToList();
+
+        await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            Suggestions.Add(SuggestionItem.FromModel(suggestion));
-        }
-
-        HasSuggestions = Suggestions.Count > 0;
+            Suggestions.ReplaceWith(suggestionItems);
+            HasSuggestions = Suggestions.Count > 0;
+        }, global::Avalonia.Threading.DispatcherPriority.Background);
     }
 
     /// <summary>

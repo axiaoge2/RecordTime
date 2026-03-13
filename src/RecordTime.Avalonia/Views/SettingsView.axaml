@@ -5,56 +5,59 @@
              xmlns:local="using:RecordTime.Avalonia.Converters"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="800"
              x:Class="RecordTime.Avalonia.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="24" MaxWidth="900" Margin="48,40,48,80">
+        <StackPanel Spacing="24" MaxWidth="800" Margin="24,24,24,48">
             <!-- Page Title -->
             <TextBlock Text="{Binding Settings, Source={x:Static strings:StringResources.Current}}"
-                      Classes="title"
-                      Margin="0,0,0,16"/>
+                      Classes="H3"
+                      Theme="{DynamicResource TitleTextBlock}"/>
 
             <!-- Status Bar -->
-            <Border Padding="12"
-                   Background="{StaticResource HoverBackground}"
+            <Border Padding="16"
+                   Theme="{DynamicResource SemiBorderCard}"
                    CornerRadius="8">
-                <TextBlock Text="{Binding StatusText}"
-                          Classes="body"
-                          TextAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                     <PathIcon Data="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 9h2V7h-2v2z" 
+                               Width="16" Height="16"
+                               Foreground="{DynamicResource SemiColorPrimary}"/>
+                     <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center"/>
+                </StackPanel>
             </Border>
 
             <!-- General Settings -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
-                <StackPanel Spacing="20">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
+                <StackPanel Spacing="24">
                     <TextBlock Text="{Binding GeneralSettings, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H5"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <!-- Auto Start -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="{Binding AutoStart, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding AutoStart, Source={x:Static strings:StringResources.Current}}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding AutoStartDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"/>
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding AutoStart, Mode=TwoWay}"
                                      VerticalAlignment="Center"/>
                     </Grid>
 
+                    <Separator Classes="Small"/>
+
                     <!-- Minimize to Tray -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="{Binding MinimizeToTray, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding MinimizeToTray, Source={x:Static strings:StringResources.Current}}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding MinimizeToTrayDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"/>
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding MinimizeToTray}"
@@ -62,14 +65,15 @@
                                      VerticalAlignment="Center"/>
                     </Grid>
 
+                    <Separator Classes="Small"/>
+
                     <!-- Notifications -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="{Binding ShowNotifications, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding ShowNotifications, Source={x:Static strings:StringResources.Current}}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding ShowNotificationsDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"/>
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"/>
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding ShowNotifications}"
@@ -77,19 +81,20 @@
                                      VerticalAlignment="Center"/>
                     </Grid>
 
+                    <Separator Classes="Small"/>
+
                     <!-- Language -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="{Binding Language, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Language, Source={x:Static strings:StringResources.Current}}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding LanguageDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"/>
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"/>
                         </StackPanel>
                         <ComboBox Grid.Column="1"
                                  ItemsSource="{Binding LanguageOptions}"
                                  SelectedItem="{Binding SelectedLanguageOption}"
-                                 Width="180"
+                                 Width="200"
                                  VerticalAlignment="Center">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
@@ -99,18 +104,19 @@
                         </ComboBox>
                     </Grid>
 
+                    <Separator Classes="Small"/>
+
                     <!-- Theme -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="{Binding Theme, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding Theme, Source={x:Static strings:StringResources.Current}}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding ThemeDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"/>
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1"
                                    Orientation="Horizontal"
-                                   Spacing="8"
+                                   Spacing="16"
                                    VerticalAlignment="Center">
                             <RadioButton Content="{Binding ThemeLight, Source={x:Static strings:StringResources.Current}}"
                                         IsChecked="{Binding SelectedThemeIndex, Converter={x:Static local:IndexToBoolConverter.Instance}, ConverterParameter=0}"
@@ -124,14 +130,15 @@
                         </StackPanel>
                     </Grid>
 
+                    <Separator Classes="Small"/>
+
                     <!-- Idle Timeout -->
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="{Binding IdleTimeout, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding IdleTimeout, Source={x:Static strings:StringResources.Current}}" FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding IdleTimeoutDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"/>
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"/>
                         </StackPanel>
                         <NumericUpDown Grid.Column="1"
                                       Value="{Binding IdleTimeoutMinutes}"
@@ -145,107 +152,72 @@
             </Border>
 
             <!-- Database Management -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
-                <StackPanel Spacing="20">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
+                <StackPanel Spacing="24">
                     <TextBlock Text="{Binding DataManagement, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H5"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <!-- Database Info -->
-                    <Border Padding="12"
-                           Background="{StaticResource HoverBackground}"
+                    <Border Padding="16"
+                           Theme="{DynamicResource SemiBorderCard}"
+                           Background="{DynamicResource SemiColorFill0}"
                            CornerRadius="8">
                         <StackPanel Spacing="8">
                             <Grid ColumnDefinitions="Auto,*">
                                 <TextBlock Grid.Column="0"
                                           Text="{Binding DatabasePath, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1"
                                           Text="{Binding DatabasePath}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           TextTrimming="CharacterEllipsis"/>
                             </Grid>
                             <Grid ColumnDefinitions="Auto,Auto,*">
                                 <TextBlock Grid.Column="0"
                                           Text="{Binding DatabaseSize, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,8,0"/>
                                 <TextBlock Grid.Column="1"
                                           Text="{Binding DatabaseSize}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,16,0"/>
                                 <TextBlock Grid.Column="2"
                                           Text="{Binding TotalSessions, StringFormat='{}{0} records total'}"
-                                          Classes="caption"/>
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"/>
                             </Grid>
                         </StackPanel>
                     </Border>
 
                     <!-- Database Actions -->
-                    <UniformGrid Columns="3" ColumnSpacing="12">
-                        <Button Content="{Binding OpenDatabaseFolder, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                    <Grid ColumnDefinitions="*, 12, *, 12, *">
+                        <Button Grid.Column="0" Content="{Binding OpenDatabaseFolder, Source={x:Static strings:StringResources.Current}}"
+                               Theme="{DynamicResource SemiButtonSecondary}"
+                               HorizontalAlignment="Stretch"
                                Command="{Binding OpenDatabaseFolderCommand}"/>
-                        <Button Content="{Binding BackupDatabase, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                        <Button Grid.Column="2" Content="{Binding BackupDatabase, Source={x:Static strings:StringResources.Current}}"
+                               Theme="{DynamicResource SemiButtonSecondary}"
+                               HorizontalAlignment="Stretch"
                                Command="{Binding BackupDatabaseCommand}"/>
-                        <Button Content="{Binding ClearOldData, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                        <Button Grid.Column="4" Content="{Binding ClearOldData, Source={x:Static strings:StringResources.Current}}"
+                               Theme="{DynamicResource SemiButtonSecondary}"
+                               HorizontalAlignment="Stretch"
                                Command="{Binding ClearOldDataCommand}"/>
-                    </UniformGrid>
+                    </Grid>
 
                     <TextBlock Text="{Binding ClearOldDataWarning, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}"
                               TextWrapping="Wrap"
-                              Foreground="{StaticResource SecondaryText}"/>
+                              Foreground="{DynamicResource SemiColorWarning}"/>
                 </StackPanel>
             </Border>
-
-            <!-- Advanced -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
-                <StackPanel Spacing="20">
-                    <TextBlock Text="{Binding AdvancedSettings, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
-
-                    <Button Content="{Binding OpenLogsFolder, Source={x:Static strings:StringResources.Current}}"
-                           Classes="secondary"
-                           Command="{Binding OpenLogsFolderCommand}"
-                           HorizontalAlignment="Left"/>
-
-                    <TextBlock Text="{Binding LogsDescription, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
-                              TextWrapping="Wrap"/>
-                </StackPanel>
-            </Border>
-
-            <!-- About -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="{Binding About, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
-
-                    <TextBlock Text="{Binding Version, Source={x:Static strings:StringResources.Current}}"
-                              Classes="body"/>
-
-                    <TextBlock Text="{Binding SettingsDescription, Source={x:Static strings:StringResources.Current}}"
-                              Classes="body"
-                              TextWrapping="Wrap"/>
-
-                    <TextBlock Text="{Binding SettingsFeatures, Source={x:Static strings:StringResources.Current}}"
-                              Classes="body"
-                              TextWrapping="Wrap"/>
-
-                    <TextBlock Text="{Binding SettingsCopyright, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
-                              Margin="0,8,0,0"/>
-                </StackPanel>
-            </Border>
-
-            <!-- 底部占位元素,确保滚动空间充足 -->
-            <Border Height="1" Background="Transparent"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

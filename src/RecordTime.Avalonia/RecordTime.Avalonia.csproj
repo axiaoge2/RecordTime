@@ -36,6 +36,7 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="Themes\**" />
   </ItemGroup>
 
   <!-- Copy icon to output directory for system tray -->
@@ -75,6 +76,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
+    <PackageReference Include="Semi.Avalonia" Version="11.3.7.1" />
+    <PackageReference Include="Semi.Avalonia.ColorPicker" Version="11.3.7.1" />
+    <PackageReference Include="Semi.Avalonia.DataGrid" Version="11.3.7.1" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />

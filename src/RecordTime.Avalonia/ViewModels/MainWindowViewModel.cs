@@ -1,6 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RecordTime.Core.Services;
+using RecordTime.Core.Services.AICoach;
 using RecordTime.Core.Models;
 using RecordTime.Core.Exceptions;
 using RecordTime.Data;
@@ -32,8 +33,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private SessionManager? _sessionManager;
     private System.Threading.Timer? _updateTimer;
     private readonly SemaphoreSlim _loadDataLock = new(1, 1);
+    private CancellationTokenSource? _dashboardLoadCancellationTokenSource;
+    private CancellationTokenSource? _dashboardIconLoadCancellationTokenSource;
     private readonly IIconExtractor _iconExtractor;
     private int _timerExecuting = 0; // 0 = 未执行, 1 = 执行中 (防重入)
+    private DateTime _lastCheckedDate = DateTime.Today; // 跨零点检测：记录上次检测的日期
 
     // 页面 ViewModel 单例 - 保持页面状态,避免切换时丢失进度
     private ReportViewModel? _reportViewModel;
@@ -41,6 +45,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private SettingsViewModel? _settingsViewModel;
     private AboutViewModel? _aboutViewModel;
     private TimeBudgetViewModel? _timeBudgetViewModel;
+
+    // AI Coach ViewModel
+    private AICoachViewModel? _aiCoachViewModel;
 
     // 汇总数据
     [ObservableProperty]
@@ -99,6 +106,35 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ISeries[] _barChartSeries = Array.Empty<ISeries>();
 
+    // 导航索引控制
+    [ObservableProperty]
+    private int _selectedTabIndex = 0;
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        switch (value)
+        {
+            case 0: // Dashboard
+                NavigateToDashboard();
+                break;
+            case 1: // AppStats
+                NavigateToAppStats();
+                break;
+            case 2: // Reports
+                NavigateToReports();
+                break;
+            case 3: // TimeBudget
+                NavigateToTimeBudget();
+                break;
+            case 4: // Settings
+                NavigateToSettings();
+                break;
+            case 5: // About
+                NavigateToAbout();
+                break;
+        }
+    }
+
     [ObservableProperty]
     private Axis[] _barChartXAxes = Array.Empty<Axis>();
 
@@ -152,6 +188,13 @@ public partial class MainWindowViewModel : ViewModelBase
     partial void OnTotalBudgetCountChanged(int value) => OnPropertyChanged(nameof(HasBudgets));
     partial void OnOverBudgetCountChanged(int value) => OnPropertyChanged(nameof(HasOverBudget));
 
+    // ========== AI Coach ==========
+
+    /// <summary>
+    /// AI Coach ViewModel - 用于悬浮面板绑定
+    /// </summary>
+    public AICoachViewModel AICoachVM => _aiCoachViewModel ??= CreateAICoachViewModel();
+
     // 当前页面内容
     [ObservableProperty]
     private ViewModelBase? _currentPageViewModel;
@@ -177,16 +220,13 @@ public partial class MainWindowViewModel : ViewModelBase
         _iconExtractor = new IconExtractor();
 
         // 应用 EF Core Migrations (自动创建/更新数据库 schema)
-        _ = ApplyDatabaseMigrationsAsync();
+        _ = Task.Run(InitializeDatabaseAsync);
 
         // 执行数据库迁移（更新旧数据的 DisplayName）
-        _ = MigrateDisplayNamesAsync();
 
         // 自动修复未结束的会话（Phase 1 数据完整性保障）
-        _ = AutoFixIncompleteSessionsAsync();
 
         // Phase 1 Task 1.2: 检测并修复心跳过期的会话
-        _ = FixStaleSessionsAsync();
 
         // Phase 4: 订阅预算进度更新事件
         BudgetTrackingService.Instance.ProgressUpdated += OnBudgetProgressUpdated;
@@ -196,6 +236,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // Phase 4: 加载预算进度
         _ = LoadBudgetProgressAsync();
+
+        // 初始化页面导航
+        _appStatsViewModel ??= new AppStatsViewModel();
+        // 默认显示 Dashboard
+        CurrentPageViewModel = this;
+
+        // 每次导航到此页面时刷新数据（异步执行，不阻塞UI）
 
         // 注意：定时刷新将在启动监控时创建，停止监控时销毁
     }
@@ -240,7 +287,16 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToDashboard()
     {
-        CurrentPageViewModel = null; // null 表示显示主仪表盘
+        CurrentPageViewModel = this;
+    }
+
+    private void ScheduleAfterNavigation(Func<Task> action)
+    {
+        _ = global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+        {
+            await Task.Yield();
+            await action();
+        }, global::Avalonia.Threading.DispatcherPriority.Background);
     }
 
     [RelayCommand]
@@ -251,7 +307,7 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentPageViewModel = _appStatsViewModel;
 
         // 每次导航到此页面时刷新数据（异步执行，不阻塞UI）
-        _ = _appStatsViewModel.OnNavigatedToAsync();
+        ScheduleAfterNavigation(_appStatsViewModel.OnNavigatedToAsync);
     }
 
     [RelayCommand]
@@ -286,7 +342,44 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentPageViewModel = _timeBudgetViewModel;
 
         // 每次导航到此页面时刷新进度数据（异步执行，不阻塞UI）
-        _ = _timeBudgetViewModel.OnNavigatedToAsync();
+        ScheduleAfterNavigation(_timeBudgetViewModel.OnNavigatedToAsync);
+    }
+
+    /// <summary>
+    /// 创建 AI Coach ViewModel
+    /// </summary>
+    private AICoachViewModel CreateAICoachViewModel()
+    {
+        try
+        {
+            // 创建服务依赖
+            var knowledgeBase = new KnowledgeBaseProvider();
+            var promptBuilder = new PromptBuilder(knowledgeBase);
+
+            // 创建上下文构建器
+            var contextBuilder = new CognitiveContextBuilder(
+                () =>
+                {
+                    var dbContext = new RecordTimeDbContext();
+                    return new SessionRepository(dbContext, ownsContext: true);
+                },
+                _windowMonitor
+            );
+
+            // 使用新的构造函数，让 ViewModel 自己管理配置
+            var vm = new AICoachViewModel(contextBuilder, promptBuilder);
+
+            // 异步初始化 (检查服务可用性)
+            _ = vm.InitializeAsync();
+
+            Log.Information("AI Coach ViewModel 已创建");
+            return vm;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "创建 AI Coach ViewModel 失败");
+            return new AICoachViewModel(); // 返回空的 ViewModel
+        }
     }
 
     private async Task StartMonitoringAsync()
@@ -334,6 +427,29 @@ public partial class MainWindowViewModel : ViewModelBase
                     {
                         try
                         {
+                            // 跨零点检测：如果日期发生变化，自动切换到新的"今日"
+                            var today = DateTime.Today;
+                            if (today > _lastCheckedDate)
+                            {
+                                Log.Information("检测到跨零点：从 {OldDate} 切换到 {NewDate}",
+                                    _lastCheckedDate.ToString("yyyy-MM-dd"),
+                                    today.ToString("yyyy-MM-dd"));
+
+                                // 如果用户之前查看的是"昨日"（现在看来），自动切换到新的"今日"
+                                if (SelectedDate.Date == _lastCheckedDate)
+                                {
+                                    // 在 UI 线程更新日期显示
+                                    await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                                    {
+                                        SelectedDate = today;
+                                        SelectedDateText = today.ToString(StringResources.Current.DateFormatPattern);
+                                    });
+                                    Log.Information("已自动切换仪表盘日期到新的今日");
+                                }
+
+                                _lastCheckedDate = today;
+                            }
+
                             if (IsMonitoring && SelectedDate.Date == DateTime.Today)
                             {
                                 await LoadDataForDateAsync(SelectedDate);
@@ -440,6 +556,14 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private async Task InitializeDatabaseAsync()
+    {
+        await ApplyDatabaseMigrationsAsync().ConfigureAwait(false);
+        await MigrateDisplayNamesAsync().ConfigureAwait(false);
+        await AutoFixIncompleteSessionsAsync().ConfigureAwait(false);
+        await FixStaleSessionsAsync().ConfigureAwait(false);
+    }
+
     private async Task ApplyDatabaseMigrationsAsync()
     {
         try
@@ -454,10 +578,17 @@ public partial class MainWindowViewModel : ViewModelBase
                 // 数据库不存在，创建并应用 Migrations
                 Log.Information("数据库不存在，正在创建...");
                 await dbContext.Database.MigrateAsync();
+                
+                // 启用 WAL 模式以提高性能
+                await dbContext.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+                
                 Log.Information("数据库创建成功");
             }
             else
             {
+                // 确保现有数据库也启用 WAL 模式
+                await dbContext.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+
                 // 数据库已存在，检查是否有待应用的 Migrations
                 var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
 
@@ -662,13 +793,28 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private async Task LoadDataForDateAsync(DateTime date)
     {
+        _dashboardLoadCancellationTokenSource?.Cancel();
+        _dashboardLoadCancellationTokenSource?.Dispose();
+        _dashboardLoadCancellationTokenSource = new CancellationTokenSource();
+        var loadToken = _dashboardLoadCancellationTokenSource.Token;
+
+        _dashboardIconLoadCancellationTokenSource?.Cancel();
+        _dashboardIconLoadCancellationTokenSource?.Dispose();
+        _dashboardIconLoadCancellationTokenSource = new CancellationTokenSource();
+        var iconToken = _dashboardIconLoadCancellationTokenSource.Token;
+
         // 使用锁防止并发更新导致重复数据
-        await _loadDataLock.WaitAsync();
+        await _loadDataLock.WaitAsync().ConfigureAwait(false);
         try
         {
             // 使用共享的 AppDataService 获取数据快照
             var appDataService = AppDataService.Instance;
-            var snapshot = await appDataService.GetSnapshotAsync(date);
+            var snapshot = await appDataService.GetSnapshotAsync(date).ConfigureAwait(false);
+
+            if (loadToken.IsCancellationRequested)
+            {
+                return;
+            }
 
             Log.Debug("MainWindow: 获取快照 [{DebugInfo}]", snapshot.GetDebugInfo());
 
@@ -688,9 +834,10 @@ public partial class MainWindowViewModel : ViewModelBase
             // 更新数据时间戳
             // - 监控运行中: 显示实时查询时间
             // - 监控未运行: 显示最后一条会话的结束时间
+            var dataUpdateTimeText = "--";
             if (IsMonitoring && date.Date == DateTime.Today)
             {
-                DataUpdateTime = DateTime.Now.ToString("HH:mm");
+                dataUpdateTimeText = DateTime.Now.ToString("HH:mm");
             }
             else
             {
@@ -702,58 +849,54 @@ public partial class MainWindowViewModel : ViewModelBase
                     .Where(s => s.StartTime >= dateStart && s.StartTime < dateStart.AddDays(1) && s.EndTime != null)
                     .OrderByDescending(s => s.EndTime)
                     .Select(s => s.EndTime)
-                    .FirstOrDefaultAsync();
+                    .FirstOrDefaultAsync().ConfigureAwait(false);
 
-                if (lastSession.HasValue)
-                {
-                    DataUpdateTime = lastSession.Value.ToString("HH:mm");
-                }
-                else
-                {
-                    DataUpdateTime = "--";
-                }
+                dataUpdateTimeText = lastSession.HasValue ? lastSession.Value.ToString("HH:mm") : "--";
             }
 
             if (snapshot.AllApps.Count == 0)
             {
                 // 没有数据 - 显示空状态
-                ShowEmptyState = true;
-                TotalDuration = "00h 00m";
-                SessionCount = 0;
-                AppTypeCount = 0;
-                ActivityTypeCount = 0;
-                CategoryStats.Clear();
-                TopApps.Clear();
-                PieChartSeries = Array.Empty<ISeries>();
-                BarChartSeries = Array.Empty<ISeries>();
-                BarChartXAxes = Array.Empty<Axis>();
-                AppTypePieChartSeries = Array.Empty<ISeries>();
-                TopCategoryName = StringResources.Current.NoData;
-                TopCategoryDuration = "--";
+                await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    DataUpdateTime = dataUpdateTimeText;
+                    ShowEmptyState = true;
+                    TotalDuration = "00h 00m";
+                    SessionCount = 0;
+                    AppTypeCount = 0;
+                    ActivityTypeCount = 0;
+                    CategoryStats.Clear();
+                    TopApps.Clear();
+                    PieChartSeries = Array.Empty<ISeries>();
+                    BarChartSeries = Array.Empty<ISeries>();
+                    BarChartXAxes = Array.Empty<Axis>();
+                    AppTypePieChartSeries = Array.Empty<ISeries>();
+                    TopCategoryName = StringResources.Current.NoData;
+                    TopCategoryDuration = "--";
+                }, global::Avalonia.Threading.DispatcherPriority.Background);
                 _lastDataFingerprint = string.Empty; // 重置指纹
                 return;
             }
 
             // 有数据 - 隐藏空状态
-            ShowEmptyState = false;
 
             // 从快照计算汇总数据
             var hours = snapshot.TotalSeconds / 3600;
             var minutes = (snapshot.TotalSeconds % 3600) / 60;
-            TotalDuration = $"{hours:D2}h {minutes:D2}m";
+            var totalDurationText = $"{hours:D2}h {minutes:D2}m";
 
-            SessionCount = snapshot.SessionCount;
-            AppTypeCount = snapshot.AllApps.Select(a => a.Category).Distinct().Count();
+            var sessionCount = snapshot.SessionCount;
+            var appTypeCount = snapshot.AllApps.Select(a => a.Category).Distinct().Count();
 
             // ActivityType 需要从数据库查询（因为 AppDataItem 没有这个字段）
             await using var dbContext = new RecordTimeDbContext();
             var targetDate = date.Date;
-            ActivityTypeCount = await dbContext.Sessions
+            var activityTypeCount = await dbContext.Sessions
                 .AsNoTracking() // 只读查询,不需要跟踪实体变化
                 .Where(s => s.StartTime >= targetDate && s.StartTime < targetDate.AddDays(1))
                 .Select(s => s.ActivityType)
                 .Distinct()
-                .CountAsync();
+                .CountAsync().ConfigureAwait(false);
 
             // 从快照计算分类统计
             var categoryGroups = snapshot.AllApps
@@ -768,10 +911,24 @@ public partial class MainWindowViewModel : ViewModelBase
                 .Take(5)
                 .ToList();
 
+            var iconRequests = new List<(TopAppItem Item, string ProcessName, string Category)>();
+
             // 在 UI 线程上更新所有集合
             await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
                 // 更新分类统计
+                if (loadToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                DataUpdateTime = dataUpdateTimeText;
+                ShowEmptyState = false;
+                TotalDuration = totalDurationText;
+                SessionCount = sessionCount;
+                AppTypeCount = appTypeCount;
+                ActivityTypeCount = activityTypeCount;
+
                 CategoryStats.Clear();
                 foreach (var item in categoryGroups)
                 {
@@ -790,7 +947,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     var app = top10Apps[i];
 
                     // 提取应用图标
-                    var icon = _iconExtractor.ExtractIcon(app.ProcessName);
+                    var icon = _iconExtractor.ExtractIcon(string.Empty, app.Category);
 
                     var item = new TopAppItem
                     {
@@ -802,11 +959,23 @@ public partial class MainWindowViewModel : ViewModelBase
                         Percentage = app.TotalPercentage
                     };
                     TopApps.Add(item);
+                    iconRequests.Add((item, app.ProcessName, app.Category));
                     Log.Verbose("添加 #{Rank}: {AppName} - {DurationSeconds}s (图标: {HasIcon})", item.Rank, item.AppName, item.Duration.TotalSeconds, icon != null ? "✓" : "✗");
                 }
                 Log.Debug("MainWindow: UI 更新完成，TopApps.Count = {TopAppsCount}", TopApps.Count);
 
                 // 更新饼图数据 - TOP 5 应用
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await LoadTopAppIconsAsync(iconRequests, iconToken).ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }
+                }, iconToken);
+
                 var top5Apps = snapshot.AllApps.Take(5).ToList();
                 var colors = new[]
                 {
@@ -831,19 +1000,40 @@ public partial class MainWindowViewModel : ViewModelBase
                     DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
                 }).Cast<ISeries>().ToArray();
 
-                // 更新条形图数据 - 分类统计
+                // 更新条形图数据 - 分类统计（每个分类使用独立的渐变色）
                 if (categoryGroups.Count > 0)
                 {
-                    var categoryNames = categoryGroups.Select(c => c.Category).ToArray();
-                    var categoryValues = categoryGroups.Select(c => c.Duration.TotalMinutes).ToArray();
-
-                    BarChartSeries = new ISeries[]
+                    // 分类专属颜色映射 - 冷色调活泼配色方案
+                    var categoryColorMap = new Dictionary<string, (SKColor Start, SKColor End)>
                     {
-                        new ColumnSeries<double>
+                        { "开发工具", (new SKColor(0x3F, 0xA6, 0xFF), new SKColor(0x1E, 0x74, 0xD8)) }, // 亮蓝
+                        { "办公软件", (new SKColor(0x35, 0xD0, 0xC8), new SKColor(0x1A, 0xA4, 0xA2)) }, // 薄荷青
+                        { "视频娱乐", (new SKColor(0xFF, 0x7E, 0xB3), new SKColor(0xE8, 0x5A, 0x9C)) }, // 冷玫粉
+                        { "社交通讯", (new SKColor(0x6A, 0xD1, 0xFF), new SKColor(0x2A, 0x9B, 0xEA)) }, // 天蓝
+                        { "游戏", (new SKColor(0x7F, 0xD0, 0x6A), new SKColor(0x45, 0xA8, 0x4F)) },     // 活力青绿
+                        { "浏览器", (new SKColor(0x9B, 0x7B, 0xFF), new SKColor(0x6B, 0x53, 0xE5)) },   // 明亮蓝紫
+                        { "系统工具", (new SKColor(0x55, 0xB5, 0xA0), new SKColor(0x2E, 0x8B, 0x79)) }, // 青绿
+                        { "其他", (new SKColor(0xA1, 0xB7, 0xFF), new SKColor(0x6C, 0x7F, 0xD9)) },     // 灰蓝紫
+                    };
+
+                    // 默认颜色（用于未匹配的分类）
+                    var defaultColor = (Start: new SKColor(0xA1, 0xB7, 0xFF), End: new SKColor(0x6C, 0x7F, 0xD9));
+
+                    // 为每个分类创建独立的柱子系列
+                    var seriesList = new List<ISeries>();
+                    var categoryNames = new List<string>();
+
+                    foreach (var category in categoryGroups)
+                    {
+                        var categoryColors = categoryColorMap.GetValueOrDefault(category.Category, defaultColor);
+                        categoryNames.Add(category.Category);
+
+                        seriesList.Add(new ColumnSeries<double>
                         {
-                            Values = categoryValues,
+                            Values = new[] { category.Duration.TotalMinutes },
+                            Name = category.Category,
                             Fill = new LinearGradientPaint(
-                                new[] { new SKColor(102, 126, 234), new SKColor(118, 75, 162) },
+                                new[] { categoryColors.Start, categoryColors.End },
                                 new SKPoint(0, 0),
                                 new SKPoint(0, 1)
                             ),
@@ -851,14 +1041,16 @@ public partial class MainWindowViewModel : ViewModelBase
                             DataLabelsSize = 11,
                             DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.End,
                             DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
-                        }
-                    };
+                        });
+                    }
+
+                    BarChartSeries = seriesList.ToArray();
 
                     BarChartXAxes = new Axis[]
                     {
                         new Axis
                         {
-                            Labels = categoryNames,
+                            Labels = categoryNames.ToArray(),
                             LabelsRotation = 15,
                             LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
                             SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234))
@@ -935,12 +1127,32 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>
     /// Phase 4: 加载预算进度数据
     /// </summary>
+    private async Task LoadTopAppIconsAsync(
+        List<(TopAppItem Item, string ProcessName, string Category)> requests,
+        CancellationToken cancellationToken)
+    {
+        foreach (var (item, processName, category) in requests)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var icon = _iconExtractor.ExtractIcon(processName, category);
+            if (icon == null)
+            {
+                continue;
+            }
+
+            await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(
+                () => item.Icon = icon,
+                global::Avalonia.Threading.DispatcherPriority.Background);
+        }
+    }
+
     private async Task LoadBudgetProgressAsync()
     {
         try
         {
-            var progressItems = await BudgetTrackingService.Instance.GetCurrentProgressAsync();
-            UpdateBudgetProgressUI(progressItems);
+            var progressItems = await BudgetTrackingService.Instance.GetCurrentProgressAsync().ConfigureAwait(false);
+            global::Avalonia.Threading.Dispatcher.UIThread.Post(() => UpdateBudgetProgressUI(progressItems));
         }
         catch (Exception ex)
         {
@@ -1060,6 +1272,13 @@ public partial class MainWindowViewModel : ViewModelBase
     public void Dispose()
     {
         _updateTimer?.Dispose();
+        _dashboardLoadCancellationTokenSource?.Cancel();
+        _dashboardLoadCancellationTokenSource?.Dispose();
+        _dashboardLoadCancellationTokenSource = null;
+
+        _dashboardIconLoadCancellationTokenSource?.Cancel();
+        _dashboardIconLoadCancellationTokenSource?.Dispose();
+        _dashboardIconLoadCancellationTokenSource = null;
 
         // Phase 4: 取消预算进度更新事件订阅
         BudgetTrackingService.Instance.ProgressUpdated -= OnBudgetProgressUpdated;

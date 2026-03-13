@@ -211,7 +211,9 @@ public class StringResources : INotifyPropertyChanged
     // Activity type names
     public string ActivityTypeVideo => _provider.ActivityTypeVideo;
     public string ActivityTypeGaming => _provider.ActivityTypeGaming;
+    public string ActivityTypeMeeting => _provider.ActivityTypeMeeting;
     public string ActivityTypeActiveTyping => _provider.ActivityTypeActiveTyping;
+    public string ActivityTypeReading => _provider.ActivityTypeReading;
     public string ActivityTypePassiveBrowsing => _provider.ActivityTypePassiveBrowsing;
     public string ActivityTypeIdle => _provider.ActivityTypeIdle;
 
@@ -623,7 +625,9 @@ public interface IStringProvider
     // Activity type names
     string ActivityTypeVideo { get; }
     string ActivityTypeGaming { get; }
+    string ActivityTypeMeeting { get; }
     string ActivityTypeActiveTyping { get; }
+    string ActivityTypeReading { get; }
     string ActivityTypePassiveBrowsing { get; }
     string ActivityTypeIdle { get; }
 

@@ -16,12 +16,12 @@ public class ChineseStrings : IStringProvider
     public string Statistics => "统计";
     public string About => "关于";
 
-    // Navigation with icons
-    public string NavigationDashboard => "📊 仪表盘";
-    public string NavigationAppStats => "📱 应用统计";
-    public string NavigationReports => "📈 报告";
-    public string NavigationSettings => "⚙️ 设置";
-    public string NavigationAbout => "ℹ️ 关于";
+    // Navigation
+    public string NavigationDashboard => "仪表盘";
+    public string NavigationAppStats => "应用统计";
+    public string NavigationReports => "报告";
+    public string NavigationSettings => "设置";
+    public string NavigationAbout => "关于";
 
     // ============================================
     // Dashboard strings
@@ -318,7 +318,9 @@ public class ChineseStrings : IStringProvider
     // Activity type names
     public string ActivityTypeVideo => "视频娱乐";
     public string ActivityTypeGaming => "游戏";
+    public string ActivityTypeMeeting => "在线会议";
     public string ActivityTypeActiveTyping => "主动输入";
+    public string ActivityTypeReading => "阅读浏览";
     public string ActivityTypePassiveBrowsing => "被动浏览";
     public string ActivityTypeIdle => "空闲";
 
@@ -346,7 +348,7 @@ public class ChineseStrings : IStringProvider
     // ============================================
     // Time Budget (Phase 4)
     // ============================================
-    public string NavigationTimeBudget => "🎯 时间目标";
+    public string NavigationTimeBudget => "时间目标";
     public string TimeBudgetTitle => "时间目标管理";
     public string RefreshButton => "刷新";
     public string AddBudgetButton => "添加目标";

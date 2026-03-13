@@ -19,6 +19,9 @@ public class SessionManager : IDisposable
     private int? _currentSessionId;
     private readonly SemaphoreSlim _sessionLock = new(1, 1);
     private bool _isRunning;
+    
+    // 性能优化: 复用 SHA256 实例
+    private readonly System.Security.Cryptography.SHA256 _sha256 = System.Security.Cryptography.SHA256.Create();
 
     // Phase 1 Task 1.2: 会话心跳机制
     private System.Threading.Timer? _heartbeatTimer;
@@ -28,9 +31,6 @@ public class SessionManager : IDisposable
     private System.Threading.Timer? _idleCheckTimer;
     private readonly int _idleCheckIntervalSeconds = 120; // 默认 2 分钟检查一次
     private bool _sessionPausedDueToIdle = false; // 标记会话是否因空闲而暂停
-
-    // 桌面延迟检查定时器
-    private System.Threading.Timer? _desktopDelayTimer;
 
     public event EventHandler<AppSession>? SessionStarted;
     public event EventHandler<AppSession>? SessionEnded;
@@ -96,7 +96,6 @@ public class SessionManager : IDisposable
 
         // 停止所有定时器
         StopIdleCheckTimer();
-        _desktopDelayTimer?.Dispose();
 
         // 取消订阅
         _windowMonitor.WindowFocusChanged -= OnWindowFocusChanged;
@@ -168,15 +167,26 @@ public class SessionManager : IDisposable
 
     private SystemState CollectSystemState(WindowInfo window)
     {
-        var keyboardActivity = _inputMonitor.GetKeyboardActivityCount(30);
-        var mouseClicks = _inputMonitor.GetMouseClickCount(30);
-        var mouseMovement = _inputMonitor.GetMouseMovementDistance(30);
-        var idleTime = _inputMonitor.GetIdleTimeSeconds();
+        // 性能优化: 一次性获取所有输入统计数据，减少锁竞争
+        var inputStats = _inputMonitor.GetInputStats(30);
 
         var isMediaPlaying = _mediaDetector.IsMediaPlaying();
         var isVideoPlayer = _mediaDetector.IsVideoPlayer(window.ProcessName);
         var isBrowser = _mediaDetector.IsBrowser(window.ProcessName);
         var hasAudio = _mediaDetector.HasAudioActivity();
+
+        // 检测后台媒体播放状态
+        var isMusicPlayerRunning = _mediaDetector.IsMusicPlayerRunning();
+        var isVideoPlayerRunning = _mediaDetector.IsVideoPlayerRunning();
+
+        // 获取应用切换频率统计
+        var switchStats = _windowMonitor.GetSwitchStats();
+
+        // 修复浏览器视频检测：
+        // 只有当浏览器是当前窗口，且有媒体播放，
+        // 但没有独立的视频播放器或音乐播放器在后台运行时，才认为是浏览器视频
+        var browserVideoPlaying = isBrowser && isMediaPlaying &&
+                                  !isVideoPlayerRunning && !isMusicPlayerRunning;
 
         return new SystemState
         {
@@ -184,12 +194,18 @@ public class SessionManager : IDisposable
             IsVideoApp = isVideoPlayer,
             AudioActive = hasAudio,
             IsBrowser = isBrowser,
-            BrowserVideoPlaying = isBrowser && isMediaPlaying,
+            BrowserVideoPlaying = browserVideoPlaying,
             WindowFocused = true,
-            SystemIdle = idleTime > _idleTimeoutSeconds,
-            KeyboardActivityLast30s = keyboardActivity,
-            MouseClicksLast30s = mouseClicks,
-            FrequentInput = keyboardActivity > 20 || mouseClicks > 10,
+            SystemIdle = inputStats.IdleTimeSeconds > _idleTimeoutSeconds,
+            KeyboardActivityLast30s = inputStats.KeyboardActivityCount,
+            MouseClicksLast30s = inputStats.MouseClickCount,
+            ScrollCountLast30s = inputStats.ScrollCount,
+            AppSwitchCountLast5Min = switchStats.SwitchesLast5Min,
+            IsAttentionFragmented = switchStats.IsFragmented,
+            IsDeepFocus = switchStats.IsDeepFocus,
+            FrequentInput = inputStats.KeyboardActivityCount > 20 || inputStats.MouseClickCount > 10,
+            HasBackgroundMusic = isMusicPlayerRunning && !_mediaDetector.IsMusicPlayer(window.ProcessName),
+            HasBackgroundVideoPlayer = isVideoPlayerRunning && !isVideoPlayer,
             HighGpuUsage = false // 简化实现，实际需要检测GPU使用率
         };
     }
@@ -230,9 +246,9 @@ public class SessionManager : IDisposable
         if (string.IsNullOrEmpty(title))
             return string.Empty;
 
-        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        // 注意：此方法在 _sessionLock 保护下调用，无需额外锁
         var bytes = System.Text.Encoding.UTF8.GetBytes(title);
-        var hash = sha256.ComputeHash(bytes);
+        var hash = _sha256.ComputeHash(bytes);
         return Convert.ToBase64String(hash);
     }
 
@@ -264,7 +280,9 @@ public class SessionManager : IDisposable
         {
             ActivityType.Video => 90,
             ActivityType.Gaming => 85,
+            ActivityType.Meeting => 85, // 会议应用 + 音频活动，可信度较高
             ActivityType.ActiveTyping => 80,
+            ActivityType.Reading => 75, // 高滚轮 + 低键盘活动，可信度中等
             ActivityType.PassiveBrowsing => 60,
             ActivityType.Idle => 100,
             _ => 50
@@ -438,6 +456,10 @@ public class SessionManager : IDisposable
                     // Video 类型：必须仍在播放（有媒体会话或音频活动）
                     return systemState.MediaSessionPlaying || systemState.AudioActive;
 
+                case ActivityType.Meeting:
+                    // Meeting 类型：必须有音频活动（表示会议仍在进行）
+                    return systemState.AudioActive;
+
                 case ActivityType.PassiveBrowsing:
                     // 在线会议工具：必须有音频活动
                     if (_activityDetector.IsOnlineMeeting(session.ProcessName))
@@ -522,7 +544,7 @@ public class SessionManager : IDisposable
     /// <summary>
     /// 检查并恢复会话
     /// </summary>
-    private async Task CheckAndResumeSessionAsync()
+    private Task CheckAndResumeSessionAsync()
     {
         try
         {
@@ -537,6 +559,8 @@ public class SessionManager : IDisposable
         {
             Log.Error(ex, "检查并恢复会话时发生错误");
         }
+
+        return Task.CompletedTask;
     }
 
     #endregion
@@ -601,6 +625,8 @@ public class SessionManager : IDisposable
                 {
                     _windowMonitor.WindowFocusChanged -= OnWindowFocusChanged;
                 }
+                
+                _sha256.Dispose();
             }
             finally
             {

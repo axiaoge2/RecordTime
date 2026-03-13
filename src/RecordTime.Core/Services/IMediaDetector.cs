@@ -44,6 +44,21 @@ public interface IMediaDetector
     /// 检查进程是否为浏览器
     /// </summary>
     bool IsBrowser(string processName);
+
+    /// <summary>
+    /// 检查进程是否为音乐播放器
+    /// </summary>
+    bool IsMusicPlayer(string processName);
+
+    /// <summary>
+    /// 检查是否有音乐播放器正在运行（后台音乐检测）
+    /// </summary>
+    bool IsMusicPlayerRunning();
+
+    /// <summary>
+    /// 检查是否有视频播放器正在运行
+    /// </summary>
+    bool IsVideoPlayerRunning();
 }
 
 /// <summary>

@@ -8,28 +8,28 @@
              x:Class="RecordTime.Avalonia.Views.AboutView"
              x:DataType="vm:AboutViewModel">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="24" MaxWidth="900" Margin="48,40,48,80">
+        <StackPanel Spacing="24" MaxWidth="900" Margin="24,24,24,48">
             <!-- Page Title -->
             <TextBlock Text="{Binding AboutTitle, Source={x:Static strings:StringResources.Current}}"
-                      Classes="title"
-                      Margin="0,0,0,16"/>
+                       Classes="H3"
+                       Theme="{DynamicResource TitleTextBlock}"
+                       Margin="0,0,0,8"/>
 
             <!-- App Icon and Name -->
-            <Border Classes="card"
-                   Padding="32,40">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="32,40">
                 <StackPanel Spacing="16" HorizontalAlignment="Center">
                     <TextBlock Text="⏱️"
                               FontSize="64"
                               HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding AppName}"
-                              Classes="title"
-                              HorizontalAlignment="Center"
-                              FontSize="32"/>
-                    <TextBlock Classes="heading"
-                              HorizontalAlignment="Center"
-                              Foreground="{StaticResource SecondaryText}">
+                              Classes="H4"
+                              Theme="{DynamicResource TitleTextBlock}"
+                              HorizontalAlignment="Center"/>
+                    <TextBlock HorizontalAlignment="Center"
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}">
                         <Run Text="{Binding VersionPrefix, Source={x:Static strings:StringResources.Current}}"/>
                         <Run Text=" "/>
                         <Run Text="{Binding Version}"/>
@@ -38,22 +38,22 @@
             </Border>
 
             <!-- Description -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding AppDescriptionTitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"/>
                     <TextBlock Text="{Binding AppDescription, Source={x:Static strings:StringResources.Current}}"
-                              Classes="body"
+                              Theme="{DynamicResource TextBlockBase}"
                               TextWrapping="Wrap"
                               LineHeight="24"/>
 
                     <!-- Privacy Emphasis -->
                     <Border Padding="16,12"
-                           Background="#1A34C759"
-                           BorderBrush="#34C759"
-                           BorderThickness="2"
-                           CornerRadius="10"
+                           Background="{DynamicResource SemiColorSuccessLight}"
+                           BorderBrush="{DynamicResource SemiColorSuccess}"
+                           BorderThickness="1"
+                           CornerRadius="6"
                            Margin="0,12,0,0">
                         <StackPanel Spacing="8">
                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -61,41 +61,41 @@
                                           FontSize="20"
                                           VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding PrivacyPromise, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="body"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           FontWeight="SemiBold"
-                                          Foreground="#34C759"
+                                          Foreground="{DynamicResource SemiColorSuccess}"
                                           VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock Text="{Binding PrivacyPromiseDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       TextWrapping="Wrap"
-                                      LineHeight="20"
-                                      Opacity="0.85"/>
+                                      LineHeight="20"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </Border>
 
             <!-- Core Features -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding CoreFeatures, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"/>
                     <TextBlock Text="{Binding CoreFeaturesSubtitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
-                              Opacity="0.7"
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}"
                               Margin="0,0,0,8"/>
 
                     <ItemsControl ItemsSource="{Binding CoreFeatures}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="12,8"
-                                       Background="{StaticResource HoverBackground}"
-                                       CornerRadius="8"
+                                       Background="{DynamicResource SemiColorFill0}"
+                                       CornerRadius="4"
                                        Margin="0,4">
                                     <TextBlock Text="{Binding}"
-                                              Classes="body"
+                                              Theme="{DynamicResource TextBlockBase}"
                                               TextWrapping="Wrap"
                                               LineHeight="22"/>
                                 </Border>
@@ -106,25 +106,25 @@
             </Border>
 
             <!-- Security Features -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding DataSecurity, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"/>
                     <TextBlock Text="{Binding DataSecuritySubtitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
-                              Opacity="0.7"
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}"
                               Margin="0,0,0,8"/>
 
                     <ItemsControl ItemsSource="{Binding SecurityFeatures}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="12,8"
-                                       Background="{StaticResource HoverBackground}"
-                                       CornerRadius="8"
+                                       Background="{DynamicResource SemiColorFill0}"
+                                       CornerRadius="4"
                                        Margin="0,4">
                                     <TextBlock Text="{Binding}"
-                                              Classes="body"
+                                              Theme="{DynamicResource TextBlockBase}"
                                               TextWrapping="Wrap"
                                               LineHeight="22"/>
                                 </Border>
@@ -135,25 +135,25 @@
             </Border>
 
             <!-- UX Features -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding UserExperience, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"/>
                     <TextBlock Text="{Binding UserExperienceSubtitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
-                              Opacity="0.7"
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}"
                               Margin="0,0,0,8"/>
 
                     <ItemsControl ItemsSource="{Binding UXFeatures}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="12,8"
-                                       Background="{StaticResource HoverBackground}"
-                                       CornerRadius="8"
+                                       Background="{DynamicResource SemiColorFill0}"
+                                       CornerRadius="4"
                                        Margin="0,4">
                                     <TextBlock Text="{Binding}"
-                                              Classes="body"
+                                              Theme="{DynamicResource TextBlockBase}"
                                               TextWrapping="Wrap"
                                               LineHeight="22"/>
                                 </Border>
@@ -164,60 +164,59 @@
             </Border>
 
             <!-- Technology Stack -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding TechStack, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"/>
                     <TextBlock Text="{Binding TechStack}"
-                              Classes="body"
+                              Theme="{DynamicResource TextBlockBase}"
                               TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Links -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding Links, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <Grid ColumnDefinitions="*,12,*">
                         <Button Grid.Column="0"
                                Content="{Binding GitHubRepo, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding OpenGitHubCommand}"
                                HorizontalAlignment="Stretch"
-                               Height="44"/>
+                               Height="32"/>
 
                         <Button Grid.Column="2"
                                Content="{Binding OpenSourceLicense, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding OpenLicenseCommand}"
                                HorizontalAlignment="Stretch"
-                               Height="44"/>
+                               Height="32"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Copyright -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="8">
                     <TextBlock Text="{Binding Copyright}"
-                              Classes="body"
-                              HorizontalAlignment="Center"
-                              Foreground="{StaticResource SecondaryText}"/>
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}"
+                              HorizontalAlignment="Center"/>
                     <TextBlock Text="{Binding MadeWithLove, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
+                              Classes="Tertiary"
+                              Theme="{DynamicResource TextBlockBase}"
                               HorizontalAlignment="Center"
-                              Foreground="{StaticResource SecondaryText}"
                               FontStyle="Italic"/>
                 </StackPanel>
             </Border>
 
             <!-- 底部占位元素,确保滚动空间充足 -->
-            <Border Height="1" Background="Transparent"/>
+            <Border Height="24" Background="Transparent"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -16,12 +16,12 @@ public class EnglishStrings : IStringProvider
     public string Statistics => "Statistics";
     public string About => "About";
 
-    // Navigation with icons
-    public string NavigationDashboard => "📊 Dashboard";
-    public string NavigationAppStats => "📱 App Statistics";
-    public string NavigationReports => "📈 Reports";
-    public string NavigationSettings => "⚙️ Settings";
-    public string NavigationAbout => "ℹ️ About";
+    // Navigation
+    public string NavigationDashboard => "Dashboard";
+    public string NavigationAppStats => "App Statistics";
+    public string NavigationReports => "Reports";
+    public string NavigationSettings => "Settings";
+    public string NavigationAbout => "About";
 
     // ============================================
     // Dashboard strings
@@ -318,7 +318,9 @@ public class EnglishStrings : IStringProvider
     // Activity type names
     public string ActivityTypeVideo => "Video Entertainment";
     public string ActivityTypeGaming => "Gaming";
+    public string ActivityTypeMeeting => "Online Meeting";
     public string ActivityTypeActiveTyping => "Active Typing";
+    public string ActivityTypeReading => "Reading";
     public string ActivityTypePassiveBrowsing => "Passive Browsing";
     public string ActivityTypeIdle => "Idle";
 
@@ -346,7 +348,7 @@ public class EnglishStrings : IStringProvider
     // ============================================
     // Time Budget (Phase 4)
     // ============================================
-    public string NavigationTimeBudget => "🎯 Time Budget";
+    public string NavigationTimeBudget => "Time Budget";
     public string TimeBudgetTitle => "Time Budget Management";
     public string RefreshButton => "Refresh";
     public string AddBudgetButton => "Add Budget";

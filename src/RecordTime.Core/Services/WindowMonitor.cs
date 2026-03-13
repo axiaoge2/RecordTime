@@ -23,6 +23,11 @@ public class WindowMonitor : IWindowMonitor
     private DateTime _lastWindowChange = DateTime.Now;
     private const int IDLE_THRESHOLD_SECONDS = 30;  // 30秒无窗口切换视为空闲
 
+    // 应用切换频率追踪
+    private readonly Queue<DateTime> _switchEvents = new();
+    private readonly object _switchLock = new();
+    private const int SWITCH_EVENT_RETENTION_MINUTES = 10; // 保留10分钟的切换事件
+
     public event EventHandler<WindowInfo>? WindowFocusChanged;
 
     public WindowMonitor() : this(ACTIVE_INTERVAL_MS) // 默认使用活跃间隔
@@ -114,6 +119,9 @@ public class WindowMonitor : IWindowMonitor
                 _lastWindow = currentWindow;
                 _lastWindowChange = DateTime.Now;
 
+                // 记录切换事件
+                RecordSwitchEvent();
+
                 // 窗口切换后切换到活跃轮询模式
                 AdjustPollingInterval(true);
 
@@ -157,6 +165,65 @@ public class WindowMonitor : IWindowMonitor
 
         Log.Debug("轮询间隔已调整: {Interval}ms ({Mode})",
             _currentIntervalMs, isActive ? "活跃模式" : "空闲模式");
+    }
+
+    /// <summary>
+    /// 记录切换事件
+    /// </summary>
+    private void RecordSwitchEvent()
+    {
+        lock (_switchLock)
+        {
+            _switchEvents.Enqueue(DateTime.Now);
+            CleanupOldSwitchEvents();
+        }
+    }
+
+    /// <summary>
+    /// 清理过期的切换事件
+    /// </summary>
+    private void CleanupOldSwitchEvents()
+    {
+        var cutoff = DateTime.Now.AddMinutes(-SWITCH_EVENT_RETENTION_MINUTES);
+        while (_switchEvents.Count > 0 && _switchEvents.Peek() < cutoff)
+        {
+            _switchEvents.Dequeue();
+        }
+    }
+
+    /// <summary>
+    /// 获取指定时间范围内的应用切换次数
+    /// </summary>
+    /// <param name="minutes">时间范围（分钟）</param>
+    /// <returns>切换次数</returns>
+    public int GetSwitchCount(int minutes)
+    {
+        lock (_switchLock)
+        {
+            CleanupOldSwitchEvents();
+            var cutoff = DateTime.Now.AddMinutes(-minutes);
+            return _switchEvents.Count(e => e >= cutoff);
+        }
+    }
+
+    /// <summary>
+    /// 获取切换频率统计
+    /// </summary>
+    /// <returns>包含各时间窗口切换次数的统计</returns>
+    public SwitchFrequencyStats GetSwitchStats()
+    {
+        lock (_switchLock)
+        {
+            CleanupOldSwitchEvents();
+            var now = DateTime.Now;
+
+            return new SwitchFrequencyStats
+            {
+                SwitchesLast1Min = _switchEvents.Count(e => e >= now.AddMinutes(-1)),
+                SwitchesLast5Min = _switchEvents.Count(e => e >= now.AddMinutes(-5)),
+                SwitchesLast10Min = _switchEvents.Count
+            };
+        }
     }
 
     private WindowInfo? GetWindowInfoFromHandle(IntPtr hwnd)

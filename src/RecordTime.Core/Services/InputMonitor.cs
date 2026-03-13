@@ -14,16 +14,19 @@ public class InputMonitor : IInputMonitor
     private readonly Queue<DateTime> _keyboardEvents = new();
     private readonly Queue<DateTime> _mouseClickEvents = new();
     private readonly Queue<(DateTime Time, int Distance)> _mouseMovements = new();
+    private readonly Queue<DateTime> _scrollEvents = new(); // 滚轮事件队列
 
     // 性能优化: 使用计数器避免频繁遍历
     private int _keyboardCount = 0;
     private int _mouseClickCount = 0;
+    private int _scrollCount = 0; // 滚轮事件计数
     private const int CLEANUP_THRESHOLD = 1000; // 达到1000条记录时触发清理
 
     // 性能优化: 滑动窗口计数器 (30秒窗口)
     private int _keyboard30sCount = 0;
     private int _mouseClick30sCount = 0;
     private int _mouseMovement30sDistance = 0;
+    private int _scroll30sCount = 0; // 30秒滚轮计数
     private DateTime _last30sWindowUpdate = DateTime.Now;
 
     private IntPtr _keyboardHookId = IntPtr.Zero;
@@ -44,6 +47,7 @@ public class InputMonitor : IInputMonitor
     private const int WM_RBUTTONDOWN = 0x0204;
     private const int WM_MBUTTONDOWN = 0x0207;
     private const int WM_MOUSEMOVE = 0x0200;
+    private const int WM_MOUSEWHEEL = 0x020A; // 鼠标滚轮事件
 
     #region Win32 API
 
@@ -222,6 +226,22 @@ public class InputMonitor : IInputMonitor
 
                 _lastMousePos = currentPos;
             }
+
+            // 鼠标滚轮
+            if (wParam == (IntPtr)WM_MOUSEWHEEL)
+            {
+                _scrollEvents.Enqueue(now);
+                System.Threading.Interlocked.Increment(ref _scrollCount);
+
+                // 触发用户活动事件（带节流）
+                TriggerUserActivityEvent(now);
+
+                // 异步清理
+                if (_scrollCount > CLEANUP_THRESHOLD)
+                {
+                    _ = Task.Run(() => CleanupScrollEvents());
+                }
+            }
         }
 
         return CallNextHookEx(_mouseHookId, nCode, wParam, lParam);
@@ -248,6 +268,19 @@ public class InputMonitor : IInputMonitor
             while (_mouseMovements.Count > 0 && _mouseMovements.Peek().Time < cutoff)
             {
                 _mouseMovements.Dequeue();
+            }
+        }
+    }
+
+    private void CleanupScrollEvents()
+    {
+        lock (_lock)
+        {
+            var cutoff = DateTime.Now.AddMinutes(-5);
+            while (_scrollEvents.Count > 0 && _scrollEvents.Peek() < cutoff)
+            {
+                _scrollEvents.Dequeue();
+                System.Threading.Interlocked.Decrement(ref _scrollCount);
             }
         }
     }
@@ -314,6 +347,26 @@ public class InputMonitor : IInputMonitor
         }
     }
 
+    public int GetScrollCount(int seconds)
+    {
+        // 性能优化: 对于30秒窗口使用预计算的计数器
+        if (seconds == 30)
+        {
+            lock (_lock)
+            {
+                UpdateSlidingWindow();
+                return _scroll30sCount;
+            }
+        }
+
+        // 其他时间窗口仍使用原逻辑
+        lock (_lock)
+        {
+            var cutoff = DateTime.Now.AddSeconds(-seconds);
+            return _scrollEvents.Count(e => e >= cutoff);
+        }
+    }
+
     /// <summary>
     /// 更新滑动窗口计数器 (仅在需要时调用，减少计算开销)
     /// </summary>
@@ -333,11 +386,12 @@ public class InputMonitor : IInputMonitor
         _mouseMovement30sDistance = _mouseMovements
             .Where(m => m.Time >= cutoff)
             .Sum(m => m.Distance);
+        _scroll30sCount = _scrollEvents.Count(e => e >= cutoff);
 
         _last30sWindowUpdate = now;
 
-        Log.Verbose("滑动窗口已更新: 键盘={Keyboard}, 鼠标点击={MouseClick}, 鼠标移动={MouseMove}px",
-            _keyboard30sCount, _mouseClick30sCount, _mouseMovement30sDistance);
+        Log.Verbose("滑动窗口已更新: 键盘={Keyboard}, 鼠标点击={MouseClick}, 鼠标移动={MouseMove}px, 滚轮={Scroll}",
+            _keyboard30sCount, _mouseClick30sCount, _mouseMovement30sDistance, _scroll30sCount);
     }
 
     public int GetIdleTimeSeconds()
@@ -352,6 +406,41 @@ public class InputMonitor : IInputMonitor
         }
 
         return 0;
+    }
+
+    public InputActivityStats GetInputStats(int seconds)
+    {
+        var stats = new InputActivityStats
+        {
+            IdleTimeSeconds = GetIdleTimeSeconds()
+        };
+
+        // 性能优化: 对于30秒窗口使用预计算的计数器
+        if (seconds == 30)
+        {
+            lock (_lock)
+            {
+                UpdateSlidingWindow();
+                stats.KeyboardActivityCount = _keyboard30sCount;
+                stats.MouseClickCount = _mouseClick30sCount;
+                stats.MouseMovementDistance = _mouseMovement30sDistance;
+                stats.ScrollCount = _scroll30sCount;
+                return stats;
+            }
+        }
+
+        // 其他时间窗口仍使用原逻辑
+        lock (_lock)
+        {
+            var cutoff = DateTime.Now.AddSeconds(-seconds);
+            stats.KeyboardActivityCount = _keyboardEvents.Count(e => e >= cutoff);
+            stats.MouseClickCount = _mouseClickEvents.Count(e => e >= cutoff);
+            stats.MouseMovementDistance = _mouseMovements
+                .Where(m => m.Time >= cutoff)
+                .Sum(m => m.Distance);
+            stats.ScrollCount = _scrollEvents.Count(e => e >= cutoff);
+            return stats;
+        }
     }
 
     /// <summary>

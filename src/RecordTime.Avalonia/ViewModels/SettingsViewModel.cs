@@ -73,6 +73,9 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private int _selectedThemeIndex = 2; // 默认 Auto (索引 2)
 
+    // 用于避免初始化时触发主题切换
+    private bool _isInitializing = true;
+
     // 语言选项
     public List<LanguageOption> LanguageOptions { get; } = new()
     {
@@ -152,11 +155,15 @@ public partial class SettingsViewModel : ViewModelBase
 
             StatusText = StringResources.Current.SettingsLoadSuccess;
             Log.Information("设置已加载");
+
+            // 初始化完成，允许后续的主题切换
+            _isInitializing = false;
         }
         catch (Exception ex)
         {
             StatusText = $"{StringResources.Current.SettingsLoadFailed}:{ex.Message}";
             Log.Error(ex, "加载设置失败");
+            _isInitializing = false;
         }
     }
 
@@ -182,6 +189,9 @@ public partial class SettingsViewModel : ViewModelBase
 
     partial void OnSelectedThemeIndexChanged(int value)
     {
+        // 初始化期间不触发主题切换（主题已由 ThemeService 在启动时设置）
+        if (_isInitializing) return;
+
         if (value >= 0 && value < ThemeOptions.Count)
         {
             var themeOption = ThemeOptions[value];

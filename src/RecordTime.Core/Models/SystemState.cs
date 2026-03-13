@@ -46,6 +46,26 @@ public class SystemState
     public int MouseClicksLast30s { get; set; }
 
     /// <summary>
+    /// 最近30秒滚轮滚动次数
+    /// </summary>
+    public int ScrollCountLast30s { get; set; }
+
+    /// <summary>
+    /// 最近5分钟应用切换次数
+    /// </summary>
+    public int AppSwitchCountLast5Min { get; set; }
+
+    /// <summary>
+    /// 是否为注意力碎片化状态（5分钟内切换超过10次）
+    /// </summary>
+    public bool IsAttentionFragmented { get; set; }
+
+    /// <summary>
+    /// 是否为深度专注状态（5分钟内切换少于3次）
+    /// </summary>
+    public bool IsDeepFocus { get; set; }
+
+    /// <summary>
     /// 窗口是否聚焦
     /// </summary>
     public bool WindowFocused { get; set; }
@@ -59,4 +79,14 @@ public class SystemState
     /// 是否有频繁输入
     /// </summary>
     public bool FrequentInput { get; set; }
+
+    /// <summary>
+    /// 是否有后台音乐播放器运行（用于"边听边做"场景检测）
+    /// </summary>
+    public bool HasBackgroundMusic { get; set; }
+
+    /// <summary>
+    /// 是否有视频播放器在后台运行
+    /// </summary>
+    public bool HasBackgroundVideoPlayer { get; set; }
 }

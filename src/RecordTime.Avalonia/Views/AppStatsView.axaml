@@ -4,231 +4,145 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
-             mc:Ignorable="d"
-             d:DesignWidth="900"
-             d:DesignHeight="700"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
              x:Class="RecordTime.Avalonia.Views.AppStatsView"
              x:DataType="vm:AppStatsViewModel">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                  VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="24" MaxWidth="1400" Margin="24,40,24,80">
-            <!-- Title -->
-            <TextBlock Text="{Binding AppStatsTitle, Source={x:Static strings:StringResources.Current}}"
-                      Classes="title"
-                      Margin="0,0,0,16"/>
-
-            <!-- Date Range Selector -->
-            <Border Classes="card"
-                   Padding="24,20">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="{Binding TimeRange, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
-                        <Button Grid.Column="0"
-                               Classes="secondary"
-                               Content="{Binding Today, Source={x:Static strings:StringResources.Current}}"
-                               Command="{Binding SetTodayCommand}"
-                               Margin="0,0,8,0"/>
-                        <Button Grid.Column="1"
-                               Classes="secondary"
-                               Content="{Binding Yesterday, Source={x:Static strings:StringResources.Current}}"
-                               Command="{Binding SetYesterdayCommand}"
-                               Margin="0,0,8,0"/>
-                        <Button Grid.Column="2"
-                               Classes="secondary"
-                               Content="{Binding ThisWeek, Source={x:Static strings:StringResources.Current}}"
-                               Command="{Binding SetThisWeekCommand}"
-                               Margin="0,0,8,0"/>
-                        <Button Grid.Column="3"
-                               Classes="secondary"
-                               Content="{Binding ThisMonth, Source={x:Static strings:StringResources.Current}}"
-                               Command="{Binding SetThisMonthCommand}"
-                               Margin="0,0,8,0"/>
-                        <TextBlock Grid.Column="4"
-                                  Text="{Binding DateRangeText}"
-                                  Classes="body"
-                                  HorizontalAlignment="Right"
-                                  VerticalAlignment="Center"
-                                  Foreground="{StaticResource SecondaryText}"/>
-                    </Grid>
+    <Grid RowDefinitions="Auto, Auto, *" Margin="24">
+        <!-- Header & Filters -->
+        <StackPanel Grid.Row="0" Spacing="24" Margin="0,0,0,24">
+            <!-- Title & Date Range -->
+            <Grid ColumnDefinitions="*, Auto">
+                <StackPanel>
+                    <TextBlock Text="{Binding AppStatsTitle, Source={x:Static strings:StringResources.Current}}" 
+                               Classes="H3" 
+                               Theme="{DynamicResource TitleTextBlock}"/>
+                    <TextBlock Text="{Binding DateRangeText}" 
+                               Classes="Tertiary" 
+                               Theme="{DynamicResource TextBlockBase}"
+                               Margin="0,4,0,0"/>
                 </StackPanel>
-            </Border>
-
-            <!-- Summary cards -->
-            <WrapPanel>
-                <Border Classes="widget-card"
-                       MinWidth="240"
-                       Margin="0,0,16,16">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="⏱️"
-                                  FontSize="28"
-                                  Opacity="0.9"/>
-                        <TextBlock Text="{Binding TotalDuration}"
-                                  Classes="number-widget"
-                                  Margin="0,4,0,0"/>
-                        <TextBlock Text="{Binding TotalUsageTime, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="caption"
-                                  Opacity="0.85"/>
-                    </StackPanel>
-                </Border>
-
-                <Border Classes="widget-card"
-                       MinWidth="240"
-                       Margin="0,0,16,16">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="📱"
-                                  FontSize="28"
-                                  Opacity="0.9"/>
-                        <TextBlock Text="{Binding TotalSessions}"
-                                  Classes="number-widget"
-                                  Margin="0,4,0,0"/>
-                        <TextBlock Text="{Binding CurrentDisplayApps, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="caption"
-                                  Opacity="0.85"/>
-                        <TextBlock Text="{Binding TotalAppCount, StringFormat='全部共 {0} 个'}"
-                                  Classes="caption"
-                                  Opacity="0.65"/>
-                    </StackPanel>
-                </Border>
-            </WrapPanel>
-
-            <!-- Search + filters -->
-            <Border Classes="card"
-                   Padding="24,20">
-                <WrapPanel>
-                    <TextBox Width="260"
-                             MinWidth="220"
-                             Margin="0,0,12,12"
-                             Text="{Binding SearchText}"
-                             Watermark="{Binding SearchAppPlaceholder, Source={x:Static strings:StringResources.Current}}"
-                             VerticalAlignment="Center"/>
-
-                    <ComboBox Width="220"
-                             ItemsSource="{Binding Categories}"
-                             SelectedItem="{Binding SelectedCategory}"
-                             PlaceholderText="{Binding SelectCategory, Source={x:Static strings:StringResources.Current}}"
-                             Margin="0,0,12,12"
-                             VerticalAlignment="Center"/>
-
-                    <Button Classes="secondary"
-                           Content="{Binding ClearFilter, Source={x:Static strings:StringResources.Current}}"
-                           Command="{Binding ClearFilterCommand}"
-                           Margin="0,0,12,12"
-                           VerticalAlignment="Center"/>
-                </WrapPanel>
-            </Border>
-
-            <!-- App detail list -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
-                <StackPanel Spacing="20">
-                    <TextBlock Text="{Binding AppDetailList, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
-
-                    <Border Padding="12,8"
-                           Background="{StaticResource HoverBackground}"
-                           CornerRadius="8"
-                           MinWidth="900">
-                        <Grid ColumnDefinitions="40,*,140,90,140,100,150">
-                            <TextBlock Grid.Column="0"
-                                      Text=""
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="1"
-                                      Text="{Binding ColumnAppName, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="2"
-                                      Text="{Binding ColumnCategory, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"/>
-                            <TextBlock Grid.Column="3"
-                                      Text="{Binding ColumnPercentage, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"
-                                      TextAlignment="Right"/>
-                            <TextBlock Grid.Column="4"
-                                      Text="{Binding ColumnUsageTime, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"
-                                      TextAlignment="Right"/>
-                            <TextBlock Grid.Column="5"
-                                      Text="{Binding ColumnUsageCount, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"
-                                      TextAlignment="Center"/>
-                            <TextBlock Grid.Column="6"
-                                      Text="{Binding ColumnLastUsed, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
-                                      FontWeight="SemiBold"
-                                      TextAlignment="Right"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- 应用列表 - 使用外层ScrollViewer滚动,无高度限制 -->
-                    <ItemsControl ItemsSource="{Binding Apps}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Padding="12,10"
-                                       CornerRadius="8"
-                                       Background="Transparent"
-                                       MinWidth="900">
-                                    <Border.Styles>
-                                        <Style Selector="Border:pointerover">
-                                            <Setter Property="Background" Value="{StaticResource HoverBackground}"/>
-                                        </Style>
-                                    </Border.Styles>
-                                    <Grid ColumnDefinitions="40,*,140,90,140,100,150">
-                                        <Image Grid.Column="0"
-                                               Source="{Binding Icon}"
-                                               Width="24"
-                                               Height="24"
-                                               VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1"
-                                                  Text="{Binding AppName}"
-                                                  Classes="body"
-                                                  TextWrapping="Wrap"
-                                                  ToolTip.Tip="{Binding AppName}"/>
-                                        <TextBlock Grid.Column="2"
-                                                  Text="{Binding Category}"
-                                                  Classes="caption"/>
-                                        <TextBlock Grid.Column="3"
-                                                  Text="{Binding PercentageText}"
-                                                  Classes="body"
-                                                  FontWeight="SemiBold"
-                                                  Foreground="{StaticResource PrimaryGradient}"
-                                                  TextAlignment="Right"/>
-                                        <TextBlock Grid.Column="4"
-                                                  Text="{Binding DurationText}"
-                                                  Classes="body"
-                                                  TextAlignment="Right"/>
-                                        <TextBlock Grid.Column="5"
-                                                  Text="{Binding SessionCountText}"
-                                                  Classes="caption"
-                                                  TextAlignment="Center"/>
-                                        <TextBlock Grid.Column="6"
-                                                  Text="{Binding LastUsedText}"
-                                                  Classes="caption"
-                                                  TextAlignment="Right"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <TextBlock Text="{Binding NoAppsRecorded, Source={x:Static strings:StringResources.Current}}"
-                              Classes="caption"
-                              HorizontalAlignment="Center"
-                              Margin="0,40,0,40"
-                              Opacity="0.7"
-                              FontSize="14"
-                              IsVisible="{Binding HasNoApps}"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button Content="{Binding Today, Source={x:Static strings:StringResources.Current}}" 
+                            Command="{Binding SetTodayCommand}" 
+                            Theme="{DynamicResource SemiButtonSecondary}"/>
+                    <Button Content="{Binding Yesterday, Source={x:Static strings:StringResources.Current}}" 
+                            Command="{Binding SetYesterdayCommand}" 
+                            Theme="{DynamicResource SemiButtonSecondary}"/>
+                    <Button Content="{Binding ThisWeek, Source={x:Static strings:StringResources.Current}}" 
+                            Command="{Binding SetThisWeekCommand}" 
+                            Theme="{DynamicResource SemiButtonSecondary}"/>
+                    <Button Content="{Binding ThisMonth, Source={x:Static strings:StringResources.Current}}" 
+                            Command="{Binding SetThisMonthCommand}" 
+                            Theme="{DynamicResource SemiButtonSecondary}"/>
+                    <!-- DatePicker -->
+                    <CalendarDatePicker SelectedDate="{Binding StartDate}" Margin="8,0,0,0"/>
                 </StackPanel>
-            </Border>
+            </Grid>
 
-            <!-- 底部占位元素,确保滚动空间充足 -->
-            <Border Height="1" Background="Transparent"/>
+            <!-- KPI Cards -->
+            <Grid ColumnDefinitions="*,16,*,16,*">
+                <Border Grid.Column="0" Theme="{DynamicResource SemiBorderCard}" Padding="24">
+                     <StackPanel>
+                         <TextBlock Text="{Binding TotalUsageTime, Source={x:Static strings:StringResources.Current}}" 
+                                    Classes="Tertiary" 
+                                    Theme="{DynamicResource TextBlockBase}"/>
+                         <TextBlock Text="{Binding TotalDuration}" 
+                                    Classes="H2" 
+                                    Theme="{DynamicResource TitleTextBlock}" 
+                                    Margin="0,8,0,0"/>
+                     </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Theme="{DynamicResource SemiBorderCard}" Padding="24">
+                     <StackPanel>
+                         <TextBlock Text="{Binding TotalSessions, Source={x:Static strings:StringResources.Current}}" 
+                                    Classes="Tertiary" 
+                                    Theme="{DynamicResource TextBlockBase}"/>
+                         <TextBlock Text="{Binding TotalSessions}" 
+                                    Classes="H2" 
+                                    Theme="{DynamicResource TitleTextBlock}" 
+                                    Margin="0,8,0,0"/>
+                     </StackPanel>
+                </Border>
+                <Border Grid.Column="4" Theme="{DynamicResource SemiBorderCard}" Padding="24">
+                     <StackPanel>
+                         <TextBlock Text="{Binding CurrentDisplayApps, Source={x:Static strings:StringResources.Current}}" 
+                                    Classes="Tertiary" 
+                                    Theme="{DynamicResource TextBlockBase}"/>
+                         <TextBlock Text="{Binding TotalAppCount}" 
+                                    Classes="H2" 
+                                    Theme="{DynamicResource TitleTextBlock}" 
+                                    Margin="0,8,0,0"/>
+                     </StackPanel>
+                </Border>
+            </Grid>
         </StackPanel>
-    </ScrollViewer>
+
+        <!-- Search & Filter Bar -->
+        <Grid Grid.Row="1" ColumnDefinitions="*, Auto, Auto" Margin="0,0,0,16">
+            <TextBox Text="{Binding SearchText}" 
+                     Watermark="{Binding SearchAppPlaceholder, Source={x:Static strings:StringResources.Current}}" 
+                     Width="300" 
+                     Classes="ClearButton" 
+                     HorizontalAlignment="Left"/>
+            
+            <ComboBox Grid.Column="1" 
+                      ItemsSource="{Binding Categories}" 
+                      SelectedItem="{Binding SelectedCategory}" 
+                      PlaceholderText="{Binding AllCategories, Source={x:Static strings:StringResources.Current}}" 
+                      Width="180" 
+                      Margin="16,0"/>
+        </Grid>
+
+        <!-- DataGrid -->
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Apps}" 
+                  IsReadOnly="True" 
+                  GridLinesVisibility="Horizontal"
+                  HeadersVisibility="Column"
+                  RowBackground="Transparent"
+                  BorderThickness="1"
+                  BorderBrush="{DynamicResource SemiColorBorder}">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="{Binding ColumnAppName, Source={x:Static strings:StringResources.Current}}" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="12" Margin="12,8">
+                                <Image Source="{Binding Icon}" Width="32" Height="32"/>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding AppName}" 
+                                               Theme="{DynamicResource TextBlockBase}"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding ProcessName}" 
+                                               Classes="Tertiary"
+                                               Theme="{DynamicResource TextBlockBase}"
+                                               FontSize="12"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="{Binding ColumnCategory, Source={x:Static strings:StringResources.Current}}" 
+                                    Binding="{Binding Category}" 
+                                    Width="120"/>
+                <DataGridTextColumn Header="{Binding ColumnUsageTime, Source={x:Static strings:StringResources.Current}}" 
+                                    Binding="{Binding DurationText}" 
+                                    Width="120"/>
+                <DataGridTextColumn Header="{Binding ColumnLastUsed, Source={x:Static strings:StringResources.Current}}" 
+                                    Binding="{Binding LastUsedText}" 
+                                    Width="120"/>
+                <DataGridTemplateColumn Header="{Binding ColumnPercentage, Source={x:Static strings:StringResources.Current}}" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding PercentageText}" 
+                                       VerticalAlignment="Center" 
+                                       HorizontalAlignment="Right" 
+                                       Margin="0,0,12,0"
+                                       Theme="{DynamicResource TextBlockBase}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
 </UserControl>

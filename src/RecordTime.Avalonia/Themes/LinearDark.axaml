@@ -1,0 +1,97 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ============================================
+         Linear Style Dark Theme - 深色主题喵～
+         Inspired by Linear.app
+         ============================================ -->
+    
+    <!-- ========== 背景色 / Background ========== -->
+    <Color x:Key="LinearBgPrimary">#0A0A0B</Color>
+    <Color x:Key="LinearBgSecondary">#111113</Color>
+    <Color x:Key="LinearBgTertiary">#18181B</Color>
+    <Color x:Key="LinearBgElevated">#1F1F23</Color>
+    <Color x:Key="LinearBgHover">#27272A</Color>
+    <Color x:Key="LinearBgActive">#2E2E33</Color>
+    
+    <!-- ========== 前景色 / Foreground ========== -->
+    <Color x:Key="LinearFgPrimary">#FAFAFA</Color>
+    <Color x:Key="LinearFgSecondary">#A1A1AA</Color>
+    <Color x:Key="LinearFgTertiary">#71717A</Color>
+    <Color x:Key="LinearFgMuted">#52525B</Color>
+    
+    <!-- ========== 边框色 / Border ========== -->
+    <Color x:Key="LinearBorderDefault">#27272A</Color>
+    <Color x:Key="LinearBorderSubtle">#1F1F23</Color>
+    <Color x:Key="LinearBorderHover">#3F3F46</Color>
+    <Color x:Key="LinearBorderFocus">#7C3AED</Color>
+    
+    <!-- ========== 卡片 / Card ========== -->
+    <Color x:Key="LinearCardBg">#111113</Color>
+    <Color x:Key="LinearCardBorder">#27272A</Color>
+    <Color x:Key="LinearCardHover">#18181B</Color>
+    
+    <!-- ========== 侧边栏 / Sidebar ========== -->
+    <Color x:Key="LinearSidebarBg">#0A0A0B</Color>
+    <Color x:Key="LinearSidebarItemHover">#18181B</Color>
+    <Color x:Key="LinearSidebarItemActive">#7C3AED1A</Color>
+    <Color x:Key="LinearSidebarItemActiveText">#7C3AED</Color>
+    
+    <!-- ========== 按钮 / Button ========== -->
+    <Color x:Key="LinearButtonPrimaryBg">#7C3AED</Color>
+    <Color x:Key="LinearButtonPrimaryHover">#6D28D9</Color>
+    <Color x:Key="LinearButtonPrimaryText">#FFFFFF</Color>
+    <Color x:Key="LinearButtonSecondaryBg">#27272A</Color>
+    <Color x:Key="LinearButtonSecondaryHover">#3F3F46</Color>
+    <Color x:Key="LinearButtonSecondaryText">#FAFAFA</Color>
+    <Color x:Key="LinearButtonGhostHover">#27272A</Color>
+    
+    <!-- ========== 输入框 / Input ========== -->
+    <Color x:Key="LinearInputBg">#18181B</Color>
+    <Color x:Key="LinearInputBorder">#27272A</Color>
+    <Color x:Key="LinearInputFocusBorder">#7C3AED</Color>
+    <Color x:Key="LinearInputPlaceholder">#52525B</Color>
+    
+    <!-- ========== 进度条 / Progress ========== -->
+    <Color x:Key="LinearProgressBg">#27272A</Color>
+    <Color x:Key="LinearProgressFill">#7C3AED</Color>
+    
+    <!-- ========== SolidColorBrush 定义 ========== -->
+    <SolidColorBrush x:Key="LinearBgPrimaryBrush" Color="{DynamicResource LinearBgPrimary}"/>
+    <SolidColorBrush x:Key="LinearBgSecondaryBrush" Color="{DynamicResource LinearBgSecondary}"/>
+    <SolidColorBrush x:Key="LinearBgTertiaryBrush" Color="{DynamicResource LinearBgTertiary}"/>
+    <SolidColorBrush x:Key="LinearBgElevatedBrush" Color="{DynamicResource LinearBgElevated}"/>
+    <SolidColorBrush x:Key="LinearBgHoverBrush" Color="{DynamicResource LinearBgHover}"/>
+    
+    <SolidColorBrush x:Key="LinearFgPrimaryBrush" Color="{DynamicResource LinearFgPrimary}"/>
+    <SolidColorBrush x:Key="LinearFgSecondaryBrush" Color="{DynamicResource LinearFgSecondary}"/>
+    <SolidColorBrush x:Key="LinearFgTertiaryBrush" Color="{DynamicResource LinearFgTertiary}"/>
+    <SolidColorBrush x:Key="LinearFgMutedBrush" Color="{DynamicResource LinearFgMuted}"/>
+    
+    <SolidColorBrush x:Key="LinearBorderDefaultBrush" Color="{DynamicResource LinearBorderDefault}"/>
+    <SolidColorBrush x:Key="LinearBorderSubtleBrush" Color="{DynamicResource LinearBorderSubtle}"/>
+    <SolidColorBrush x:Key="LinearBorderHoverBrush" Color="{DynamicResource LinearBorderHover}"/>
+    
+    <SolidColorBrush x:Key="LinearCardBgBrush" Color="{DynamicResource LinearCardBg}"/>
+    <SolidColorBrush x:Key="LinearCardBorderBrush" Color="{DynamicResource LinearCardBorder}"/>
+    
+    <SolidColorBrush x:Key="LinearSidebarBgBrush" Color="{DynamicResource LinearSidebarBg}"/>
+    <SolidColorBrush x:Key="LinearSidebarItemHoverBrush" Color="{DynamicResource LinearSidebarItemHover}"/>
+    <SolidColorBrush x:Key="LinearSidebarItemActiveBrush" Color="{DynamicResource LinearSidebarItemActive}"/>
+    <SolidColorBrush x:Key="LinearSidebarItemActiveTextBrush" Color="{DynamicResource LinearSidebarItemActiveText}"/>
+    
+    <SolidColorBrush x:Key="LinearButtonPrimaryBgBrush" Color="{DynamicResource LinearButtonPrimaryBg}"/>
+    <SolidColorBrush x:Key="LinearButtonPrimaryHoverBrush" Color="{DynamicResource LinearButtonPrimaryHover}"/>
+    <SolidColorBrush x:Key="LinearButtonSecondaryBgBrush" Color="{DynamicResource LinearButtonSecondaryBg}"/>
+    <SolidColorBrush x:Key="LinearButtonSecondaryHoverBrush" Color="{DynamicResource LinearButtonSecondaryHover}"/>
+    
+    <SolidColorBrush x:Key="LinearProgressBgBrush" Color="{DynamicResource LinearProgressBg}"/>
+    <SolidColorBrush x:Key="LinearProgressFillBrush" Color="{DynamicResource LinearProgressFill}"/>
+    
+    <!-- ========== 渐变色 / Gradients ========== -->
+    <LinearGradientBrush x:Key="LinearAccentGradient" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#7C3AED" Offset="0"/>
+        <GradientStop Color="#3B82F6" Offset="1"/>
+    </LinearGradientBrush>
+    
+</ResourceDictionary>

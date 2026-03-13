@@ -8,54 +8,56 @@
              x:Class="RecordTime.Avalonia.Views.TimeBudgetView"
              x:DataType="vm:TimeBudgetViewModel">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
         <Grid RowDefinitions="Auto,*">
             <!-- Main Content (when not editing) -->
             <StackPanel Grid.Row="0"
                        Spacing="24"
                        MaxWidth="900"
-                       Margin="48,40,48,80"
+                       Margin="24,24,24,48"
                        IsVisible="{Binding !IsEditing}">
                 <!-- Page Title -->
                 <TextBlock Text="{Binding TimeBudgetTitle, Source={x:Static strings:StringResources.Current}}"
-                          Classes="title"
-                          Margin="0,0,0,16"/>
+                          Classes="H3"
+                          Theme="{DynamicResource TitleTextBlock}"
+                          Margin="0,0,0,8"/>
 
                 <!-- Status Bar -->
-                <Border Padding="12"
-                       Background="{StaticResource HoverBackground}"
-                       CornerRadius="8">
+                <Border Padding="16"
+                       Theme="{DynamicResource SemiBorderCard}">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                   Text="{Binding StatusMessage}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1"
                                    Orientation="Horizontal"
                                    Spacing="8">
                             <Button Content="{Binding RefreshButton, Source={x:Static strings:StringResources.Current}}"
-                                   Classes="secondary"
+                                   Theme="{DynamicResource SemiButtonSecondary}"
                                    Command="{Binding LoadDataCommand}"
                                    IsEnabled="{Binding !IsLoading}"/>
                             <Button Content="{Binding AddBudgetButton, Source={x:Static strings:StringResources.Current}}"
-                                   Classes="primary"
+                                   Theme="{DynamicResource SemiButtonPrimary}"
                                    Command="{Binding StartAddBudgetCommand}"/>
                         </StackPanel>
                     </Grid>
                 </Border>
 
                 <!-- AI Suggestions Section -->
-                <Border Classes="card"
-                       Padding="24,20,24,24"
+                <Border Theme="{DynamicResource SemiBorderCard}"
+                       Padding="24"
                        IsVisible="{Binding HasSuggestions}">
                     <StackPanel Spacing="16">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Spacing="4">
                                 <TextBlock Text="{Binding AISuggestionsTitle, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="heading"/>
+                                          Classes="H6"
+                                          Theme="{DynamicResource TitleTextBlock}"/>
                                 <TextBlock Text="{Binding AISuggestionsDesc, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"/>
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"/>
                             </StackPanel>
                         </Grid>
 
@@ -64,33 +66,35 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="16"
-                                           Background="{StaticResource HoverBackground}"
-                                           CornerRadius="8"
+                                           Background="{DynamicResource SemiColorFill0}"
+                                           CornerRadius="4"
                                            Margin="0,0,0,8">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Spacing="8">
                                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                                     <TextBlock Text="{Binding DisplayName}"
-                                                              Classes="body"
+                                                              Theme="{DynamicResource TextBlockBase}"
                                                               FontWeight="SemiBold"/>
                                                     <Border Padding="6,2"
                                                            CornerRadius="4"
-                                                           Background="#4ECDC4">
+                                                           Background="{DynamicResource SemiColorInfoLight}">
                                                         <TextBlock Text="{Binding TypeLabel}"
                                                                   FontSize="11"
-                                                                  Foreground="White"/>
+                                                                  Foreground="{DynamicResource SemiColorInfo}"/>
                                                     </Border>
                                                 </StackPanel>
                                                 <TextBlock Text="{Binding Reason}"
-                                                          Classes="caption"
+                                                          Classes="Tertiary"
+                                                          Theme="{DynamicResource TextBlockBase}"
                                                           TextWrapping="Wrap"/>
                                                 <StackPanel Orientation="Horizontal" Spacing="16">
-                                                    <TextBlock Classes="caption" Opacity="0.8">
+                                                    <TextBlock Classes="Tertiary" Theme="{DynamicResource TextBlockBase}" Opacity="0.8">
                                                         <Run Text="{Binding SuggestedTimeLabel, Source={x:Static strings:StringResources.Current}}"/>
                                                         <Run Text="{Binding SuggestedTimeText}" FontWeight="SemiBold"/>
                                                     </TextBlock>
                                                     <TextBlock Text="{Binding HistoricalTimeText}"
-                                                              Classes="caption"
+                                                              Classes="Tertiary"
+                                                              Theme="{DynamicResource TextBlockBase}"
                                                               Opacity="0.6"/>
                                                 </StackPanel>
                                             </StackPanel>
@@ -99,11 +103,11 @@
                                                        Spacing="8"
                                                        VerticalAlignment="Center">
                                                 <Button Content="{Binding AcceptButton, Source={x:Static strings:StringResources.Current}}"
-                                                       Classes="primary"
+                                                       Theme="{DynamicResource SemiButtonPrimary}"
                                                        Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).AcceptSuggestionCommand}"
                                                        CommandParameter="{Binding}"/>
                                                 <Button Content="{Binding IgnoreButton, Source={x:Static strings:StringResources.Current}}"
-                                                       Classes="secondary"
+                                                       Theme="{DynamicResource SemiButtonSecondary}"
                                                        Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).IgnoreSuggestionCommand}"
                                                        CommandParameter="{Binding}"/>
                                             </StackPanel>
@@ -116,21 +120,23 @@
                 </Border>
 
                 <!-- Generate Suggestions Button (when no suggestions) -->
-                <Border Classes="card"
-                       Padding="24,20,24,24"
+                <Border Theme="{DynamicResource SemiBorderCard}"
+                       Padding="24"
                        IsVisible="{Binding !HasSuggestions}">
                     <StackPanel Spacing="16" HorizontalAlignment="Center">
                         <TextBlock Text="{Binding NoSuggestionsTitle, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="heading"
+                                  Classes="H6"
+                                  Theme="{DynamicResource TitleTextBlock}"
                                   HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding NoSuggestionsDesc, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="caption"
+                                  Classes="Tertiary"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   HorizontalAlignment="Center"
                                   TextAlignment="Center"
                                   TextWrapping="Wrap"
                                   MaxWidth="400"/>
                         <Button Content="{Binding GenerateSuggestionsButton, Source={x:Static strings:StringResources.Current}}"
-                               Classes="primary"
+                               Theme="{DynamicResource SemiButtonPrimary}"
                                Command="{Binding GenerateSuggestionsCommand}"
                                IsEnabled="{Binding !IsGeneratingSuggestions}"
                                HorizontalAlignment="Center"/>
@@ -138,11 +144,12 @@
                 </Border>
 
                 <!-- Existing Budgets Section -->
-                <Border Classes="card"
-                       Padding="24,20,24,24">
+                <Border Theme="{DynamicResource SemiBorderCard}"
+                       Padding="24">
                     <StackPanel Spacing="16">
                         <TextBlock Text="{Binding MyBudgetsTitle, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="heading"/>
+                                  Classes="H6"
+                                  Theme="{DynamicResource TitleTextBlock}"/>
 
                         <!-- Empty State -->
                         <StackPanel IsVisible="{Binding !HasBudgets}"
@@ -150,11 +157,12 @@
                                    HorizontalAlignment="Center"
                                    Margin="0,20">
                             <TextBlock Text="{Binding NoBudgetsTitle, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       HorizontalAlignment="Center"
                                       Opacity="0.7"/>
                             <TextBlock Text="{Binding NoBudgetsDesc, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       HorizontalAlignment="Center"
                                       TextAlignment="Center"
                                       Opacity="0.5"/>
@@ -166,8 +174,8 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Border Padding="16"
-                                           Background="{StaticResource HoverBackground}"
-                                           CornerRadius="8"
+                                           Background="{DynamicResource SemiColorFill0}"
+                                           CornerRadius="4"
                                            Margin="0,0,0,12">
                                         <StackPanel Spacing="12">
                                             <!-- 第一行: 名称、标签、操作按钮 -->
@@ -175,7 +183,7 @@
                                                 <StackPanel Grid.Column="0" Spacing="8">
                                                     <StackPanel Orientation="Horizontal" Spacing="12">
                                                         <TextBlock Text="{Binding DisplayName}"
-                                                                  Classes="body"
+                                                                  Theme="{DynamicResource TextBlockBase}"
                                                                   FontWeight="SemiBold"/>
                                                         <Border Padding="6,2"
                                                                CornerRadius="4"
@@ -186,7 +194,7 @@
                                                         </Border>
                                                         <Border Padding="6,2"
                                                                CornerRadius="4"
-                                                               Background="#8E8E93"
+                                                               Background="{DynamicResource SemiColorDisabledText}"
                                                                IsVisible="{Binding !IsEnabled}">
                                                             <TextBlock Text="{Binding DisabledLabel, Source={x:Static strings:StringResources.Current}}"
                                                                       FontSize="11"
@@ -199,10 +207,10 @@
                                                            Spacing="8"
                                                            VerticalAlignment="Center">
                                                     <Button Content="{Binding EditButton, Source={x:Static strings:StringResources.Current}}"
-                                                           Classes="secondary"
+                                                           Theme="{DynamicResource SemiButtonSecondary}"
                                                            Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).StartEditBudgetCommand}"
                                                            CommandParameter="{Binding}"/>
-                                                    <Button Classes="secondary"
+                                                    <Button Theme="{DynamicResource SemiButtonSecondary}"
                                                            Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).ToggleBudgetEnabledCommand}"
                                                            CommandParameter="{Binding}">
                                                         <Button.Content>
@@ -215,7 +223,7 @@
                                                         </Button.Content>
                                                     </Button>
                                                     <Button Content="{Binding DeleteButton, Source={x:Static strings:StringResources.Current}}"
-                                                           Classes="secondary"
+                                                           Theme="{DynamicResource SemiButtonSecondary}"
                                                            Command="{Binding $parent[ItemsControl].((vm:TimeBudgetViewModel)DataContext).DeleteBudgetCommand}"
                                                            CommandParameter="{Binding}"/>
                                                 </StackPanel>
@@ -226,15 +234,15 @@
                                                 <!-- 进度信息 -->
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                                        <TextBlock Classes="body" FontWeight="SemiBold"
+                                                        <TextBlock Theme="{DynamicResource TextBlockBase}" FontWeight="SemiBold"
                                                                   Text="{Binding ActualDurationText}"/>
-                                                        <TextBlock Classes="caption" VerticalAlignment="Center" Opacity="0.7">
+                                                        <TextBlock Classes="Tertiary" Theme="{DynamicResource TextBlockBase}" VerticalAlignment="Center" Opacity="0.7">
                                                             <Run Text="/"/>
                                                             <Run Text="{Binding TargetDurationText}"/>
                                                         </TextBlock>
                                                     </StackPanel>
                                                     <TextBlock Grid.Column="1"
-                                                              Classes="body"
+                                                              Theme="{DynamicResource TextBlockBase}"
                                                               FontWeight="SemiBold"
                                                               Text="{Binding ProgressStatusText}"/>
                                                 </Grid>
@@ -253,15 +261,15 @@
                                                     <!-- 超限警告 (上限目标) -->
                                                     <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding IsOverBudget}">
                                                         <TextBlock Text="⚠️" FontSize="12"/>
-                                                        <TextBlock Text="已超出上限" Classes="caption" Foreground="#FF6B6B"/>
+                                                        <TextBlock Text="已超出上限" Classes="Tertiary" Theme="{DynamicResource TextBlockBase}" Foreground="{DynamicResource SemiColorDanger}"/>
                                                     </StackPanel>
                                                     <!-- 达标提示 (仅下限目标显示) -->
                                                     <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding ShowGoalMetMessage}">
-                                                        <TextBlock Text="✓" FontSize="12" Foreground="#4ECDC4"/>
-                                                        <TextBlock Text="目标已达成" Classes="caption" Foreground="#4ECDC4"/>
+                                                        <TextBlock Text="✓" FontSize="12" Foreground="{DynamicResource SemiColorSuccess}"/>
+                                                        <TextBlock Text="目标已达成" Classes="Tertiary" Theme="{DynamicResource TextBlockBase}" Foreground="{DynamicResource SemiColorSuccess}"/>
                                                     </StackPanel>
                                                     <!-- 提醒阈值 -->
-                                                    <TextBlock Classes="caption" Opacity="0.5"
+                                                    <TextBlock Classes="Tertiary" Theme="{DynamicResource TextBlockBase}" Opacity="0.5"
                                                               IsVisible="{Binding ReminderEnabled}">
                                                         <Run Text="{Binding ReminderAtLabel, Source={x:Static strings:StringResources.Current}}"/>
                                                         <Run Text="{Binding ReminderThreshold}"/>
@@ -272,7 +280,7 @@
 
                                             <!-- 禁用状态下显示简单信息 -->
                                             <StackPanel Orientation="Horizontal" Spacing="16" IsVisible="{Binding !IsEnabled}">
-                                                <TextBlock Classes="caption" Opacity="0.6">
+                                                <TextBlock Classes="Tertiary" Theme="{DynamicResource TextBlockBase}" Opacity="0.6">
                                                     <Run Text="{Binding TargetLabel, Source={x:Static strings:StringResources.Current}}"/>
                                                     <Run Text="{Binding TargetDurationText}"/>
                                                 </TextBlock>
@@ -288,25 +296,27 @@
 
             <!-- Edit/Add Form (shown when editing) -->
             <Border Grid.Row="0"
-                   Margin="48,40,48,80"
+                   Margin="24,24,24,48"
                    MaxWidth="600"
                    HorizontalAlignment="Center"
-                   Classes="card"
+                   Theme="{DynamicResource SemiBorderCard}"
                    Padding="32"
                    IsVisible="{Binding IsEditing}">
                 <StackPanel Spacing="24">
                     <!-- Form Title -->
                     <TextBlock Text="{Binding AddBudgetTitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"
                               IsVisible="{Binding EditingBudget, Converter={x:Static ObjectConverters.IsNull}}"/>
                     <TextBlock Text="{Binding EditBudgetTitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"
+                              Classes="H6"
+                              Theme="{DynamicResource TitleTextBlock}"
                               IsVisible="{Binding EditingBudget, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
                     <!-- Budget Name -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{Binding BudgetNameLabel, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   FontWeight="SemiBold"/>
                         <TextBox Text="{Binding EditDisplayName}"
                                 Watermark="{Binding BudgetNamePlaceholder, Source={x:Static strings:StringResources.Current}}"/>
@@ -315,7 +325,7 @@
                     <!-- Budget Type Selection -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{Binding BudgetTypeLabel, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   FontWeight="SemiBold"/>
                         <StackPanel Orientation="Horizontal" Spacing="16">
                             <RadioButton Content="{Binding MaximumBudget, Source={x:Static strings:StringResources.Current}}"
@@ -326,11 +336,13 @@
                                         GroupName="BudgetType"/>
                         </StackPanel>
                         <TextBlock Text="{Binding BudgetTypeMaxDesc, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="caption"
+                                  Classes="Tertiary"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   Opacity="0.6"
                                   IsVisible="{Binding EditIsMaximum}"/>
                         <TextBlock Text="{Binding BudgetTypeMinDesc, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="caption"
+                                  Classes="Tertiary"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   Opacity="0.6"
                                   IsVisible="{Binding EditIsMinimum}"/>
                     </StackPanel>
@@ -338,7 +350,7 @@
                     <!-- Target Type: App or Category -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{Binding TargetTypeLabel, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   FontWeight="SemiBold"/>
                         <StackPanel Orientation="Horizontal" Spacing="16">
                             <RadioButton Content="{Binding TargetTypeApp, Source={x:Static strings:StringResources.Current}}"
@@ -353,7 +365,7 @@
                     <!-- App Selection (when IsAppBudget) -->
                     <StackPanel Spacing="8" IsVisible="{Binding EditIsAppBudget}">
                         <TextBlock Text="{Binding SelectAppLabel, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   FontWeight="SemiBold"/>
                         <ComboBox ItemsSource="{Binding AvailableApps}"
                                  SelectedItem="{Binding EditProcessName}"
@@ -364,7 +376,7 @@
                     <!-- Category Selection (when not IsAppBudget) -->
                     <StackPanel Spacing="8" IsVisible="{Binding !EditIsAppBudget}">
                         <TextBlock Text="{Binding SelectCategoryLabel, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   FontWeight="SemiBold"/>
                         <ComboBox ItemsSource="{Binding AvailableCategories}"
                                  SelectedItem="{Binding EditCategory}"
@@ -375,7 +387,7 @@
                     <!-- Target Duration -->
                     <StackPanel Spacing="8">
                         <TextBlock Text="{Binding TargetDurationLabel, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="body"
+                                  Theme="{DynamicResource TextBlockBase}"
                                   FontWeight="SemiBold"/>
                         <StackPanel Orientation="Horizontal" Spacing="16">
                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -403,10 +415,11 @@
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Spacing="4">
                                 <TextBlock Text="{Binding ReminderEnabledLabel, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="body"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           FontWeight="SemiBold"/>
                                 <TextBlock Text="{Binding ReminderEnabledDesc, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"/>
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"/>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1"
                                          IsChecked="{Binding EditReminderEnabled}"
@@ -414,7 +427,7 @@
                         </Grid>
 
                         <StackPanel Spacing="8" IsVisible="{Binding EditReminderEnabled}">
-                            <TextBlock Classes="body">
+                            <TextBlock Theme="{DynamicResource TextBlockBase}">
                                 <Run Text="{Binding ReminderThresholdLabel, Source={x:Static strings:StringResources.Current}}"/>
                                 <Run Text="{Binding EditReminderThreshold}"/>
                                 <Run Text="%"/>
@@ -431,12 +444,12 @@
                     <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,16,0,0">
                         <Button Grid.Column="1"
                                Content="{Binding CancelButton, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding CancelEditCommand}"
                                Margin="0,0,12,0"/>
                         <Button Grid.Column="2"
                                Content="{Binding SaveButton, Source={x:Static strings:StringResources.Current}}"
-                               Classes="primary"
+                               Theme="{DynamicResource SemiButtonPrimary}"
                                Command="{Binding SaveBudgetCommand}"/>
                     </Grid>
                 </StackPanel>

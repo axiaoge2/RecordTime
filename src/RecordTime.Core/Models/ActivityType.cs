@@ -21,6 +21,16 @@ public enum ActivityType
     Gaming,
 
     /// <summary>
+    /// 在线会议/通话（Zoom、Teams、腾讯会议等）
+    /// </summary>
+    Meeting,
+
+    /// <summary>
+    /// 阅读浏览（高滚轮活动 + 低键盘活动，表示专注阅读）
+    /// </summary>
+    Reading,
+
+    /// <summary>
     /// 被动浏览
     /// </summary>
     PassiveBrowsing,

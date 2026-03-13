@@ -44,6 +44,7 @@ public class IconExtractor : IIconExtractor
 {
     // 内存缓存：进程名 -> Avalonia Bitmap
     private readonly Dictionary<string, global::Avalonia.Media.Imaging.Bitmap?> _iconCache = new();
+    private readonly object _cacheLock = new();
 
     // 磁盘缓存目录
     private readonly string _cacheDirectory;
@@ -81,8 +82,11 @@ public class IconExtractor : IIconExtractor
             return GetCategoryDefaultIcon(category);
 
         // 1. 检查内存缓存
-        if (_iconCache.TryGetValue(processName, out var cachedIcon))
-            return cachedIcon ?? GetCategoryDefaultIcon(category);
+        lock (_cacheLock)
+        {
+            if (_iconCache.TryGetValue(processName, out var cachedIcon))
+                return cachedIcon ?? GetCategoryDefaultIcon(category);
+        }
 
         // 2. 检查磁盘缓存
         var diskCachePath = Path.Combine(_cacheDirectory, $"{processName}.png");
@@ -91,7 +95,10 @@ public class IconExtractor : IIconExtractor
             try
             {
                 var icon = new global::Avalonia.Media.Imaging.Bitmap(diskCachePath);
-                _iconCache[processName] = icon;
+                lock (_cacheLock)
+                {
+                    _iconCache[processName] = icon;
+                }
                 return icon;
             }
             catch
@@ -105,7 +112,10 @@ public class IconExtractor : IIconExtractor
         var extractedIcon = TryExtractFromExecutable(processName);
 
         // 4. 缓存结果
-        _iconCache[processName] = extractedIcon;
+        lock (_cacheLock)
+        {
+            _iconCache[processName] = extractedIcon;
+        }
 
         // 5. 保存到磁盘缓存
         if (extractedIcon != null)
@@ -603,8 +613,11 @@ public class IconExtractor : IIconExtractor
             return GetDefaultIcon();
 
         // 检查缓存
-        if (_categoryIconCache.TryGetValue(category, out var cachedIcon))
-            return cachedIcon;
+        lock (_cacheLock)
+        {
+            if (_categoryIconCache.TryGetValue(category, out var cachedIcon))
+                return cachedIcon;
+        }
 
         try
         {
@@ -634,7 +647,10 @@ public class IconExtractor : IIconExtractor
             graphics.DrawString(symbol, font, textBrush, x, y);
 
             var icon = ConvertToAvaloniaBitmap(bitmap);
-            _categoryIconCache[category] = icon;
+            lock (_cacheLock)
+            {
+                _categoryIconCache[category] = icon;
+            }
             return icon;
         }
         catch
@@ -667,7 +683,11 @@ public class IconExtractor : IIconExtractor
     /// </summary>
     public void ClearCache()
     {
-        _iconCache.Clear();
+        lock (_cacheLock)
+        {
+            _iconCache.Clear();
+            _categoryIconCache.Clear();
+        }
 
         try
         {

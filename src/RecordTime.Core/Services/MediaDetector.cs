@@ -282,4 +282,34 @@ public class MediaDetector : IMediaDetector
     {
         return _browserProcesses.Contains(processName);
     }
+
+    /// <summary>
+    /// 检查进程是否为音乐播放器
+    /// </summary>
+    public bool IsMusicPlayer(string processName)
+    {
+        return _audioPlayerProcesses.Contains(processName);
+    }
+
+    /// <summary>
+    /// 检查是否有音乐播放器正在运行（后台音乐检测）
+    /// </summary>
+    public bool IsMusicPlayerRunning()
+    {
+        lock (_cacheLock)
+        {
+            return _cachedAudioProcesses.Count > 0;
+        }
+    }
+
+    /// <summary>
+    /// 检查是否有视频播放器正在运行
+    /// </summary>
+    public bool IsVideoPlayerRunning()
+    {
+        lock (_cacheLock)
+        {
+            return _cachedVideoProcesses.Count > 0;
+        }
+    }
 }

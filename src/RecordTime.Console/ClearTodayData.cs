@@ -48,7 +48,6 @@ public class ClearTodayData
             // 自动确认删除(临时修改用于修复bug)
             System.Console.WriteLine();
             System.Console.WriteLine("⚠️  自动确认删除,清除未结束的会话记录...");
-            var confirm = "YES";
 
             // if (confirm != "YES")
             // {

@@ -56,7 +56,7 @@ public class AppDataService
 
         var cacheKey = $"{normalizedStart:yyyyMMdd}-{normalizedEnd:yyyyMMdd}";
 
-        await _loadLock.WaitAsync();
+        await _loadLock.WaitAsync().ConfigureAwait(false);
         try
         {
             if (!forceRefresh && _snapshotCache.TryGetValue(cacheKey, out var cached))
@@ -70,7 +70,7 @@ public class AppDataService
             }
 
             System.Diagnostics.Debug.WriteLine($"=== AppDataService: 加载 {normalizedStart:yyyy-MM-dd} ~ {normalizedEnd:yyyy-MM-dd} 的数据... ===");
-            var snapshot = await LoadSnapshotFromDatabaseAsync(normalizedStart, normalizedEnd);
+            var snapshot = await LoadSnapshotFromDatabaseAsync(normalizedStart, normalizedEnd).ConfigureAwait(false);
 
             _snapshotCache[cacheKey] = snapshot;
             if (_snapshotCache.Count > MaxCacheSize)
@@ -103,7 +103,7 @@ public class AppDataService
             var sessions = await dbContext.Sessions
                 .AsNoTracking() // 只读查询,不需要跟踪实体变化
                 .Where(s => s.EndTime != null && s.StartTime < rangeEnd && s.EndTime >= rangeStart)
-                .ToListAsync();
+                .ToListAsync().ConfigureAwait(false);
 
             if (sessions.Count == 0)
             {

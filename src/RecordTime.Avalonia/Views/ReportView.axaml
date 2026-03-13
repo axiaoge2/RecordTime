@@ -5,58 +5,61 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:strings="using:RecordTime.Avalonia.Resources.Strings"
              xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="1200"
              x:Class="RecordTime.Avalonia.Views.ReportView"
              x:DataType="vm:ReportViewModel">
 
-    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="24" MaxWidth="1400" Margin="48,40,48,80">
+        <StackPanel Spacing="24" MaxWidth="1000" Margin="24,24,24,48">
             <!-- Page Title -->
             <TextBlock Text="{Binding ReportGenerationTitle, Source={x:Static strings:StringResources.Current}}"
-                      Classes="title"
-                      Margin="0,0,0,16"/>
+                      Classes="H3"
+                      Theme="{DynamicResource TitleTextBlock}"/>
 
             <!-- Date Range Selection -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
-                <StackPanel Spacing="20">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
+                <StackPanel Spacing="24">
                     <TextBlock Text="{Binding SelectDateRange, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H5"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <!-- Quick Date Range Buttons -->
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*">
+                    <Grid ColumnDefinitions="*,12,*,12,*,12,*">
                         <Button Grid.Column="0"
                                Content="{Binding LastWeek, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding SetLastWeekCommand}"
-                               Margin="0,0,8,0"/>
-                        <Button Grid.Column="1"
-                               Content="{Binding LastMonth, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
-                               Command="{Binding SetLastMonthCommand}"
-                               Margin="0,0,8,0"/>
+                               HorizontalAlignment="Stretch"/>
                         <Button Grid.Column="2"
+                               Content="{Binding LastMonth, Source={x:Static strings:StringResources.Current}}"
+                               Theme="{DynamicResource SemiButtonSecondary}"
+                               Command="{Binding SetLastMonthCommand}"
+                               HorizontalAlignment="Stretch"/>
+                        <Button Grid.Column="4"
                                Content="{Binding LastThreeMonths, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding SetLastThreeMonthsCommand}"
-                               Margin="0,0,8,0"/>
-                        <Button Grid.Column="3"
+                               HorizontalAlignment="Stretch"/>
+                        <Button Grid.Column="6"
                                Content="{Binding CustomDateRange, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
-                               Command="{Binding ToggleCustomDateCommand}"/>
+                               Theme="{DynamicResource SemiButtonSecondary}"
+                               Command="{Binding ToggleCustomDateCommand}"
+                               HorizontalAlignment="Stretch"/>
                     </Grid>
 
                     <!-- Custom Date Pickers (Collapsible) -->
                     <Border IsVisible="{Binding IsCustomDateMode}"
                             Padding="16"
-                            Background="{StaticResource HoverBackground}"
-                            CornerRadius="12">
+                            Theme="{DynamicResource SemiBorderCard}"
+                            Background="{DynamicResource SemiColorFill0}"
+                            CornerRadius="8">
                         <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="Auto,12,Auto">
                             <!-- Start Date -->
                             <StackPanel Grid.Column="0" Grid.Row="0">
                                 <TextBlock Text="{Binding StartDate, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,0,4"/>
                                 <CalendarDatePicker SelectedDate="{Binding StartDate}"
                                                    HorizontalAlignment="Stretch"
@@ -68,12 +71,14 @@
                                       Text="→"
                                       FontSize="20"
                                       VerticalAlignment="Center"
-                                      Margin="16,16,16,0"/>
+                                      Margin="16,16,16,0"
+                                      Foreground="{DynamicResource SemiColorText2}"/>
 
                             <!-- End Date -->
                             <StackPanel Grid.Column="2" Grid.Row="0">
                                 <TextBlock Text="{Binding EndDate, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,0,4"/>
                                 <CalendarDatePicker SelectedDate="{Binding EndDate}"
                                                    HorizontalAlignment="Stretch"
@@ -85,16 +90,17 @@
                     <!-- Date Display (when not in custom mode) -->
                     <Border IsVisible="{Binding !IsCustomDateMode}"
                             Padding="16"
-                           Background="{StaticResource HoverBackground}"
-                           CornerRadius="12">
+                           Theme="{DynamicResource SemiBorderCard}"
+                           Background="{DynamicResource SemiColorFill0}"
+                           CornerRadius="8">
                         <Grid ColumnDefinitions="*,Auto,*">
                             <!-- Start Date -->
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="{Binding StartDate, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding StartDateText}"
-                                          Classes="body"
                                           FontWeight="SemiBold"/>
                             </StackPanel>
 
@@ -103,15 +109,16 @@
                                       Text="→"
                                       FontSize="20"
                                       VerticalAlignment="Center"
-                                      Margin="16,0"/>
+                                      Margin="16,0"
+                                      Foreground="{DynamicResource SemiColorText2}"/>
 
                             <!-- End Date -->
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="{Binding EndDate, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"
                                           Margin="0,0,0,4"/>
                                 <TextBlock Text="{Binding EndDateText}"
-                                          Classes="body"
                                           FontWeight="SemiBold"/>
                             </StackPanel>
                         </Grid>
@@ -120,45 +127,53 @@
             </Border>
 
             <!-- Report Summary (Preview) -->
-            <Border Classes="widget-card">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding ReportPreview, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H5"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <Grid ColumnDefinitions="*,20,*,20,*"
                          RowDefinitions="Auto">
                         <!-- Total Days -->
                         <StackPanel Grid.Column="0">
                             <TextBlock Text="{Binding TotalDays}"
-                                      Classes="number-widget"
-                                      HorizontalAlignment="Center"
-                                      FontSize="28"/>
+                                      Classes="H3"
+                                      Theme="{DynamicResource TitleTextBlock}"
+                                      HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding StatisticDays, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       HorizontalAlignment="Center"
                                       Margin="0,4,0,0"/>
                         </StackPanel>
+
+                        <Separator Grid.Column="1" Classes="Vertical" Height="40"/>
 
                         <!-- Total Sessions -->
                         <StackPanel Grid.Column="2">
                             <TextBlock Text="{Binding TotalSessions}"
-                                      Classes="number-widget"
-                                      HorizontalAlignment="Center"
-                                      FontSize="28"/>
+                                      Classes="H3"
+                                      Theme="{DynamicResource TitleTextBlock}"
+                                      HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding TotalSessions, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       HorizontalAlignment="Center"
                                       Margin="0,4,0,0"/>
                         </StackPanel>
 
+                        <Separator Grid.Column="3" Classes="Vertical" Height="40"/>
+
                         <!-- Total Apps -->
                         <StackPanel Grid.Column="4">
                             <TextBlock Text="{Binding TotalApps}"
-                                      Classes="number-widget"
-                                      HorizontalAlignment="Center"
-                                      FontSize="28"/>
+                                      Classes="H3"
+                                      Theme="{DynamicResource TitleTextBlock}"
+                                      HorizontalAlignment="Center"/>
                             <TextBlock Text="{Binding TotalApps, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="caption"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       HorizontalAlignment="Center"
                                       Margin="0,4,0,0"/>
                         </StackPanel>
@@ -167,13 +182,13 @@
             </Border>
 
             <!-- AI 分析配置 -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                   Text="{Binding AIAnalysisTitle, Source={x:Static strings:StringResources.Current}}"
-                                  Classes="heading"/>
+                                  Classes="H5"
+                                  Theme="{DynamicResource TitleTextBlock}"/>
                         <ToggleSwitch Grid.Column="1"
                                      IsChecked="{Binding EnableAIAnalysis}"
                                      OnContent="{Binding AIEnable, Source={x:Static strings:StringResources.Current}}"
@@ -183,10 +198,11 @@
 
                     <!-- AI 状态提示 - 增强视觉反馈 -->
                     <Border Padding="16"
-                           Background="{StaticResource HoverBackground}"
-                           CornerRadius="10"
-                           BorderThickness="2"
-                           BorderBrush="Transparent">
+                           Theme="{DynamicResource SemiBorderCard}"
+                           Background="{DynamicResource SemiColorFill0}"
+                           CornerRadius="8"
+                           BorderThickness="1"
+                           BorderBrush="{DynamicResource SemiColorBorder}">
                         <Grid ColumnDefinitions="Auto,*">
                             <TextBlock Grid.Column="0"
                                       Text="{Binding ConnectionTestIcon}"
@@ -195,8 +211,8 @@
                                       VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding AiStatusText}"
-                                      Classes="caption"
-                                      FontSize="14"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       FontWeight="SemiBold"
                                       TextAlignment="Left"
                                       VerticalAlignment="Center"
@@ -209,48 +225,47 @@
                              IsExpanded="False">
                         <StackPanel Spacing="16" Margin="0,16,0,0">
                             <!-- 配置选择 - 支持可编辑名称 -->
-                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                            <Grid ColumnDefinitions="*,8,Auto,8,Auto,8,Auto">
                                 <StackPanel Grid.Column="0" Spacing="4">
                                     <TextBlock Text="{Binding ConfigurationProfileDesc, Source={x:Static strings:StringResources.Current}}"
-                                              Classes="caption"/>
+                                              Classes="Tertiary"
+                                              Theme="{DynamicResource TextBlockBase}"/>
                                     <ComboBox ItemsSource="{Binding AvailableConfigs}"
                                              SelectedItem="{Binding CurrentConfigName}"
                                              IsEditable="True"
                                              HorizontalAlignment="Stretch"/>
                                 </StackPanel>
-                                <Button Grid.Column="1"
+                                <Button Grid.Column="2"
                                        Content="➕"
-                                       Classes="secondary"
+                                       Theme="{DynamicResource SemiButtonSecondary}"
                                        Command="{Binding AddNewAIConfigCommand}"
                                        VerticalAlignment="Bottom"
                                        Width="36"
-                                       Height="36"
-                                       FontSize="14"
+                                       Height="32"
                                        ToolTip.Tip="{Binding AddNewConfig, Source={x:Static strings:StringResources.Current}}"/>
-                                <Button Grid.Column="2"
+                                <Button Grid.Column="4"
                                        Content="💾"
-                                       Classes="secondary"
+                                       Theme="{DynamicResource SemiButtonSecondary}"
                                        Command="{Binding SaveAIConfigCommand}"
                                        VerticalAlignment="Bottom"
                                        Width="36"
-                                       Height="36"
-                                       FontSize="14"
+                                       Height="32"
                                        ToolTip.Tip="{Binding SaveConfig, Source={x:Static strings:StringResources.Current}}"/>
-                                <Button Grid.Column="3"
+                                <Button Grid.Column="6"
                                        Content="🗑️"
-                                       Classes="secondary"
+                                       Theme="{DynamicResource SemiButtonSecondary}"
                                        Command="{Binding DeleteAIConfigCommand}"
                                        VerticalAlignment="Bottom"
                                        Width="36"
-                                       Height="36"
-                                       FontSize="14"
+                                       Height="32"
                                        ToolTip.Tip="{Binding DeleteConfig, Source={x:Static strings:StringResources.Current}}"/>
                             </Grid>
 
                             <!-- API Key -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{Binding APIKey, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"/>
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"/>
                                 <TextBox Watermark="{Binding APIKeyPlaceholder, Source={x:Static strings:StringResources.Current}}"
                                         PasswordChar="•"
                                         Text="{Binding AiApiKey}"/>
@@ -259,7 +274,8 @@
                             <!-- Model -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{Binding Model, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"/>
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"/>
                                 <TextBox Watermark="{Binding ModelPlaceholder, Source={x:Static strings:StringResources.Current}}"
                                         Text="{Binding AiModel}"/>
                             </StackPanel>
@@ -267,41 +283,41 @@
                             <!-- Base URL -->
                             <StackPanel Spacing="4">
                                 <TextBlock Text="{Binding APIAddress, Source={x:Static strings:StringResources.Current}}"
-                                          Classes="caption"/>
+                                          Classes="Tertiary"
+                                          Theme="{DynamicResource TextBlockBase}"/>
                                 <TextBox Watermark="{Binding APIAddressPlaceholder, Source={x:Static strings:StringResources.Current}}"
                                         Text="{Binding AiBaseUrl}"/>
                             </StackPanel>
 
-                            <!-- Test Connection Button - 增强视觉效果 -->
+                            <!-- Test Connection Button -->
                             <Button Command="{Binding TestAIConnectionCommand}"
                                    IsEnabled="{Binding !IsTestingConnection}"
-                                   Classes="secondary"
+                                   Theme="{DynamicResource SemiButtonSecondary}"
                                    HorizontalAlignment="Stretch"
                                    Height="40"
-                                   FontSize="14"
                                    FontWeight="SemiBold">
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <TextBlock Grid.Column="0"
-                                              Text="{Binding ConnectionTestIcon}"
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding ConnectionTestIcon}"
                                               FontSize="16"
-                                              Margin="0,0,8,0"
                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1"
-                                              Text="{Binding TestConnection, Source={x:Static strings:StringResources.Current}}"
+                                    <TextBlock Text="{Binding TestConnection, Source={x:Static strings:StringResources.Current}}"
                                               VerticalAlignment="Center"/>
-                                </Grid>
+                                </StackPanel>
                             </Button>
 
                             <!-- 隐私说明 -->
                             <Border Padding="12"
-                                   Background="{StaticResource HoverBackground}"
+                                   Theme="{DynamicResource SemiBorderCard}"
+                                   Background="{DynamicResource SemiColorFill0}"
                                    CornerRadius="8">
                                 <StackPanel Spacing="4">
                                     <TextBlock Text="{Binding PrivacyProtection, Source={x:Static strings:StringResources.Current}}"
-                                              Classes="caption"
+                                              Classes="Tertiary"
+                                              Theme="{DynamicResource TextBlockBase}"
                                               FontWeight="SemiBold"/>
                                     <TextBlock Text="{Binding PrivacyProtectionDesc, Source={x:Static strings:StringResources.Current}}"
-                                              Classes="caption"
+                                              Classes="Tertiary"
+                                              Theme="{DynamicResource TextBlockBase}"
                                               TextWrapping="Wrap"
                                               Opacity="0.8"/>
                                 </StackPanel>
@@ -312,23 +328,24 @@
             </Border>
 
             <!-- Generate Report Section -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="20">
                     <TextBlock Text="{Binding GenerateReportTitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H5"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <!-- Status Text -->
                     <Border Padding="16"
-                           Background="{StaticResource HoverBackground}"
-                           CornerRadius="12">
+                           Theme="{DynamicResource SemiBorderCard}"
+                           Background="{DynamicResource SemiColorFill0}"
+                           CornerRadius="8">
                         <StackPanel Spacing="4">
                             <TextBlock Text="{Binding StatusText}"
-                                      Classes="body"
                                       TextAlignment="Center"
                                       FontWeight="SemiBold"/>
                             <TextBlock Text="{Binding StatusDetail}"
-                                      Classes="caption"
+                                      Classes="Tertiary"
+                                      Theme="{DynamicResource TextBlockBase}"
                                       TextAlignment="Center"
                                       IsVisible="{Binding StatusDetail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
@@ -337,7 +354,7 @@
                     <!-- Generate Button -->
                     <Grid>
                         <Button Content="{Binding GenerateHTMLReport, Source={x:Static strings:StringResources.Current}}"
-                               Classes="primary"
+                               Theme="{DynamicResource SemiButtonPrimary}"
                                Command="{Binding GenerateReportCommand}"
                                IsEnabled="{Binding !IsGenerating}"
                                IsVisible="{Binding !EnableAIAnalysis}"
@@ -346,7 +363,7 @@
                                FontSize="16"
                                Margin="0,8,0,0"/>
                         <Button Content="{Binding GenerateReportWithAI, Source={x:Static strings:StringResources.Current}}"
-                               Classes="primary"
+                               Theme="{DynamicResource SemiButtonPrimary}"
                                Command="{Binding GenerateReportCommand}"
                                IsEnabled="{Binding !IsGenerating}"
                                IsVisible="{Binding EnableAIAnalysis}"
@@ -360,7 +377,7 @@
                     <Grid ColumnDefinitions="*,12,*">
                         <Button Grid.Column="0"
                                Content="{Binding OpenReport, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding OpenReportCommand}"
                                IsEnabled="{Binding LastReportPath}"
                                HorizontalAlignment="Stretch"
@@ -368,7 +385,7 @@
 
                         <Button Grid.Column="2"
                                Content="{Binding OpenReportsFolder, Source={x:Static strings:StringResources.Current}}"
-                               Classes="secondary"
+                               Theme="{DynamicResource SemiButtonSecondary}"
                                Command="{Binding OpenReportsFolderCommand}"
                                HorizontalAlignment="Stretch"
                                Height="40"/>
@@ -377,70 +394,56 @@
             </Border>
 
             <!-- Report Info -->
-            <Border Classes="card"
-                   Padding="24,20,24,24">
+            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
                 <StackPanel Spacing="16">
                     <TextBlock Text="{Binding ReportInfoTitle, Source={x:Static strings:StringResources.Current}}"
-                              Classes="heading"/>
+                              Classes="H5"
+                              Theme="{DynamicResource TitleTextBlock}"/>
 
                     <StackPanel Spacing="8">
                         <Grid ColumnDefinitions="Auto,*">
                             <TextBlock Grid.Column="0"
                                       Text="✓"
-                                      Classes="body"
-                                      Foreground="{StaticResource SystemGreen}"
+                                      Foreground="{DynamicResource SemiColorSuccess}"
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding ReportInfoFeature1, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
-
-                        <Grid ColumnDefinitions="Auto,*">
+                         <Grid ColumnDefinitions="Auto,*">
                             <TextBlock Grid.Column="0"
                                       Text="✓"
-                                      Classes="body"
-                                      Foreground="{StaticResource SystemGreen}"
+                                      Foreground="{DynamicResource SemiColorSuccess}"
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding ReportInfoFeature2, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
-
-                        <Grid ColumnDefinitions="Auto,*">
+                         <Grid ColumnDefinitions="Auto,*">
                             <TextBlock Grid.Column="0"
                                       Text="✓"
-                                      Classes="body"
-                                      Foreground="{StaticResource SystemGreen}"
+                                      Foreground="{DynamicResource SemiColorSuccess}"
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding ReportInfoFeature3, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
-
-                        <Grid ColumnDefinitions="Auto,*">
+                         <Grid ColumnDefinitions="Auto,*">
                             <TextBlock Grid.Column="0"
                                       Text="✓"
-                                      Classes="body"
-                                      Foreground="{StaticResource SystemGreen}"
+                                      Foreground="{DynamicResource SemiColorSuccess}"
                                       FontWeight="Bold"
                                       Margin="0,0,8,0"/>
                             <TextBlock Grid.Column="1"
                                       Text="{Binding ReportInfoFeature4, Source={x:Static strings:StringResources.Current}}"
-                                      Classes="body"
                                       TextWrapping="Wrap"/>
                         </Grid>
                     </StackPanel>
                 </StackPanel>
             </Border>
-
-            <!-- 底部占位元素,确保滚动空间充足 -->
-            <Border Height="1" Background="Transparent"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,6 +10,9 @@ namespace RecordTime.Core.Services;
 /// </summary>
 public class AppNameResolver
 {
+    // 缓存已解析的进程名，避免重复文件系统访问
+    private static readonly ConcurrentDictionary<string, string> _resolvedCache = new(StringComparer.OrdinalIgnoreCase);
+
     private static readonly Dictionary<string, string> _knownApps = new(StringComparer.OrdinalIgnoreCase)
     {
         // 浏览器
@@ -89,13 +93,21 @@ public class AppNameResolver
         if (string.IsNullOrEmpty(processName))
             return "未知应用";
 
-        // 先查找已知应用映射
+        // 1. 先查找已知应用映射
         if (_knownApps.TryGetValue(processName, out var friendlyName))
         {
             return friendlyName;
         }
 
-        // 尝试从进程获取产品名称
+        // 2. 查找缓存
+        if (_resolvedCache.TryGetValue(processName, out var cachedName))
+        {
+            return cachedName;
+        }
+
+        string result = processName;
+
+        // 3. 尝试从进程获取产品名称
         try
         {
             var processes = Process.GetProcessesByName(processName);
@@ -111,13 +123,17 @@ public class AppNameResolver
                     // 优先使用 ProductName
                     if (!string.IsNullOrEmpty(fileVersionInfo.ProductName))
                     {
-                        return fileVersionInfo.ProductName;
+                        result = fileVersionInfo.ProductName;
+                        _resolvedCache[processName] = result;
+                        return result;
                     }
 
                     // 其次使用 FileDescription
                     if (!string.IsNullOrEmpty(fileVersionInfo.FileDescription))
                     {
-                        return fileVersionInfo.FileDescription;
+                        result = fileVersionInfo.FileDescription;
+                        _resolvedCache[processName] = result;
+                        return result;
                     }
                 }
             }
@@ -127,8 +143,13 @@ public class AppNameResolver
             // 无法获取进程信息，继续使用后备方案
         }
 
-        // 后备方案：美化进程名
-        return BeautifyProcessName(processName);
+        // 4. 后备方案：美化进程名
+        result = BeautifyProcessName(processName);
+        
+        // 存入缓存
+        _resolvedCache[processName] = result;
+        
+        return result;
     }
 
     /// <summary>

@@ -414,7 +414,9 @@ public partial class ReportViewModel : ViewModelBase
                     {
                         { ActivityType.Video, new SKColor(255, 59, 48) },        // 红色 - 视频娱乐
                         { ActivityType.Gaming, new SKColor(255, 149, 0) },        // 橙色 - 游戏
+                        { ActivityType.Meeting, new SKColor(88, 86, 214) },       // 紫色 - 在线会议
                         { ActivityType.ActiveTyping, new SKColor(48, 209, 88) },  // 绿色 - 主动输入
+                        { ActivityType.Reading, new SKColor(90, 200, 250) },      // 青色 - 阅读浏览
                         { ActivityType.PassiveBrowsing, new SKColor(0, 113, 227) }, // 蓝色 - 被动浏览
                         { ActivityType.Idle, new SKColor(142, 142, 147) }         // 灰色 - 空闲
                     };
@@ -423,7 +425,9 @@ public partial class ReportViewModel : ViewModelBase
                     {
                         { ActivityType.Video, StringResources.Current.ActivityTypeVideo },
                         { ActivityType.Gaming, StringResources.Current.ActivityTypeGaming },
+                        { ActivityType.Meeting, StringResources.Current.ActivityTypeMeeting },
                         { ActivityType.ActiveTyping, StringResources.Current.ActivityTypeActiveTyping },
+                        { ActivityType.Reading, StringResources.Current.ActivityTypeReading },
                         { ActivityType.PassiveBrowsing, StringResources.Current.ActivityTypePassiveBrowsing },
                         { ActivityType.Idle, StringResources.Current.ActivityTypeIdle }
                     };
