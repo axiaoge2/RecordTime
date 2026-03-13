@@ -12,41 +12,10 @@ namespace RecordTime.Core.Services;
 /// </summary>
 public class MediaDetector : IMediaDetector
 {
-    private readonly HashSet<string> _videoPlayerProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // 桌面视频播放器
-        "vlc", "potplayer", "potplayermini", "potplayer64",
-        "mpv", "mpc-hc", "mpc-hc64", "mpc-be", "mpc-be64",
-        "wmplayer", "k-litecodecpackx64", "kmplayer",
-        "gomplayer", "daum", "smplayer", "kodi",
-
-        // 流媒体应用
-        "netflix", "primevideo", "disney", "disneyplus",
-        "hulu", "hbomax", "appletv",
-
-        // 中文视频平台
-        "bilibili", "bilibiliuwp", "tencent_video", "qqlivetv",
-        "iqiyi", "iqiyiuwp", "youku", "manggotv",
-        "douyu", "huya", "kuaishou", "douyin",
-
-        // 其他
-        "zoom", "teams", "skype", // 会议软件
-        "obs", "obs64", "streamlabs" // 录屏/直播软件
-    };
-
-    private readonly HashSet<string> _browserProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "chrome", "msedge", "firefox", "brave", "opera", "vivaldi",
-        "chromium", "edge", "iexplore", "safari",
-        "maxthon", "360se", "360chrome", "sogouexplorer",
-        "qqbrowser", "liebao", "tor"
-    };
-
-    private readonly HashSet<string> _audioPlayerProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "spotify", "cloudmusic", "qqmusic", "wmplayer", "kugou", "kuwo",
-        "foobar2000", "aimp", "musicbee"
-    };
+    private readonly HashSet<string> _videoPlayerProcesses = ProcessCategories.VideoPlayers;
+    private readonly HashSet<string> _videoRelatedProcesses = ProcessCategories.VideoRelatedProcesses;
+    private readonly HashSet<string> _browserProcesses = ProcessCategories.Browsers;
+    private readonly HashSet<string> _audioPlayerProcesses = ProcessCategories.MusicPlayers;
 
     private bool _isRunning;
 

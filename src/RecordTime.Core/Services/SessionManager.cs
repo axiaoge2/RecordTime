@@ -564,31 +564,6 @@ public class SessionManager : IDisposable
 
     #endregion
 
-    #region 桌面场景特殊处理
-
-    /// <summary>
-    /// 处理桌面延迟检查
-    /// </summary>
-    private async Task HandleDesktopDelayedCheckAsync(WindowInfo desktopWindow)
-    {
-        try
-        {
-            await Task.Delay(30000); // 等待 30 秒
-
-            // 这里需要获取当前窗口，暂时简化实现
-            // 实际应该检查用户是否还在桌面
-            // 如果还在桌面，则创建会话
-
-            Log.Debug("桌面延迟检查完成（简化实现）");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "处理桌面延迟检查时发生错误");
-        }
-    }
-
-    #endregion
-
     private bool _disposed = false;
 
     public void Dispose()

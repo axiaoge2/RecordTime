@@ -7,55 +7,6 @@ namespace RecordTime.Core.Services;
 /// </summary>
 public class ActivityDetector : IActivityDetector
 {
-    // 已知的视频播放器进程名
-    private static readonly HashSet<string> VideoAppProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // 桌面视频播放器
-        "vlc", "potplayer", "potplayermini", "potplayer64",
-        "mpv", "mpc-hc", "mpc-hc64", "mpc-be", "mpc-be64",
-        "wmplayer", "k-litecodecpackx64", "kmplayer",
-        "gomplayer", "daum", "smplayer", "kodi",
-
-        // 流媒体应用
-        "netflix", "primevideo", "disney", "disneyplus",
-        "hulu", "hbomax", "appletv",
-
-        // 中文视频平台
-        "bilibili", "bilibiliuwp", "tencent_video", "qqlivetv",
-        "iqiyi", "iqiyiuwp", "youku", "manggotv",
-        "douyu", "huya", "kuaishou", "douyin"
-    };
-
-    // 已知的浏览器进程名
-    private static readonly HashSet<string> BrowserProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "chrome", "msedge", "firefox", "brave", "opera", "vivaldi",
-        "chromium", "edge", "iexplore", "safari",
-        "maxthon", "360se", "360chrome", "sogouexplorer",
-        "qqbrowser", "liebao", "tor"
-    };
-
-    // 在线会议工具
-    private static readonly HashSet<string> OnlineMeetingApps = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "zoom", "teams", "skype", "webex", "dingtalk", "lark",
-        "feishu", "腾讯会议", "tencent_meeting", "voovmeeting",
-        "googlemeet", "meet", "discord" // Discord 也可能用于会议
-    };
-
-    // 音乐播放器
-    private static readonly HashSet<string> MusicPlayerApps = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "spotify", "cloudmusic", "qqmusic", "kugou", "kuwo",
-        "foobar2000", "aimp", "musicbee", "netease_cloud_music",
-        "applemusic", "itunes", "vlc" // VLC 也可以播放音乐
-    };
-
-    // 桌面进程（系统桌面）
-    private static readonly HashSet<string> DesktopProcesses = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "explorer", "progman", "workerw"
-    };
 
     public ActivityType DetermineActivity(WindowInfo window, SystemState state)
     {
@@ -126,7 +77,7 @@ public class ActivityDetector : IActivityDetector
 
     public bool IsVideoPlaying(string processName)
     {
-        return VideoAppProcesses.Contains(processName);
+        return ProcessCategories.VideoPlayers.Contains(processName);
     }
 
     /// <summary>
@@ -134,7 +85,7 @@ public class ActivityDetector : IActivityDetector
     /// </summary>
     public bool IsBrowser(string processName)
     {
-        return BrowserProcesses.Contains(processName);
+        return ProcessCategories.Browsers.Contains(processName);
     }
 
     /// <summary>
@@ -142,7 +93,7 @@ public class ActivityDetector : IActivityDetector
     /// </summary>
     public bool IsOnlineMeeting(string processName)
     {
-        return OnlineMeetingApps.Contains(processName);
+        return ProcessCategories.OnlineMeetingApps.Contains(processName);
     }
 
     /// <summary>
@@ -150,7 +101,7 @@ public class ActivityDetector : IActivityDetector
     /// </summary>
     public bool IsMusicPlayer(string processName)
     {
-        return MusicPlayerApps.Contains(processName);
+        return ProcessCategories.MusicPlayers.Contains(processName);
     }
 
     /// <summary>
@@ -158,7 +109,7 @@ public class ActivityDetector : IActivityDetector
     /// </summary>
     public bool IsDesktop(string processName)
     {
-        return DesktopProcesses.Contains(processName);
+        return ProcessCategories.DesktopProcesses.Contains(processName);
     }
 
     // 缓存已解析的应用分类
@@ -181,15 +132,15 @@ public class ActivityDetector : IActivityDetector
         string result;
         var ci = StringComparison.OrdinalIgnoreCase;
 
-        if (VideoAppProcesses.Contains(processName))
+        if (ProcessCategories.VideoPlayers.Contains(processName))
             result = "视频娱乐";
-        else if (BrowserProcesses.Contains(processName))
+        else if (ProcessCategories.Browsers.Contains(processName))
             result = "浏览器";
-        else if (OnlineMeetingApps.Contains(processName))
+        else if (ProcessCategories.OnlineMeetingApps.Contains(processName))
             result = "在线会议";
-        else if (MusicPlayerApps.Contains(processName))
+        else if (ProcessCategories.MusicPlayers.Contains(processName))
             result = "音乐";
-        else if (DesktopProcesses.Contains(processName))
+        else if (ProcessCategories.DesktopProcesses.Contains(processName))
             result = "系统桌面";
         else if (processName.Contains("code", ci) || processName.Contains("studio", ci) ||
             processName.Contains("idea", ci) || processName.Contains("eclipse", ci) ||
