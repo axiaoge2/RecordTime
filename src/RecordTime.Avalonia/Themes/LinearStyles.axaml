@@ -6,10 +6,10 @@
          ============================================ -->
 
     <!-- ========== 设计规范 / Design Tokens ========== -->
-    <CornerRadius x:Key="LinearRadiusSm">4</CornerRadius>
-    <CornerRadius x:Key="LinearRadiusMd">8</CornerRadius>
-    <CornerRadius x:Key="LinearRadiusLg">12</CornerRadius>
-    <CornerRadius x:Key="LinearRadiusXl">16</CornerRadius>
+    <CornerRadius x:Key="LinearRadiusSm">0</CornerRadius>
+    <CornerRadius x:Key="LinearRadiusMd">2</CornerRadius>
+    <CornerRadius x:Key="LinearRadiusLg">2</CornerRadius>
+    <CornerRadius x:Key="LinearRadiusXl">4</CornerRadius>
     <CornerRadius x:Key="LinearRadiusFull">9999</CornerRadius>
 
     <Thickness x:Key="LinearSpacingXs">4</Thickness>
@@ -39,18 +39,21 @@
 
     <!-- ========== 文本样式 / Text Styles ========== -->
     <ControlTheme x:Key="LinearTextH1" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource EditorialSerifFont}"/>
         <Setter Property="FontSize" Value="{DynamicResource LinearFontSize4xl}"/>
-        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
     </ControlTheme>
 
     <ControlTheme x:Key="LinearTextH2" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource EditorialSerifFont}"/>
         <Setter Property="FontSize" Value="{DynamicResource LinearFontSize3xl}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>
     </ControlTheme>
 
     <ControlTheme x:Key="LinearTextH3" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource EditorialSerifFont}"/>
         <Setter Property="FontSize" Value="{DynamicResource LinearFontSize2xl}"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Foreground" Value="{DynamicResource LinearFgPrimaryBrush}"/>

@@ -88,68 +88,62 @@
 
                             <!-- Dashboard -->
                             <ListBoxItem>
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <PathIcon Data="{StaticResource IconDashboard}" Width="18" Height="18"/>
-                                    <TextBlock Text="{Binding NavigationDashboard, Source={x:Static strings:StringResources.Current}}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               FontWeight="Medium"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding NavigationDashboard, Source={x:Static strings:StringResources.Current}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontFamily="{DynamicResource EditorialSerifFont}"
+                                           FontWeight="Medium"
+                                           Margin="16,0,0,0"/>
                             </ListBoxItem>
 
                             <!-- App Stats -->
                             <ListBoxItem>
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <PathIcon Data="{StaticResource IconStats}" Width="18" Height="18"/>
-                                    <TextBlock Text="{Binding NavigationAppStats, Source={x:Static strings:StringResources.Current}}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               FontWeight="Medium"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding NavigationAppStats, Source={x:Static strings:StringResources.Current}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontFamily="{DynamicResource EditorialSerifFont}"
+                                           FontWeight="Medium"
+                                           Margin="16,0,0,0"/>
                             </ListBoxItem>
 
                             <!-- Reports -->
                             <ListBoxItem>
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <PathIcon Data="{StaticResource IconReports}" Width="18" Height="18"/>
-                                    <TextBlock Text="{Binding NavigationReports, Source={x:Static strings:StringResources.Current}}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               FontWeight="Medium"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding NavigationReports, Source={x:Static strings:StringResources.Current}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontFamily="{DynamicResource EditorialSerifFont}"
+                                           FontWeight="Medium"
+                                           Margin="16,0,0,0"/>
                             </ListBoxItem>
 
                             <!-- Time Budget -->
                             <ListBoxItem>
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <PathIcon Data="{StaticResource IconTimeBudget}" Width="18" Height="18"/>
-                                    <TextBlock Text="{Binding NavigationTimeBudget, Source={x:Static strings:StringResources.Current}}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               FontWeight="Medium"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding NavigationTimeBudget, Source={x:Static strings:StringResources.Current}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontFamily="{DynamicResource EditorialSerifFont}"
+                                           FontWeight="Medium"
+                                           Margin="16,0,0,0"/>
                             </ListBoxItem>
 
                             <!-- Settings -->
                             <ListBoxItem>
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <PathIcon Data="{StaticResource IconSettings}" Width="18" Height="18"/>
-                                    <TextBlock Text="{Binding NavigationSettings, Source={x:Static strings:StringResources.Current}}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               FontWeight="Medium"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding NavigationSettings, Source={x:Static strings:StringResources.Current}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontFamily="{DynamicResource EditorialSerifFont}"
+                                           FontWeight="Medium"
+                                           Margin="16,0,0,0"/>
                             </ListBoxItem>
 
                             <!-- About -->
                             <ListBoxItem>
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <PathIcon Data="{StaticResource IconAbout}" Width="18" Height="18"/>
-                                    <TextBlock Text="{Binding NavigationAbout, Source={x:Static strings:StringResources.Current}}"
-                                               VerticalAlignment="Center"
-                                               FontSize="14"
-                                               FontWeight="Medium"/>
-                                </StackPanel>
+                                <TextBlock Text="{Binding NavigationAbout, Source={x:Static strings:StringResources.Current}}"
+                                           VerticalAlignment="Center"
+                                           FontSize="15"
+                                           FontFamily="{DynamicResource EditorialSerifFont}"
+                                           FontWeight="Medium"
+                                           Margin="16,0,0,0"/>
                             </ListBoxItem>
                         </ListBox>
                     </Border>

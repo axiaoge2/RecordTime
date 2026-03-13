@@ -7,54 +7,54 @@
          ============================================ -->
     
     <!-- ========== 背景色 / Background ========== -->
-    <Color x:Key="LinearBgPrimary">#0A0A0B</Color>
-    <Color x:Key="LinearBgSecondary">#111113</Color>
-    <Color x:Key="LinearBgTertiary">#18181B</Color>
-    <Color x:Key="LinearBgElevated">#1F1F23</Color>
-    <Color x:Key="LinearBgHover">#27272A</Color>
-    <Color x:Key="LinearBgActive">#2E2E33</Color>
+    <Color x:Key="LinearBgPrimary">#121212</Color>
+    <Color x:Key="LinearBgSecondary">#1A1A1A</Color>
+    <Color x:Key="LinearBgTertiary">#222222</Color>
+    <Color x:Key="LinearBgElevated">#1A1A1A</Color>
+    <Color x:Key="LinearBgHover">#2A2A2A</Color>
+    <Color x:Key="LinearBgActive">#333333</Color>
     
     <!-- ========== 前景色 / Foreground ========== -->
-    <Color x:Key="LinearFgPrimary">#FAFAFA</Color>
-    <Color x:Key="LinearFgSecondary">#A1A1AA</Color>
-    <Color x:Key="LinearFgTertiary">#71717A</Color>
-    <Color x:Key="LinearFgMuted">#52525B</Color>
+    <Color x:Key="LinearFgPrimary">#E8E6E1</Color>
+    <Color x:Key="LinearFgSecondary">#A09E99</Color>
+    <Color x:Key="LinearFgTertiary">#7A7873</Color>
+    <Color x:Key="LinearFgMuted">#5C5A55</Color>
     
     <!-- ========== 边框色 / Border ========== -->
-    <Color x:Key="LinearBorderDefault">#27272A</Color>
-    <Color x:Key="LinearBorderSubtle">#1F1F23</Color>
-    <Color x:Key="LinearBorderHover">#3F3F46</Color>
-    <Color x:Key="LinearBorderFocus">#7C3AED</Color>
+    <Color x:Key="LinearBorderDefault">#333333</Color>
+    <Color x:Key="LinearBorderSubtle">#222222</Color>
+    <Color x:Key="LinearBorderHover">#444444</Color>
+    <Color x:Key="LinearBorderFocus">#E8E6E1</Color>
     
     <!-- ========== 卡片 / Card ========== -->
-    <Color x:Key="LinearCardBg">#111113</Color>
-    <Color x:Key="LinearCardBorder">#27272A</Color>
-    <Color x:Key="LinearCardHover">#18181B</Color>
+    <Color x:Key="LinearCardBg">#121212</Color>
+    <Color x:Key="LinearCardBorder">#E8E6E1</Color>
+    <Color x:Key="LinearCardHover">#1A1A1A</Color>
     
     <!-- ========== 侧边栏 / Sidebar ========== -->
-    <Color x:Key="LinearSidebarBg">#0A0A0B</Color>
-    <Color x:Key="LinearSidebarItemHover">#18181B</Color>
-    <Color x:Key="LinearSidebarItemActive">#7C3AED1A</Color>
-    <Color x:Key="LinearSidebarItemActiveText">#7C3AED</Color>
+    <Color x:Key="LinearSidebarBg">#121212</Color>
+    <Color x:Key="LinearSidebarItemHover">#1A1A1A</Color>
+    <Color x:Key="LinearSidebarItemActive">#E8E6E1</Color>
+    <Color x:Key="LinearSidebarItemActiveText">#121212</Color>
     
     <!-- ========== 按钮 / Button ========== -->
-    <Color x:Key="LinearButtonPrimaryBg">#7C3AED</Color>
-    <Color x:Key="LinearButtonPrimaryHover">#6D28D9</Color>
-    <Color x:Key="LinearButtonPrimaryText">#FFFFFF</Color>
-    <Color x:Key="LinearButtonSecondaryBg">#27272A</Color>
-    <Color x:Key="LinearButtonSecondaryHover">#3F3F46</Color>
-    <Color x:Key="LinearButtonSecondaryText">#FAFAFA</Color>
-    <Color x:Key="LinearButtonGhostHover">#27272A</Color>
+    <Color x:Key="LinearButtonPrimaryBg">#E8E6E1</Color>
+    <Color x:Key="LinearButtonPrimaryHover">#D0CFCB</Color>
+    <Color x:Key="LinearButtonPrimaryText">#121212</Color>
+    <Color x:Key="LinearButtonSecondaryBg">#222222</Color>
+    <Color x:Key="LinearButtonSecondaryHover">#333333</Color>
+    <Color x:Key="LinearButtonSecondaryText">#E8E6E1</Color>
+    <Color x:Key="LinearButtonGhostHover">#222222</Color>
     
     <!-- ========== 输入框 / Input ========== -->
-    <Color x:Key="LinearInputBg">#18181B</Color>
-    <Color x:Key="LinearInputBorder">#27272A</Color>
-    <Color x:Key="LinearInputFocusBorder">#7C3AED</Color>
-    <Color x:Key="LinearInputPlaceholder">#52525B</Color>
+    <Color x:Key="LinearInputBg">#1A1A1A</Color>
+    <Color x:Key="LinearInputBorder">#333333</Color>
+    <Color x:Key="LinearInputFocusBorder">#E8E6E1</Color>
+    <Color x:Key="LinearInputPlaceholder">#5C5A55</Color>
     
     <!-- ========== 进度条 / Progress ========== -->
-    <Color x:Key="LinearProgressBg">#27272A</Color>
-    <Color x:Key="LinearProgressFill">#7C3AED</Color>
+    <Color x:Key="LinearProgressBg">#222222</Color>
+    <Color x:Key="LinearProgressFill">#E8E6E1</Color>
     
     <!-- ========== SolidColorBrush 定义 ========== -->
     <SolidColorBrush x:Key="LinearBgPrimaryBrush" Color="{DynamicResource LinearBgPrimary}"/>

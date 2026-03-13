@@ -36,6 +36,7 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Include="Assets\Fonts\**" />
     <AvaloniaResource Include="Themes\**" />
   </ItemGroup>
 

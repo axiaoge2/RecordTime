@@ -21,30 +21,37 @@
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="20" Margin="24,20,24,32">
 
-            <!-- Header Card - Linear Style -->
-            <Border Background="{DynamicResource LinearCardBgBrush}"
-                    BorderBrush="{DynamicResource LinearCardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    Padding="28">
+            <!-- Header Card - Editorial Style -->
+            <Border BorderBrush="{DynamicResource LinearBorderFocusBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,16,0,32">
                 <Grid ColumnDefinitions="*, Auto">
                     <StackPanel Spacing="8">
+                        <TextBlock Text="TOTAL FOCUS TIME TODAY"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   LetterSpacing="1.5"
+                                   Foreground="{DynamicResource LinearFgTertiaryBrush}"/>
+                        
                         <!-- Date -->
                         <TextBlock Text="{Binding SelectedDateText}"
                                    FontSize="14"
-                                   FontWeight="Medium"
+                                   FontFamily="{DynamicResource EditorialSerifFont}"
                                    Foreground="{DynamicResource LinearFgSecondaryBrush}"/>
+                        
                         <!-- Total Duration - Big Number -->
                         <TextBlock Text="{Binding TotalDuration}"
-                                   FontSize="56"
-                                   FontWeight="Bold"
+                                   FontSize="64"
+                                   FontFamily="{DynamicResource EditorialSerifFont}"
+                                   FontWeight="SemiBold"
                                    Foreground="{DynamicResource LinearFgPrimaryBrush}"
-                                   Margin="0,4,0,8"/>
+                                   Margin="0,8,0,12"/>
+                        
                         <!-- Status -->
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <!-- Recording indicator with pulse animation -->
                             <Panel IsVisible="{Binding IsMonitoring}">
-                                <Ellipse Width="10" Height="10" Fill="#FF3B30" Opacity="0.3">
+                                <Ellipse Width="10" Height="10" Fill="{DynamicResource LinearFgPrimaryBrush}" Opacity="0.3">
                                     <Ellipse.Styles>
                                         <Style Selector="Ellipse">
                                             <Style.Animations>
@@ -57,15 +64,27 @@
                                         </Style>
                                     </Ellipse.Styles>
                                 </Ellipse>
-                                <Ellipse Width="6" Height="6" Fill="#FF3B30"
+                                <Ellipse Width="6" Height="6" Fill="{DynamicResource LinearFgPrimaryBrush}"
                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Panel>
                             <Ellipse Width="8" Height="8"
                                      Fill="{DynamicResource LinearFgMutedBrush}"
                                      IsVisible="{Binding !IsMonitoring}"/>
-                            <TextBlock Text="{Binding MonitoringStatusText}"
+                            
+                            <!-- 专注状态文本 -->
+                            <TextBlock Text="FOCUSING"
+                                       IsVisible="{Binding IsMonitoring}"
                                        FontSize="13"
-                                       Foreground="{DynamicResource LinearFgTertiaryBrush}"/>
+                                       FontWeight="Bold"
+                                       LetterSpacing="1.5"
+                                       Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                            <TextBlock Text="PAUSED"
+                                       IsVisible="{Binding !IsMonitoring}"
+                                       FontSize="13"
+                                       FontWeight="Bold"
+                                       LetterSpacing="1.5"
+                                       Foreground="{DynamicResource LinearFgMutedBrush}"/>
+                            
                             <!-- Last update time -->
                             <TextBlock Text="{Binding DataUpdateTime, StringFormat='· {0}'}"
                                        FontSize="12"
@@ -75,94 +94,71 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Start/Stop Button - Linear Style -->
+                    <!-- Start/Stop Button - Editorial Style (Pill shape, High Contrast) -->
                     <Button Grid.Column="1"
                             Command="{Binding ToggleMonitoringCommand}"
                             VerticalAlignment="Center"
-                            Padding="24,14"
-                            CornerRadius="8"
+                            Padding="32,16"
+                            CornerRadius="999"
                             Cursor="Hand">
                         <Button.Styles>
                             <Style Selector="Button">
-                                <Setter Property="Background" Value="{DynamicResource LinearButtonPrimaryBgBrush}"/>
-                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                                <Setter Property="Background" Value="{DynamicResource LinearFgPrimaryBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource LinearBgPrimaryBrush}"/>
                                 <Setter Property="BorderThickness" Value="0"/>
                             </Style>
                             <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="{DynamicResource LinearButtonPrimaryHoverBrush}"/>
+                                <Setter Property="Background" Value="{DynamicResource LinearFgSecondaryBrush}"/>
                             </Style>
                         </Button.Styles>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
-                            <Panel Width="16" Height="16">
-                                <PathIcon Data="{StaticResource IconPlay}"
-                                          IsVisible="{Binding !IsMonitoring}"
-                                          Width="16" Height="16"
-                                          Foreground="#FFFFFF"/>
-                                <PathIcon Data="{StaticResource IconPause}"
-                                          IsVisible="{Binding IsMonitoring}"
-                                          Width="16" Height="16"
-                                          Foreground="#FFFFFF"/>
-                            </Panel>
-                            <TextBlock Text="{Binding StartButtonText}"
-                                       FontWeight="SemiBold"
-                                       FontSize="14"/>
-                        </StackPanel>
+                        <TextBlock Text="{Binding StartButtonText}"
+                                   FontWeight="SemiBold"
+                                   LetterSpacing="1"
+                                   FontSize="14"/>
                     </Button>
                 </Grid>
             </Border>
 
-            <!-- Charts Row - Linear Style -->
-            <Grid ColumnDefinitions="*, 20, *">
+            <!-- Charts Row - Editorial Style -->
+            <Grid ColumnDefinitions="*, 40, *">
                 <!-- Activity Type Distribution - Pie Chart -->
-                <Border Grid.Column="0"
-                        Background="{DynamicResource LinearCardBgBrush}"
-                        BorderBrush="{DynamicResource LinearCardBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Padding="24">
-                    <StackPanel Spacing="16">
-                        <TextBlock Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
-                        <lvc:PieChart Series="{Binding PieChartSeries}"
-                                      LegendPosition="Right"
-                                      Height="280"
-                                      IsHitTestVisible="False"
-                                      Background="{DynamicResource LinearCardBgBrush}"/>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="0" Spacing="24" Margin="0,16,0,0">
+                    <TextBlock Text="{Binding AppTypeDistribution, Source={x:Static strings:StringResources.Current}}"
+                               FontSize="20"
+                               FontFamily="{DynamicResource EditorialSerifFont}"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                    <lvc:PieChart Series="{Binding PieChartSeries}"
+                                  LegendPosition="Right"
+                                  Height="280"
+                                  IsHitTestVisible="False"
+                                  Background="Transparent"/>
+                </StackPanel>
 
                 <!-- Category Distribution - Bar Chart -->
-                <Border Grid.Column="2"
-                        Background="{DynamicResource LinearCardBgBrush}"
-                        BorderBrush="{DynamicResource LinearCardBorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Padding="24">
-                    <StackPanel Spacing="16">
-                        <TextBlock Text="{Binding CategoryDistribution, Source={x:Static strings:StringResources.Current}}"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
-                        <lvc:CartesianChart Series="{Binding BarChartSeries}"
-                                            XAxes="{Binding BarChartXAxes}"
-                                            Height="280"
-                                            IsHitTestVisible="False"
-                                            Background="{DynamicResource LinearCardBgBrush}"/>
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="2" Spacing="24" Margin="0,16,0,0">
+                    <TextBlock Text="{Binding CategoryDistribution, Source={x:Static strings:StringResources.Current}}"
+                               FontSize="20"
+                               FontFamily="{DynamicResource EditorialSerifFont}"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                    <lvc:CartesianChart Series="{Binding BarChartSeries}"
+                                        XAxes="{Binding BarChartXAxes}"
+                                        Height="280"
+                                        IsHitTestVisible="False"
+                                        Background="Transparent"/>
+                </StackPanel>
             </Grid>
 
-            <!-- Top Apps Table - Linear Style -->
-            <Border Background="{DynamicResource LinearCardBgBrush}"
-                    BorderBrush="{DynamicResource LinearCardBorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="12"
-                    Padding="24">
-                <StackPanel Spacing="16">
+            <!-- Top Apps Table - Editorial Style -->
+            <Border BorderBrush="{DynamicResource LinearBorderFocusBrush}"
+                    BorderThickness="0,1,0,0"
+                    Margin="0,32,0,0"
+                    Padding="0,32,0,0">
+                <StackPanel Spacing="24">
                     <TextBlock Text="{Binding Top10AppsTitle, Source={x:Static strings:StringResources.Current}}"
-                               FontSize="16"
+                               FontSize="24"
+                               FontFamily="{DynamicResource EditorialSerifFont}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
 

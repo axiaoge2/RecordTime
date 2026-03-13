@@ -14,11 +14,15 @@
         <StackPanel Spacing="24" MaxWidth="1000" Margin="24,24,24,48">
             <!-- Page Title -->
             <TextBlock Text="{Binding ReportGenerationTitle, Source={x:Static strings:StringResources.Current}}"
-                      Classes="H3"
-                      Theme="{DynamicResource TitleTextBlock}"/>
+                      FontSize="32" 
+                      FontFamily="{DynamicResource EditorialSerifFont}"
+                      FontWeight="SemiBold"
+                      Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
 
-            <!-- Date Range Selection -->
-            <Border Theme="{DynamicResource SemiBorderCard}" Padding="24">
+            <!-- Date Range Selection - Editorial Style -->
+            <Border BorderBrush="{DynamicResource LinearBorderFocusBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="0,0,0,24">
                 <StackPanel Spacing="24">
                     <TextBlock Text="{Binding SelectDateRange, Source={x:Static strings:StringResources.Current}}"
                               Classes="H5"

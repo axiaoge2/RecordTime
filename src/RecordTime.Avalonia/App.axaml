@@ -17,6 +17,7 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <FontFamily x:Key="EditorialSerifFont">avares://RecordTime.Avalonia/Assets/Fonts#LXGW WenKai</FontFamily>
             <ResourceDictionary.MergedDictionaries>
                 <!-- Linear Style Theme Resources (shared) -->
                 <ResourceInclude Source="avares://RecordTime/Themes/LinearColors.axaml"/>

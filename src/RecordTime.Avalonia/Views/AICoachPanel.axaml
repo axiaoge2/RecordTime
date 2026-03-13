@@ -8,34 +8,35 @@
              x:DataType="vm:AICoachViewModel">
 
     <UserControl.Styles>
-        <!-- 消息气泡样式 -->
+        <!-- 消息气泡样式 - 极简学术风 -->
         <Style Selector="Border.UserMessage">
-            <Setter Property="Background" Value="{DynamicResource SemiColorPrimary}"/>
-            <Setter Property="CornerRadius" Value="12,12,4,12"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Margin" Value="48,4,8,4"/>
+            <Setter Property="Background" Value="{DynamicResource LinearFgPrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Margin" Value="48,8,8,8"/>
             <Setter Property="HorizontalAlignment" Value="Right"/>
         </Style>
         <Style Selector="Border.AssistantMessage">
-            <Setter Property="Background" Value="{DynamicResource SemiColorFillTertiary}"/>
-            <Setter Property="CornerRadius" Value="12,12,12,4"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Margin" Value="8,4,48,4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource LinearBorderDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Margin" Value="8,8,48,8"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
         </Style>
         <Style Selector="Border.UserMessage TextBlock">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource LinearBgPrimaryBrush}"/>
         </Style>
     </UserControl.Styles>
 
     <!-- 使用 Canvas 实现自由定位 -->
     <Canvas x:Name="RootCanvas">
 
-        <!-- 悬浮按钮 (可拖动) -->
+        <!-- 悬浮按钮 (可拖动) - 纯黑/白 -->
         <Button x:Name="FloatingButton"
-                Classes="Primary"
                 Width="56" Height="56"
-                CornerRadius="28"
+                CornerRadius="0"
                 Command="{Binding TogglePanelCommand}"
                 IsVisible="{Binding !IsPanelOpen}"
                 ToolTip.Tip="AI 助手 (可拖动)"
@@ -43,42 +44,53 @@
                 PointerPressed="OnButtonPointerPressed"
                 PointerMoved="OnButtonPointerMoved"
                 PointerReleased="OnButtonPointerReleased">
-            <TextBlock Text="🤖" FontSize="24"/>
+            <Button.Styles>
+                <Style Selector="Button">
+                    <Setter Property="Background" Value="{DynamicResource LinearFgPrimaryBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource LinearBgPrimaryBrush}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Style>
+            </Button.Styles>
+            <TextBlock Text="AI" 
+                       FontFamily="{DynamicResource EditorialSerifFont}" 
+                       FontWeight="Bold" 
+                       FontSize="20"/>
         </Button>
 
-        <!-- AI 面板 (可拖动) -->
+        <!-- AI 面板 (可拖动) - 极简黑边框 -->
         <Border x:Name="AIPanelBorder"
                 IsVisible="{Binding IsPanelOpen}"
-                Width="380"
-                Background="{DynamicResource SemiColorBgElevated}"
-                BorderBrush="{DynamicResource SemiColorBorder}"
-                BorderThickness="1"
-                CornerRadius="16"
+                Width="400"
+                Background="{DynamicResource LinearBgPrimaryBrush}"
+                BorderBrush="{DynamicResource LinearFgPrimaryBrush}"
+                BorderThickness="2"
+                CornerRadius="0"
                 ClipToBounds="True"
-                BoxShadow="0 8 32 0 #40000000">
+                BoxShadow="8 8 0 0 #20000000">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
 
                 <!-- 标题栏 (可拖动) -->
                 <Border x:Name="DragHandle"
                         Grid.Row="0"
-                        Background="{DynamicResource SemiColorPrimary}"
+                        Background="{DynamicResource LinearFgPrimaryBrush}"
                         Padding="16,12"
                         Cursor="SizeAll"
                         PointerPressed="OnPanelPointerPressed"
                         PointerMoved="OnPanelPointerMoved"
                         PointerReleased="OnPanelPointerReleased">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                        <TextBlock Text="⋮⋮"
-                                   FontSize="12"
-                                   Foreground="#80FFFFFF"
+                        <TextBlock Text="≡"
+                                   FontSize="16"
+                                   Foreground="{DynamicResource LinearBgPrimaryBrush}"
+                                   Opacity="0.5"
                                    VerticalAlignment="Center"
-                                   Margin="0,0,8,0"/>
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🤖" FontSize="20"/>
+                                   Margin="0,0,12,0"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
                             <TextBlock Text="AI Time Coach"
+                                      FontFamily="{DynamicResource EditorialSerifFont}"
                                       FontWeight="SemiBold"
-                                      FontSize="16"
-                                      Foreground="White"
+                                      FontSize="18"
+                                      Foreground="{DynamicResource LinearBgPrimaryBrush}"
                                       VerticalAlignment="Center"/>
                         </StackPanel>
                         <!-- 设置按钮 -->
@@ -88,74 +100,89 @@
                                 Margin="0,0,4,0"
                                 Command="{Binding OpenSettingsCommand}"
                                 ToolTip.Tip="API 设置">
-                            <TextBlock Text="⚙️" Foreground="White" FontSize="14"/>
+                            <TextBlock Text="SETTING" Foreground="{DynamicResource LinearBgPrimaryBrush}" FontSize="12"/>
                         </Button>
                         <Button Grid.Column="3"
                                 Classes="Tertiary"
                                 Padding="4"
                                 Command="{Binding ClosePanelCommand}">
-                            <TextBlock Text="✕" Foreground="White" FontSize="14"/>
+                            <TextBlock Text="✕" Foreground="{DynamicResource LinearBgPrimaryBrush}" FontSize="14"/>
                         </Button>
                     </Grid>
                 </Border>
 
                 <!-- 快捷按钮 (非设置模式时显示) -->
                 <Border Grid.Row="1"
-                        Padding="12,12,12,8"
+                        Padding="16,16,16,16"
+                        BorderBrush="{DynamicResource LinearBorderDefaultBrush}"
+                        BorderThickness="0,0,0,1"
                         IsVisible="{Binding !IsSettingsOpen}">
-                    <StackPanel Spacing="8" IsVisible="{Binding !IsLoading}">
+                    <StackPanel Spacing="16" IsVisible="{Binding !IsLoading}">
                         <!-- 配置状态提示 -->
                         <Border IsVisible="{Binding !IsConfigured}"
-                                Background="{DynamicResource SemiColorWarningLight}"
-                                CornerRadius="8"
-                                Padding="10"
+                                Background="{DynamicResource LinearBgSecondaryBrush}"
+                                CornerRadius="0"
+                                Padding="16"
                                 Margin="0,0,0,8">
-                            <StackPanel Spacing="8">
+                            <StackPanel Spacing="12">
                                 <TextBlock Text="⚠️ 请先配置 API Key"
+                                          FontFamily="{DynamicResource EditorialSerifFont}"
                                           FontWeight="SemiBold"
-                                          Foreground="{DynamicResource SemiColorWarning}"/>
-                                <Button Classes="Secondary"
-                                        HorizontalAlignment="Left"
-                                        Command="{Binding OpenSettingsCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="6">
-                                        <TextBlock Text="⚙️"/>
-                                        <TextBlock Text="打开设置"/>
-                                    </StackPanel>
+                                          FontSize="16"
+                                          Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
+                                <Button Command="{Binding OpenSettingsCommand}"
+                                        Background="Transparent"
+                                        BorderBrush="{DynamicResource LinearFgPrimaryBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="0"
+                                        Padding="12,8">
+                                    <TextBlock Text="打开设置" FontFamily="{DynamicResource EditorialSerifFont}"/>
                                 </Button>
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="快捷操作"
-                                  Classes="Tertiary"
-                                  FontSize="12"
-                                  Margin="4,0,0,4"
+                        <TextBlock Text="QUICK ACTIONS"
+                                  FontSize="11"
+                                  FontWeight="Bold"
+                                  LetterSpacing="1.5"
+                                  Margin="4,0,0,0"
+                                  Foreground="{DynamicResource LinearFgTertiaryBrush}"
                                   IsVisible="{Binding IsConfigured}"/>
-                        <WrapPanel IsVisible="{Binding IsConfigured}">
-                            <Button Classes="Secondary"
-                                    Margin="0,0,8,8"
-                                    Command="{Binding DailySummaryCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="📊"/>
-                                    <TextBlock Text="今日总结"/>
-                                </StackPanel>
+                        <Grid ColumnDefinitions="*,8,*,8,*" IsVisible="{Binding IsConfigured}">
+                            <Button Grid.Column="0"
+                                    Command="{Binding DailySummaryCommand}"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource LinearFgPrimaryBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="0"
+                                    Padding="8"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center">
+                                <TextBlock Text="今日总结" FontSize="13" FontFamily="{DynamicResource EditorialSerifFont}" Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
                             </Button>
-                            <Button Classes="Secondary"
-                                    Margin="0,0,8,8"
-                                    Command="{Binding QuickAdviceCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="💡"/>
-                                    <TextBlock Text="给我建议"/>
-                                </StackPanel>
+                            <Button Grid.Column="2"
+                                    Command="{Binding QuickAdviceCommand}"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource LinearFgPrimaryBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="0"
+                                    Padding="8"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center">
+                                <TextBlock Text="给我建议" FontSize="13" FontFamily="{DynamicResource EditorialSerifFont}" Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
                             </Button>
-                            <Button Classes="Secondary"
-                                    Margin="0,0,8,8"
-                                    Command="{Binding TomorrowPlanCommand}">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <TextBlock Text="🎯"/>
-                                    <TextBlock Text="规划明天"/>
-                                </StackPanel>
+                            <Button Grid.Column="4"
+                                    Command="{Binding TomorrowPlanCommand}"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource LinearFgPrimaryBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="0"
+                                    Padding="8"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center">
+                                <TextBlock Text="规划明天" FontSize="13" FontFamily="{DynamicResource EditorialSerifFont}" Foreground="{DynamicResource LinearFgPrimaryBrush}"/>
                             </Button>
-                        </WrapPanel>
+                        </Grid>
                     </StackPanel>
                 </Border>
 

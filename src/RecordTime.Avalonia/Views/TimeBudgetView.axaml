@@ -19,13 +19,16 @@
                        IsVisible="{Binding !IsEditing}">
                 <!-- Page Title -->
                 <TextBlock Text="{Binding TimeBudgetTitle, Source={x:Static strings:StringResources.Current}}"
-                          Classes="H3"
-                          Theme="{DynamicResource TitleTextBlock}"
+                          FontSize="32" 
+                          FontFamily="{DynamicResource EditorialSerifFont}"
+                          FontWeight="SemiBold"
+                          Foreground="{DynamicResource LinearFgPrimaryBrush}"
                           Margin="0,0,0,8"/>
 
-                <!-- Status Bar -->
-                <Border Padding="16"
-                       Theme="{DynamicResource SemiBorderCard}">
+                <!-- Status Bar - Editorial Style -->
+                <Border BorderBrush="{DynamicResource LinearBorderFocusBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="0,0,0,24">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0"
                                   Text="{Binding StatusMessage}"
