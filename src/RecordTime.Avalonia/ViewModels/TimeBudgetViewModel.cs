@@ -403,12 +403,13 @@ public partial class TimeBudgetViewModel : ViewModelBase
     private int _editReminderThreshold = 80;
 
     private readonly GoalSuggestionEngine _suggestionEngine = new();
-    private readonly BudgetTrackingService _trackingService = BudgetTrackingService.Instance;
+    private readonly BudgetTrackingService _trackingService;
 
     private CancellationTokenSource? _loadCancellationTokenSource;
 
-    public TimeBudgetViewModel()
+    public TimeBudgetViewModel(BudgetTrackingService budgetTrackingService)
     {
+        _trackingService = budgetTrackingService;
         _trackingService.ProgressUpdated += OnProgressUpdated;
     }
 

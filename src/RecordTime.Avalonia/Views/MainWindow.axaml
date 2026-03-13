@@ -164,8 +164,8 @@
                                 <CrossFade Duration="0:0:0.2" />
                             </TransitioningContentControl.PageTransition>
                             <TransitioningContentControl.DataTemplates>
-                                <!-- MainWindowViewModel -> DashboardView -->
-                                <DataTemplate DataType="vm:MainWindowViewModel">
+                                <!-- DashboardViewModel -> DashboardView -->
+                                <DataTemplate DataType="vm:DashboardViewModel">
                                     <local:DashboardView/>
                                 </DataTemplate>
                                 <!-- AppStatsViewModel -> AppStatsView -->

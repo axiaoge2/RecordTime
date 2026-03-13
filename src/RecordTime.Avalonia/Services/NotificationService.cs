@@ -11,9 +11,6 @@ namespace RecordTime.Avalonia.Services;
 /// </summary>
 public class NotificationService : IDisposable
 {
-    private static NotificationService? _instance;
-    public static NotificationService Instance => _instance ??= new NotificationService();
-
     private BudgetTrackingService? _trackingService;
     private DailySummaryService? _summaryService;
 

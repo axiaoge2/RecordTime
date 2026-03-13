@@ -36,14 +36,11 @@ public class AppDataSnapshot
 /// </summary>
 public class AppDataService
 {
-    private static AppDataService? _instance;
-    public static AppDataService Instance => _instance ??= new AppDataService();
-
     private readonly SemaphoreSlim _loadLock = new(1, 1);
     private readonly Dictionary<string, AppDataSnapshot> _snapshotCache = new();
     private const int MaxCacheSize = 7;
 
-    private AppDataService() { }
+    public AppDataService() { }
 
     public async Task<AppDataSnapshot> GetSnapshotAsync(DateTime startDate, DateTime? endDate = null, bool forceRefresh = false)
     {

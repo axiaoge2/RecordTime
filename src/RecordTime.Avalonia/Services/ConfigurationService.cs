@@ -11,36 +11,15 @@ namespace RecordTime.Avalonia.Services;
 /// </summary>
 public class ConfigurationService : IConfigurationService
 {
-    private static ConfigurationService? _instance;
-    private static readonly object _lock = new();
-
     private IConfiguration _configuration;
     private AppConfiguration _currentConfig;
 
     public AppConfiguration Current => _currentConfig;
 
-    private ConfigurationService()
+    public ConfigurationService()
     {
         _configuration = BuildConfiguration();
         _currentConfig = LoadConfiguration();
-    }
-
-    public static ConfigurationService Instance
-    {
-        get
-        {
-            if (_instance == null)
-            {
-                lock (_lock)
-                {
-                    if (_instance == null)
-                    {
-                        _instance = new ConfigurationService();
-                    }
-                }
-            }
-            return _instance;
-        }
     }
 
     public void Reload()

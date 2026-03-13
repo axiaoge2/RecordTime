@@ -92,9 +92,6 @@ public class BudgetProgressItem
 /// </summary>
 public class BudgetTrackingService : IDisposable
 {
-    private static BudgetTrackingService? _instance;
-    public static BudgetTrackingService Instance => _instance ??= new BudgetTrackingService();
-
     private System.Threading.Timer? _updateTimer;
     private readonly SemaphoreSlim _updateLock = new(1, 1);
 

@@ -51,16 +51,15 @@ public partial class AppStatsViewModel : ViewModelBase
     // 分类列表
     public BulkObservableCollection<string> Categories { get; } = new();
 
-    // 图标提取服务
     private readonly IIconExtractor _iconExtractor = new IconExtractor();
+    private readonly AppDataService _appDataService;
 
     private CancellationTokenSource? _loadCancellationTokenSource;
     private CancellationTokenSource? _iconLoadCancellationTokenSource;
 
-    public AppStatsViewModel()
+    public AppStatsViewModel(AppDataService appDataService)
     {
-        // 不在构造函数中加载数据，避免时序问题
-        // 数据加载由 OnNavigatedTo() 触发
+        _appDataService = appDataService;
     }
 
     /// <summary>
@@ -167,9 +166,7 @@ public partial class AppStatsViewModel : ViewModelBase
 
         try
         {
-            // 使用共享的 AppDataService 获取快照
-            var appDataService = AppDataService.Instance;
-            var snapshot = await appDataService.GetSnapshotAsync(StartDate, EndDate).ConfigureAwait(false);
+            var snapshot = await _appDataService.GetSnapshotAsync(StartDate, EndDate).ConfigureAwait(false);
 
             if (loadToken.IsCancellationRequested)
             {
