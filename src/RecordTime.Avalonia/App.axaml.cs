@@ -229,11 +229,11 @@ public partial class App : Application
 
             menu.Add(new NativeMenuItemSeparator());
 
-            var startMonitoringItem = new NativeMenuItem("启动监控");
+            var startMonitoringItem = new NativeMenuItem("开始专注");
             startMonitoringItem.Click += async (s, e) => await trayService.StartMonitoringCommand.ExecuteAsync(null);
             menu.Add(startMonitoringItem);
 
-            var stopMonitoringItem = new NativeMenuItem("停止监控");
+            var stopMonitoringItem = new NativeMenuItem("停止专注");
             stopMonitoringItem.Click += async (s, e) => await trayService.StopMonitoringCommand.ExecuteAsync(null);
             menu.Add(stopMonitoringItem);
 
@@ -282,8 +282,8 @@ public partial class App : Application
             }
 
             _trayIcon.ToolTipText = isMonitoring
-                ? "RecordTime - 监控中 ⏱️"
-                : "RecordTime - 未监控 ⏸️";
+                ? "RecordTime - 专注中 ⏱️"
+                : "RecordTime - 未开始 ⏸️";
         }
         catch (Exception ex)
         {

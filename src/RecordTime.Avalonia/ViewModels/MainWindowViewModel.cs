@@ -280,13 +280,13 @@ public partial class MainWindowViewModel : ViewModelBase
             StartButtonText = StringResources.Current.StopMonitoring;
             DashboardVM.StartButtonText = StartButtonText;
 
-            Log.Information("监控已成功启动");
+            Log.Information("专注已成功启动");
 
             await DashboardVM.LoadDataForDateAsync(DashboardVM.SelectedDate);
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "启动监控失败");
+            Log.Error(ex, "启动专注失败");
             MonitoringStatusText = StringResources.Current.StartMonitoringFailed;
             GlobalExceptionHandler.Instance.HandleException(
                 MonitoringException.StartupFailed("SessionManager", ex));

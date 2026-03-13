@@ -34,21 +34,21 @@ public class ChineseStrings : IStringProvider
     public string UpdatedAt => "更新于";
     public string SessionCount => "会话数量";
     public string AppTypeDistribution => "📱 应用类型分布";
-    public string MonitoringStatus => "监控状态";
-    public string MonitoringRunning => "监控运行中";
-    public string MonitoringStopped => "监控未启动";
-    public string StartMonitoring => "启动监控";
-    public string StopMonitoring => "停止监控";
+    public string MonitoringStatus => "专注状态";
+    public string MonitoringRunning => "专注进行中";
+    public string MonitoringStopped => "专注未开始";
+    public string StartMonitoring => "开始专注";
+    public string StopMonitoring => "停止专注";
     public string TopAppsTitle => "TOP 10 应用";
     public string CurrentDisplaying => "当前显示: {0} 个";
 
     // Empty state
     public string EmptyStateTitle => "开始追踪您的时间";
-    public string EmptyStateDescription => "点击下方的\"启动监控\"按钮,RecordTime 将开始自动记录您的应用使用情况。";
+    public string EmptyStateDescription => "点击下方的\"开始专注\"按钮,RecordTime 将开始自动记录您的应用使用情况。";
     public string EmptyStateFeature1 => "自动追踪应用使用时长";
     public string EmptyStateFeature2 => "智能识别活动类型(视频、游戏等)";
     public string EmptyStateFeature3 => "数据本地存储,保护您的隐私";
-    public string EmptyStateHint => "💡 提示:监控在后台运行,不会影响您的正常使用";
+    public string EmptyStateHint => "💡 提示:专注模式在后台运行,不会影响您的正常使用";
 
     // ============================================
     // AppStats strings
@@ -155,7 +155,7 @@ public class ChineseStrings : IStringProvider
     // Settings page (existing)
     // ============================================
     public string GeneralSettings => "常规设置";
-    public string MonitoringSettings => "监控行为";
+    public string MonitoringSettings => "专注行为";
     public string PrivacySettings => "隐私与安全";
     public string DataManagement => "数据管理";
     public string AdvancedSettings => "高级设置";
@@ -181,8 +181,8 @@ public class ChineseStrings : IStringProvider
     public string IdleTimeoutDesc => "无操作多久后视为空闲(分钟)";
     public string RecordWindowTitles => "记录窗口标题";
     public string RecordWindowTitlesDesc => "记录应用窗口标题(已加密哈希)";
-    public string ExcludedApps => "排除监控的应用";
-    public string ExcludedAppsDesc => "这些应用将不会被监控和记录";
+    public string ExcludedApps => "排除记录的应用";
+    public string ExcludedAppsDesc => "这些应用将不会被记录";
 
     public string DatabasePath => "数据库路径";
     public string DatabaseSize => "数据库大小";
@@ -197,7 +197,7 @@ public class ChineseStrings : IStringProvider
 
     // Settings About section
     public string SettingsDescription => "RecordTime 是一款 Windows 桌面时间追踪工具";
-    public string SettingsFeatures => "功能:实时监控、数据统计、HTML 报告、AI 分析";
+    public string SettingsFeatures => "功能:专注记录、数据统计、HTML 报告、AI 分析";
     public string SettingsCopyright => "© 2025 RecordTime. All rights reserved.";
     public string LogsDescription => "日志文件可用于故障排除和诊断";
     public string TotalRecordsFormat => "共 {0} 条记录";
@@ -218,7 +218,7 @@ public class ChineseStrings : IStringProvider
     public string SecurityFeature4 => "🛡️ 自动修复机制 - 启动时检测并修复异常会话,确保数据完整性";
 
     // UX Features
-    public string UXFeature1 => "🚀 轻量级运行 - 低资源占用,后台静默监控不影响正常使用";
+    public string UXFeature1 => "🚀 轻量级运行 - 低资源占用,后台静默记录不影响正常使用";
     public string UXFeature2 => "🎨 现代化界面 - Apple 风格设计,简洁美观的用户界面";
     public string UXFeature3 => "⚡ 高性能优化 - 500ms 窗口轮询,准确捕捉应用切换";
     public string UXFeature4 => "🔧 灵活配置 - 支持多 AI 配置、自定义命名、状态持久化";
@@ -232,10 +232,10 @@ public class ChineseStrings : IStringProvider
     // ============================================
     // Main Window / Dashboard
     // ============================================
-    public string MonitoringNotStarted => "监控未启动";
+    public string MonitoringNotStarted => "专注未开始";
     public string ShowHistoricalData => "显示历史数据";
     public string RealTimeData => "实时数据";
-    public string StartMonitoringFailed => "启动监控失败";
+    public string StartMonitoringFailed => "开始专注失败";
     public string NoData => "暂无数据";
     public string DateFormatPattern => "yyyy年MM月dd日";
     public string UsageCountSuffix => " 次";

@@ -12,10 +12,10 @@
         Icon="/Assets/Icons/AppIcon.ico"
         Title="{Binding AppTitle, Source={x:Static strings:StringResources.Current}}"
         WindowStartupLocation="CenterScreen"
-        Width="1280"
-        Height="800"
-        MinWidth="1100"
-        MinHeight="650"
+        Width="1050"
+        Height="700"
+        MinWidth="900"
+        MinHeight="580"
         Background="{DynamicResource LinearBgPrimaryBrush}">
 
     <Design.DataContext>

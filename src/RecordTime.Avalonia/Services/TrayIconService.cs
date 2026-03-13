@@ -95,7 +95,7 @@ public partial class TrayIconService : ObservableObject
         if (_mainViewModel == null) return;
 
         await _mainViewModel.ToggleMonitoringCommand.ExecuteAsync(null);
-        Log.Information("从托盘菜单启动监控");
+        Log.Information("从托盘菜单启动专注");
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ public partial class TrayIconService : ObservableObject
         if (_mainViewModel == null) return;
 
         await _mainViewModel.ToggleMonitoringCommand.ExecuteAsync(null);
-        Log.Information("从托盘菜单停止监控");
+        Log.Information("从托盘菜单停止专注");
     }
 
     /// <summary>
