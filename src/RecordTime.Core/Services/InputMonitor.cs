@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using Serilog;
@@ -8,13 +9,13 @@ namespace RecordTime.Core.Services;
 /// Windows输入监控实现 (性能优化版)
 /// 性能优化: 使用滑动窗口计数器代替队列全遍历，大幅提升查询性能
 /// </summary>
-public class InputMonitor : IInputMonitor
+public class InputMonitor : IInputMonitor, IDisposable
 {
     private readonly object _lock = new();
-    private readonly Queue<DateTime> _keyboardEvents = new();
-    private readonly Queue<DateTime> _mouseClickEvents = new();
-    private readonly Queue<(DateTime Time, int Distance)> _mouseMovements = new();
-    private readonly Queue<DateTime> _scrollEvents = new(); // 滚轮事件队列
+    private readonly ConcurrentQueue<DateTime> _keyboardEvents = new();
+    private readonly ConcurrentQueue<DateTime> _mouseClickEvents = new();
+    private readonly ConcurrentQueue<(DateTime Time, int Distance)> _mouseMovements = new();
+    private readonly ConcurrentQueue<DateTime> _scrollEvents = new();
 
     // 性能优化: 使用计数器避免频繁遍历
     private int _keyboardCount = 0;
@@ -71,7 +72,7 @@ public class InputMonitor : IInputMonitor
     private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
     [DllImport("kernel32.dll")]
-    private static extern uint GetTickCount();
+    private static extern ulong GetTickCount64();
 
     [StructLayout(LayoutKind.Sequential)]
     private struct LASTINPUTINFO
@@ -169,9 +170,9 @@ public class InputMonitor : IInputMonitor
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddMinutes(-5);
-            while (_keyboardEvents.Count > 0 && _keyboardEvents.Peek() < cutoff)
+            while (_keyboardEvents.TryPeek(out var time) && time < cutoff)
             {
-                _keyboardEvents.Dequeue();
+                _keyboardEvents.TryDequeue(out _);
                 System.Threading.Interlocked.Decrement(ref _keyboardCount);
             }
         }
@@ -252,9 +253,9 @@ public class InputMonitor : IInputMonitor
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddMinutes(-5);
-            while (_mouseClickEvents.Count > 0 && _mouseClickEvents.Peek() < cutoff)
+            while (_mouseClickEvents.TryPeek(out var time) && time < cutoff)
             {
-                _mouseClickEvents.Dequeue();
+                _mouseClickEvents.TryDequeue(out _);
                 System.Threading.Interlocked.Decrement(ref _mouseClickCount);
             }
         }
@@ -265,9 +266,9 @@ public class InputMonitor : IInputMonitor
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddMinutes(-5);
-            while (_mouseMovements.Count > 0 && _mouseMovements.Peek().Time < cutoff)
+            while (_mouseMovements.TryPeek(out var item) && item.Time < cutoff)
             {
-                _mouseMovements.Dequeue();
+                _mouseMovements.TryDequeue(out _);
             }
         }
     }
@@ -277,9 +278,9 @@ public class InputMonitor : IInputMonitor
         lock (_lock)
         {
             var cutoff = DateTime.Now.AddMinutes(-5);
-            while (_scrollEvents.Count > 0 && _scrollEvents.Peek() < cutoff)
+            while (_scrollEvents.TryPeek(out var time) && time < cutoff)
             {
-                _scrollEvents.Dequeue();
+                _scrollEvents.TryDequeue(out _);
                 System.Threading.Interlocked.Decrement(ref _scrollCount);
             }
         }
@@ -401,7 +402,7 @@ public class InputMonitor : IInputMonitor
 
         if (GetLastInputInfo(ref lastInputInfo))
         {
-            var idleTime = GetTickCount() - lastInputInfo.dwTime;
+            var idleTime = GetTickCount64() - lastInputInfo.dwTime;
             return (int)(idleTime / 1000);
         }
 
@@ -448,12 +449,21 @@ public class InputMonitor : IInputMonitor
     /// </summary>
     private void TriggerUserActivityEvent(DateTime now)
     {
-        // 节流：5秒内只触发一次
         if ((now - _lastActivityEventTime).TotalSeconds > _activityEventThrottleSeconds)
         {
             _lastActivityEventTime = now;
-            UserActivityDetected?.Invoke(this, EventArgs.Empty);
+            ThreadPool.QueueUserWorkItem(_ => UserActivityDetected?.Invoke(this, EventArgs.Empty));
         }
+    }
+
+    private bool _disposed = false;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        Stop();
+        GC.SuppressFinalize(this);
     }
 
     ~InputMonitor()

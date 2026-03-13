@@ -93,10 +93,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private string _selectedDateText = DateTime.Today.ToString(StringResources.Current.DateFormatPattern);
 
     // 分类统计
-    public ObservableCollection<CategoryStatItem> CategoryStats { get; } = new();
+    public BulkObservableCollection<CategoryStatItem> CategoryStats { get; } = new();
 
     // TOP 应用
-    public ObservableCollection<TopAppItem> TopApps { get; } = new();
+    public BulkObservableCollection<TopAppItem> TopApps { get; } = new();
 
     // 饼图数据 - TOP 5 应用使用时长
     [ObservableProperty]
@@ -155,7 +155,7 @@ public partial class MainWindowViewModel : ViewModelBase
     /// <summary>
     /// 预算进度列表
     /// </summary>
-    public ObservableCollection<BudgetProgressDisplayItem> BudgetProgressItems { get; } = new();
+    public BulkObservableCollection<BudgetProgressDisplayItem> BudgetProgressItems { get; } = new();
 
     /// <summary>
     /// 总预算数量
@@ -529,31 +529,31 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private System.Threading.Timer? _sessionEventDebounceTimer;
+
     private void OnSessionStarted(object? sender, AppSession session)
     {
         Log.Debug("会话开始: {DisplayName} (ProcessName: {ProcessName})", session.DisplayName, session.ProcessName);
-
-        // 会话开始时刷新数据（只在查看今日数据时）
-        if (SelectedDate.Date == DateTime.Today)
-        {
-            Log.Debug("触发数据刷新...");
-            _ = LoadDataForDateAsync(SelectedDate);
-        }
+        ScheduleDebouncedRefresh();
     }
 
     private void OnSessionEnded(object? sender, AppSession session)
     {
         Log.Debug("会话结束: {DisplayName} (ID: {SessionId}, Duration: {DurationSeconds}s)", session.DisplayName, session.Id, session.DurationSeconds);
-
-        // 会话结束时立即触发预算进度更新（实时同步）
         BudgetTrackingService.Instance.TriggerImmediateUpdate();
+        ScheduleDebouncedRefresh();
+    }
 
-        // 会话结束时刷新数据（只在查看今日数据时）
-        if (SelectedDate.Date == DateTime.Today)
-        {
-            Log.Debug("触发数据刷新...");
-            _ = LoadDataForDateAsync(SelectedDate);
-        }
+    private void ScheduleDebouncedRefresh()
+    {
+        if (SelectedDate.Date != DateTime.Today) return;
+
+        _sessionEventDebounceTimer?.Dispose();
+        _sessionEventDebounceTimer = new System.Threading.Timer(
+            _ => _ = LoadDataForDateAsync(SelectedDate),
+            null,
+            dueTime: 500,
+            period: Timeout.Infinite);
     }
 
     private async Task InitializeDatabaseAsync()
@@ -911,17 +911,134 @@ public partial class MainWindowViewModel : ViewModelBase
                 .Take(5)
                 .ToList();
 
+            // 在后台线程预计算所有数据和图表 Series
+            var top10Apps = snapshot.AllApps.Take(10).ToList();
+            var top5Apps = snapshot.AllApps.Take(5).ToList();
             var iconRequests = new List<(TopAppItem Item, string ProcessName, string Category)>();
 
-            // 在 UI 线程上更新所有集合
+            var topAppItems = new List<TopAppItem>();
+            for (int i = 0; i < top10Apps.Count; i++)
+            {
+                var app = top10Apps[i];
+                var item = new TopAppItem
+                {
+                    Rank = i + 1,
+                    AppName = app.AppName,
+                    Duration = app.TotalDuration,
+                    SessionCount = app.SessionCount,
+                    Percentage = app.TotalPercentage
+                };
+                topAppItems.Add(item);
+                iconRequests.Add((item, app.ProcessName, app.Category));
+            }
+
+            var pieColors = new[]
+            {
+                new SKColor(102, 126, 234), new SKColor(118, 75, 162),
+                new SKColor(237, 100, 166), new SKColor(255, 154, 0), new SKColor(52, 199, 89)
+            };
+            var pieChartData = top5Apps.Select((app, index) => new PieSeries<double>
+            {
+                Values = new[] { app.TotalDuration.TotalMinutes },
+                Name = app.AppName,
+                Fill = new SolidColorPaint(pieColors[index % pieColors.Length]),
+                DataLabelsPaint = new SolidColorPaint(new SKColor(29, 29, 31)),
+                DataLabelsSize = 12,
+                DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
+                DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
+            }).Cast<ISeries>().ToArray();
+
+            var categoryColorMap = new Dictionary<string, (SKColor Start, SKColor End)>
+            {
+                { "开发工具", (new SKColor(0x3F, 0xA6, 0xFF), new SKColor(0x1E, 0x74, 0xD8)) },
+                { "办公软件", (new SKColor(0x35, 0xD0, 0xC8), new SKColor(0x1A, 0xA4, 0xA2)) },
+                { "视频娱乐", (new SKColor(0xFF, 0x7E, 0xB3), new SKColor(0xE8, 0x5A, 0x9C)) },
+                { "社交通讯", (new SKColor(0x6A, 0xD1, 0xFF), new SKColor(0x2A, 0x9B, 0xEA)) },
+                { "游戏", (new SKColor(0x7F, 0xD0, 0x6A), new SKColor(0x45, 0xA8, 0x4F)) },
+                { "浏览器", (new SKColor(0x9B, 0x7B, 0xFF), new SKColor(0x6B, 0x53, 0xE5)) },
+                { "系统工具", (new SKColor(0x55, 0xB5, 0xA0), new SKColor(0x2E, 0x8B, 0x79)) },
+                { "其他", (new SKColor(0xA1, 0xB7, 0xFF), new SKColor(0x6C, 0x7F, 0xD9)) },
+            };
+            var defaultColor = (Start: new SKColor(0xA1, 0xB7, 0xFF), End: new SKColor(0x6C, 0x7F, 0xD9));
+
+            ISeries[] barChartData;
+            Axis[] barXAxes;
+            if (categoryGroups.Count > 0)
+            {
+                var seriesList = new List<ISeries>();
+                var categoryNames = new List<string>();
+                foreach (var category in categoryGroups)
+                {
+                    var cc = categoryColorMap.GetValueOrDefault(category.Category, defaultColor);
+                    categoryNames.Add(category.Category);
+                    seriesList.Add(new ColumnSeries<double>
+                    {
+                        Values = new[] { category.Duration.TotalMinutes },
+                        Name = category.Category,
+                        Fill = new LinearGradientPaint(new[] { cc.Start, cc.End }, new SKPoint(0, 0), new SKPoint(0, 1)),
+                        DataLabelsPaint = new SolidColorPaint(new SKColor(29, 29, 31)),
+                        DataLabelsSize = 11,
+                        DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.End,
+                        DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
+                    });
+                }
+                barChartData = seriesList.ToArray();
+                barXAxes = new Axis[]
+                {
+                    new Axis
+                    {
+                        Labels = categoryNames.ToArray(), LabelsRotation = 15,
+                        LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234))
+                    }
+                };
+            }
+            else
+            {
+                barChartData = Array.Empty<ISeries>();
+                barXAxes = Array.Empty<Axis>();
+            }
+
+            var appTypeGroups = snapshot.AllApps
+                .GroupBy(a => a.Category)
+                .Select(g => new { Category = g.Key, TotalMinutes = g.Sum(a => a.TotalDuration.TotalMinutes) })
+                .OrderByDescending(x => x.TotalMinutes).Take(5).ToList();
+
+            ISeries[] donutData;
+            string topCatName;
+            string topCatDuration;
+            if (appTypeGroups.Count > 0)
+            {
+                var donutColors = new[]
+                {
+                    new SKColor(102, 126, 234), new SKColor(237, 100, 166),
+                    new SKColor(255, 154, 0), new SKColor(52, 199, 89), new SKColor(118, 75, 162)
+                };
+                donutData = appTypeGroups.Select((group, index) => new PieSeries<double>
+                {
+                    Values = new[] { group.TotalMinutes }, Name = group.Category,
+                    Fill = new SolidColorPaint(donutColors[index % donutColors.Length]),
+                    InnerRadius = 80, HoverPushout = 8
+                }).Cast<ISeries>().ToArray();
+
+                var topCat = appTypeGroups.First();
+                topCatName = topCat.Category;
+                var h = (int)(topCat.TotalMinutes / 60);
+                var m = (int)(topCat.TotalMinutes % 60);
+                topCatDuration = h > 0 ? $"{h}h {m}m" : $"{m}m";
+            }
+            else
+            {
+                donutData = Array.Empty<ISeries>();
+                topCatName = StringResources.Current.NoData;
+                topCatDuration = "--";
+            }
+
+            if (loadToken.IsCancellationRequested) return;
+
+            // UI 线程只做赋值
             await global::Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
-                // 更新分类统计
-                if (loadToken.IsCancellationRequested)
-                {
-                    return;
-                }
-
                 DataUpdateTime = dataUpdateTimeText;
                 ShowEmptyState = false;
                 TotalDuration = totalDurationText;
@@ -929,190 +1046,22 @@ public partial class MainWindowViewModel : ViewModelBase
                 AppTypeCount = appTypeCount;
                 ActivityTypeCount = activityTypeCount;
 
-                CategoryStats.Clear();
-                foreach (var item in categoryGroups)
-                {
-                    CategoryStats.Add(item);
-                }
+                CategoryStats.ReplaceWith(categoryGroups);
+                TopApps.ReplaceWith(topAppItems);
 
-                // 更新 TOP 10 应用 - 直接使用 AllApps 取前10个(与应用统计页面保持一致)
-                TopApps.Clear();
-                var top10Apps = snapshot.AllApps.Take(10).ToList();
+                PieChartSeries = pieChartData;
+                BarChartSeries = barChartData;
+                BarChartXAxes = barXAxes;
+                AppTypePieChartSeries = donutData;
+                TopCategoryName = topCatName;
+                TopCategoryDuration = topCatDuration;
+            }, global::Avalonia.Threading.DispatcherPriority.Background);
 
-                Log.Debug("MainWindow: 开始更新 TOP 10");
-                Log.Verbose("AllApps.Count = {AllAppsCount}, top10Apps.Count = {Top10Count}", snapshot.AllApps.Count, top10Apps.Count);
-
-                for (int i = 0; i < top10Apps.Count; i++)
-                {
-                    var app = top10Apps[i];
-
-                    // 提取应用图标
-                    var icon = _iconExtractor.ExtractIcon(string.Empty, app.Category);
-
-                    var item = new TopAppItem
-                    {
-                        Rank = i + 1,
-                        AppName = app.AppName,
-                        Duration = app.TotalDuration,
-                        SessionCount = app.SessionCount,
-                        Icon = icon,
-                        Percentage = app.TotalPercentage
-                    };
-                    TopApps.Add(item);
-                    iconRequests.Add((item, app.ProcessName, app.Category));
-                    Log.Verbose("添加 #{Rank}: {AppName} - {DurationSeconds}s (图标: {HasIcon})", item.Rank, item.AppName, item.Duration.TotalSeconds, icon != null ? "✓" : "✗");
-                }
-                Log.Debug("MainWindow: UI 更新完成，TopApps.Count = {TopAppsCount}", TopApps.Count);
-
-                // 更新饼图数据 - TOP 5 应用
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await LoadTopAppIconsAsync(iconRequests, iconToken).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                    }
-                }, iconToken);
-
-                var top5Apps = snapshot.AllApps.Take(5).ToList();
-                var colors = new[]
-                {
-                    new SKColor(102, 126, 234),   // #667eea - 主色调
-                    new SKColor(118, 75, 162),    // #764ba2 - 次色调
-                    new SKColor(237, 100, 166),   // 粉色
-                    new SKColor(255, 154, 0),     // 橙色
-                    new SKColor(52, 199, 89)      // 绿色
-                };
-
-                PieChartSeries = top5Apps.Select((app, index) => new PieSeries<double>
-                {
-                    Values = new[] { app.TotalDuration.TotalMinutes },
-                    Name = app.AppName,
-                    Fill = new SolidColorPaint(colors[index % colors.Length])
-                    {
-                        Color = colors[index % colors.Length]
-                    },
-                    DataLabelsPaint = new SolidColorPaint(new SKColor(29, 29, 31)),
-                    DataLabelsSize = 12,
-                    DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
-                    DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
-                }).Cast<ISeries>().ToArray();
-
-                // 更新条形图数据 - 分类统计（每个分类使用独立的渐变色）
-                if (categoryGroups.Count > 0)
-                {
-                    // 分类专属颜色映射 - 冷色调活泼配色方案
-                    var categoryColorMap = new Dictionary<string, (SKColor Start, SKColor End)>
-                    {
-                        { "开发工具", (new SKColor(0x3F, 0xA6, 0xFF), new SKColor(0x1E, 0x74, 0xD8)) }, // 亮蓝
-                        { "办公软件", (new SKColor(0x35, 0xD0, 0xC8), new SKColor(0x1A, 0xA4, 0xA2)) }, // 薄荷青
-                        { "视频娱乐", (new SKColor(0xFF, 0x7E, 0xB3), new SKColor(0xE8, 0x5A, 0x9C)) }, // 冷玫粉
-                        { "社交通讯", (new SKColor(0x6A, 0xD1, 0xFF), new SKColor(0x2A, 0x9B, 0xEA)) }, // 天蓝
-                        { "游戏", (new SKColor(0x7F, 0xD0, 0x6A), new SKColor(0x45, 0xA8, 0x4F)) },     // 活力青绿
-                        { "浏览器", (new SKColor(0x9B, 0x7B, 0xFF), new SKColor(0x6B, 0x53, 0xE5)) },   // 明亮蓝紫
-                        { "系统工具", (new SKColor(0x55, 0xB5, 0xA0), new SKColor(0x2E, 0x8B, 0x79)) }, // 青绿
-                        { "其他", (new SKColor(0xA1, 0xB7, 0xFF), new SKColor(0x6C, 0x7F, 0xD9)) },     // 灰蓝紫
-                    };
-
-                    // 默认颜色（用于未匹配的分类）
-                    var defaultColor = (Start: new SKColor(0xA1, 0xB7, 0xFF), End: new SKColor(0x6C, 0x7F, 0xD9));
-
-                    // 为每个分类创建独立的柱子系列
-                    var seriesList = new List<ISeries>();
-                    var categoryNames = new List<string>();
-
-                    foreach (var category in categoryGroups)
-                    {
-                        var categoryColors = categoryColorMap.GetValueOrDefault(category.Category, defaultColor);
-                        categoryNames.Add(category.Category);
-
-                        seriesList.Add(new ColumnSeries<double>
-                        {
-                            Values = new[] { category.Duration.TotalMinutes },
-                            Name = category.Category,
-                            Fill = new LinearGradientPaint(
-                                new[] { categoryColors.Start, categoryColors.End },
-                                new SKPoint(0, 0),
-                                new SKPoint(0, 1)
-                            ),
-                            DataLabelsPaint = new SolidColorPaint(new SKColor(29, 29, 31)),
-                            DataLabelsSize = 11,
-                            DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.End,
-                            DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
-                        });
-                    }
-
-                    BarChartSeries = seriesList.ToArray();
-
-                    BarChartXAxes = new Axis[]
-                    {
-                        new Axis
-                        {
-                            Labels = categoryNames.ToArray(),
-                            LabelsRotation = 15,
-                            LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
-                            SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234))
-                        }
-                    };
-                }
-                else
-                {
-                    BarChartSeries = Array.Empty<ISeries>();
-                    BarChartXAxes = Array.Empty<Axis>();
-                }
-
-                // 更新应用类型圆环图数据 - TOP 5 应用分类
-                var appTypeGroups = snapshot.AllApps
-                    .GroupBy(a => a.Category)
-                    .Select(g => new
-                    {
-                        Category = g.Key,
-                        TotalMinutes = g.Sum(a => a.TotalDuration.TotalMinutes)
-                    })
-                    .OrderByDescending(x => x.TotalMinutes)
-                    .Take(5)
-                    .ToList();
-
-                if (appTypeGroups.Count > 0)
-                {
-                    // 使用更大更鲜艳的颜色配置（适合大型圆环图）
-                    var donutColors = new[]
-                    {
-                        new SKColor(102, 126, 234),   // #667eea - 主色调
-                        new SKColor(237, 100, 166),   // #ed64a6 - 粉色
-                        new SKColor(255, 154, 0),     // #ff9a00 - 橙色
-                        new SKColor(52, 199, 89),     // #34c759 - 绿色
-                        new SKColor(118, 75, 162)     // #764ba2 - 紫色
-                    };
-
-                    AppTypePieChartSeries = appTypeGroups.Select((group, index) => new PieSeries<double>
-                    {
-                        Values = new[] { group.TotalMinutes },
-                        Name = group.Category,
-                        Fill = new SolidColorPaint(donutColors[index % donutColors.Length])
-                        {
-                            Color = donutColors[index % donutColors.Length]
-                        },
-                        InnerRadius = 80,  // 设置内半径创建圆环效果
-                        HoverPushout = 8  // 悬停时突出距离
-                    }).Cast<ISeries>().ToArray();
-
-                    // 设置圆环图中心显示（最多使用的类型）
-                    var topCategory = appTypeGroups.First();
-                    TopCategoryName = topCategory.Category;
-                    var hours = (int)(topCategory.TotalMinutes / 60);
-                    var minutes = (int)(topCategory.TotalMinutes % 60);
-                    TopCategoryDuration = hours > 0 ? $"{hours}h {minutes}m" : $"{minutes}m";
-                }
-                else
-                {
-                    AppTypePieChartSeries = Array.Empty<ISeries>();
-                    TopCategoryName = StringResources.Current.NoData;
-                    TopCategoryDuration = "--";
-                }
-            });
+            _ = Task.Run(async () =>
+            {
+                try { await LoadTopAppIconsAsync(iconRequests, iconToken).ConfigureAwait(false); }
+                catch (OperationCanceledException) { }
+            }, iconToken);
         }
         catch (Exception ex)
         {
@@ -1174,11 +1123,10 @@ public partial class MainWindowViewModel : ViewModelBase
     /// </summary>
     private void UpdateBudgetProgressUI(List<BudgetProgressItem> progressItems)
     {
-        BudgetProgressItems.Clear();
-
         int completed = 0;
         int overBudget = 0;
 
+        var displayItems = new List<BudgetProgressDisplayItem>(progressItems.Count);
         foreach (var item in progressItems)
         {
             var displayItem = new BudgetProgressDisplayItem
@@ -1194,17 +1142,14 @@ public partial class MainWindowViewModel : ViewModelBase
                 IsOverBudget = item.IsOverBudget,
                 IsGoalMet = item.IsGoalMet
             };
-
-            // 设置进度条颜色
             displayItem.UpdateProgressColor();
+            displayItems.Add(displayItem);
 
-            BudgetProgressItems.Add(displayItem);
-
-            // 统计完成和超标数量
             if (item.IsGoalMet) completed++;
             if (item.IsOverBudget) overBudget++;
         }
 
+        BudgetProgressItems.ReplaceWith(displayItems);
         TotalBudgetCount = progressItems.Count;
         CompletedBudgetCount = completed;
         OverBudgetCount = overBudget;
@@ -1272,6 +1217,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public void Dispose()
     {
         _updateTimer?.Dispose();
+        _sessionEventDebounceTimer?.Dispose();
         _dashboardLoadCancellationTokenSource?.Cancel();
         _dashboardLoadCancellationTokenSource?.Dispose();
         _dashboardLoadCancellationTokenSource = null;
@@ -1280,20 +1226,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _dashboardIconLoadCancellationTokenSource?.Dispose();
         _dashboardIconLoadCancellationTokenSource = null;
 
-        // Phase 4: 取消预算进度更新事件订阅
         BudgetTrackingService.Instance.ProgressUpdated -= OnBudgetProgressUpdated;
-
-        // 停止预算追踪服务和通知服务
         BudgetTrackingService.Instance.Stop();
         NotificationService.Instance.Dispose();
 
-        // ✅ 修复: 先异步停止 SessionManager,确保当前会话被正确结束
-        // 这样可以避免应用退出时会话 EndTime 为 null 导致时长异常的问题
         if (_sessionManager != null)
         {
             try
             {
-                _sessionManager.StopAsync().GetAwaiter().GetResult();
+                Task.Run(() => _sessionManager.StopAsync()).GetAwaiter().GetResult();
             }
             catch (Exception ex)
             {

@@ -81,9 +81,11 @@ public partial class AppStatsViewModel : ViewModelBase
         FilterApps();
     }
 
+    private bool _suppressLoadOnDateChange = false;
+
     partial void OnStartDateChanged(DateTime value)
     {
-        // 当用户通过日期选择器更改日期时，同步更新 EndDate 并重新加载数据
+        if (_suppressLoadOnDateChange) return;
         EndDate = value;
         DateRangeText = value.ToString("yyyy-MM-dd");
         _ = LoadDataAsync();
@@ -92,8 +94,10 @@ public partial class AppStatsViewModel : ViewModelBase
     [RelayCommand]
     private async Task SetTodayAsync()
     {
+        _suppressLoadOnDateChange = true;
         StartDate = DateTime.Today;
         EndDate = DateTime.Today;
+        _suppressLoadOnDateChange = false;
         DateRangeText = "今日";
         await LoadDataAsync();
     }
@@ -101,8 +105,10 @@ public partial class AppStatsViewModel : ViewModelBase
     [RelayCommand]
     private async Task SetYesterdayAsync()
     {
+        _suppressLoadOnDateChange = true;
         StartDate = DateTime.Today.AddDays(-1);
         EndDate = DateTime.Today.AddDays(-1);
+        _suppressLoadOnDateChange = false;
         DateRangeText = "昨日";
         await LoadDataAsync();
     }
@@ -112,13 +118,12 @@ public partial class AppStatsViewModel : ViewModelBase
     {
         var today = DateTime.Today;
         var dayOfWeek = (int)today.DayOfWeek;
-        if (dayOfWeek == 0)
-        {
-            dayOfWeek = 7;
-        }
+        if (dayOfWeek == 0) dayOfWeek = 7;
         var startOfWeek = today.AddDays(-(dayOfWeek - (int)DayOfWeek.Monday));
+        _suppressLoadOnDateChange = true;
         StartDate = startOfWeek;
         EndDate = today;
+        _suppressLoadOnDateChange = false;
         DateRangeText = "本周";
         await LoadDataAsync();
     }
@@ -127,8 +132,10 @@ public partial class AppStatsViewModel : ViewModelBase
     private async Task SetThisMonthAsync()
     {
         var today = DateTime.Today;
+        _suppressLoadOnDateChange = true;
         StartDate = new DateTime(today.Year, today.Month, 1);
         EndDate = today;
+        _suppressLoadOnDateChange = false;
         DateRangeText = "本月";
         await LoadDataAsync();
     }
@@ -207,13 +214,9 @@ public partial class AppStatsViewModel : ViewModelBase
                 TotalAppCount = _allApps.Count;
                 TotalSessions = _allApps.Count;
 
-                Categories.Clear();
-                Categories.Add("全部分类");
-                var categories = _allApps.Select(a => a.Category).Distinct().OrderBy(c => c);
-                foreach (var category in categories)
-                {
-                    Categories.Add(category);
-                }
+                var allCategories = new List<string> { "全部分类" };
+                allCategories.AddRange(_allApps.Select(a => a.Category).Distinct().OrderBy(c => c));
+                Categories.ReplaceWith(allCategories);
 
                 System.Diagnostics.Debug.WriteLine($"=== AppStatsViewModel: 从快照获取了 {_allApps.Count} 个应用 ===");
 

@@ -99,10 +99,19 @@ public class AppDataService
             var rangeStart = startDate.Date;
             var rangeEnd = endDate.Date.AddDays(1); // 包含结束日期当天
 
-            // 获取所有与日期范围有交集的会话(包括跨日会话)
             var sessions = await dbContext.Sessions
-                .AsNoTracking() // 只读查询,不需要跟踪实体变化
+                .AsNoTracking()
                 .Where(s => s.EndTime != null && s.StartTime < rangeEnd && s.EndTime >= rangeStart)
+                .Select(s => new AppSession
+                {
+                    Id = s.Id,
+                    ProcessName = s.ProcessName,
+                    DisplayName = s.DisplayName,
+                    Category = s.Category,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime,
+                    DurationSeconds = s.DurationSeconds
+                })
                 .ToListAsync().ConfigureAwait(false);
 
             if (sessions.Count == 0)

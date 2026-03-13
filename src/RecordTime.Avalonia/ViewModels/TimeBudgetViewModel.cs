@@ -409,9 +409,14 @@ public partial class TimeBudgetViewModel : ViewModelBase
 
     public TimeBudgetViewModel()
     {
-        // 订阅预算进度更新事件
         _trackingService.ProgressUpdated += OnProgressUpdated;
+    }
 
+    public void Dispose()
+    {
+        _trackingService.ProgressUpdated -= OnProgressUpdated;
+        _loadCancellationTokenSource?.Cancel();
+        _loadCancellationTokenSource?.Dispose();
     }
 
     /// <summary>
@@ -625,12 +630,7 @@ public partial class TimeBudgetViewModel : ViewModelBase
             }
             await context.SaveChangesAsync();
 
-            // 刷新 UI
-            Suggestions.Clear();
-            foreach (var suggestion in suggestions)
-            {
-                Suggestions.Add(SuggestionItem.FromModel(suggestion));
-            }
+            Suggestions.ReplaceWith(suggestions.Select(SuggestionItem.FromModel));
 
             HasSuggestions = true;
             StatusMessage = $"已生成 {suggestions.Count} 条建议";

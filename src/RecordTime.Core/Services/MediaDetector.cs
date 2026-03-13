@@ -177,7 +177,7 @@ public class MediaDetector : IMediaDetector
     {
         try
         {
-            var process = Process.GetProcessById(processId);
+            using var process = Process.GetProcessById(processId);
             return _videoPlayerProcesses.Contains(process.ProcessName) ||
                    _browserProcesses.Contains(process.ProcessName);
         }

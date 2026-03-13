@@ -35,8 +35,8 @@ public class HtmlReportGenerator
         var start = startDate.Date;
         var end = endDate.Date.AddDays(1);
 
-        // 查询数据
         var sessions = await _dbContext.Sessions
+            .AsNoTracking()
             .Where(s => s.StartTime >= start && s.StartTime < end)
             .OrderBy(s => s.StartTime)
             .ToListAsync();

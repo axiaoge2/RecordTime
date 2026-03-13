@@ -13,7 +13,7 @@ public class AppNameResolver
     // 缓存已解析的进程名，避免重复文件系统访问
     private static readonly ConcurrentDictionary<string, string> _resolvedCache = new(StringComparer.OrdinalIgnoreCase);
 
-    private static readonly Dictionary<string, string> _knownApps = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly ConcurrentDictionary<string, string> _knownApps = new(StringComparer.OrdinalIgnoreCase)
     {
         // 浏览器
         ["chrome"] = "Google Chrome",
@@ -46,7 +46,6 @@ public class AppNameResolver
         ["QQ"] = "QQ",
         ["DingTalk"] = "钉钉",
         ["Feishu"] = "飞书",
-        ["OUTLOOK"] = "Outlook",
         ["slack"] = "Slack",
         ["discord"] = "Discord",
         ["Telegram"] = "Telegram",
@@ -108,19 +107,18 @@ public class AppNameResolver
         string result = processName;
 
         // 3. 尝试从进程获取产品名称
+        Process[]? processes = null;
         try
         {
-            var processes = Process.GetProcessesByName(processName);
+            processes = Process.GetProcessesByName(processName);
             if (processes.Length > 0)
             {
-                var process = processes[0];
-                var mainModule = process.MainModule;
+                var mainModule = processes[0].MainModule;
 
                 if (mainModule != null && !string.IsNullOrEmpty(mainModule.FileName))
                 {
                     var fileVersionInfo = FileVersionInfo.GetVersionInfo(mainModule.FileName);
 
-                    // 优先使用 ProductName
                     if (!string.IsNullOrEmpty(fileVersionInfo.ProductName))
                     {
                         result = fileVersionInfo.ProductName;
@@ -128,7 +126,6 @@ public class AppNameResolver
                         return result;
                     }
 
-                    // 其次使用 FileDescription
                     if (!string.IsNullOrEmpty(fileVersionInfo.FileDescription))
                     {
                         result = fileVersionInfo.FileDescription;
@@ -140,7 +137,13 @@ public class AppNameResolver
         }
         catch
         {
-            // 无法获取进程信息，继续使用后备方案
+        }
+        finally
+        {
+            if (processes != null)
+            {
+                foreach (var p in processes) p.Dispose();
+            }
         }
 
         // 4. 后备方案：美化进程名

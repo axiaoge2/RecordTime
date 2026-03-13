@@ -21,19 +21,20 @@ public class RecordTimeDbContext : DbContext
         // EnsureCreated() 无法处理 schema 变更,已弃用
     }
 
+    private static readonly string DbPath = InitDbPath();
+
+    private static string InitDbPath()
+    {
+        var path = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "RecordTime", "recordtime.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        return path;
+    }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var dbPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "RecordTime",
-            "recordtime.db"
-        );
-
-        Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-
-        // 使用 WAL 模式提高并发性能，避免数据库锁定问题
-        // Pooling=false 确保连接在 Dispose 时立即关闭，避免资源泄漏
-        optionsBuilder.UseSqlite($"Data Source={dbPath};Mode=ReadWriteCreate;Cache=Shared");
+        optionsBuilder.UseSqlite($"Data Source={DbPath};Mode=ReadWriteCreate;Cache=Shared");
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -18,7 +18,7 @@ public class SessionManager : IDisposable
 
     private int? _currentSessionId;
     private readonly SemaphoreSlim _sessionLock = new(1, 1);
-    private bool _isRunning;
+    private volatile bool _isRunning;
     
     // 性能优化: 复用 SHA256 实例
     private readonly System.Security.Cryptography.SHA256 _sha256 = System.Security.Cryptography.SHA256.Create();
@@ -30,7 +30,7 @@ public class SessionManager : IDisposable
     // 空闲检查机制
     private System.Threading.Timer? _idleCheckTimer;
     private readonly int _idleCheckIntervalSeconds = 120; // 默认 2 分钟检查一次
-    private bool _sessionPausedDueToIdle = false; // 标记会话是否因空闲而暂停
+    private volatile bool _sessionPausedDueToIdle = false;
 
     public event EventHandler<AppSession>? SessionStarted;
     public event EventHandler<AppSession>? SessionEnded;
@@ -329,20 +329,19 @@ public class SessionManager : IDisposable
 
     private async Task UpdateSessionHeartbeatAsync()
     {
-        // 如果没有活动会话，不执行更新
-        if (_currentSessionId == null)
+        var sessionId = _currentSessionId;
+        if (sessionId == null)
             return;
 
         try
         {
             using var repository = _repositoryFactory();
-            await repository.UpdateSessionHeartbeatAsync(_currentSessionId.Value, DateTime.Now);
-            Log.Debug("会话心跳已更新: SessionId={SessionId}", _currentSessionId);
+            await repository.UpdateSessionHeartbeatAsync(sessionId.Value, DateTime.Now);
+            Log.Debug("会话心跳已更新: SessionId={SessionId}", sessionId);
         }
         catch (Exception ex)
         {
-            // 心跳更新失败不应影响主流程
-            Log.Error(ex, "更新会话心跳时发生错误: SessionId={SessionId}", _currentSessionId);
+            Log.Error(ex, "更新会话心跳时发生错误: SessionId={SessionId}", sessionId);
         }
     }
 
@@ -604,26 +603,26 @@ public class SessionManager : IDisposable
 
         if (disposing)
         {
-            // 同步清理
             _isRunning = false;
 
-            // Phase 1 Task 1.2: 停止心跳定时器
             StopHeartbeatTimer();
+            StopIdleCheckTimer();
 
-            // 尝试获取锁,但设置超时避免死锁
             var lockAcquired = _sessionLock.Wait(TimeSpan.FromSeconds(5));
 
             try
             {
-                // 同步停止所有监控服务
                 _windowMonitor?.Stop();
                 _inputMonitor?.Stop();
                 _mediaDetector?.Stop();
 
-                // 取消订阅事件
                 if (_windowMonitor != null)
                 {
                     _windowMonitor.WindowFocusChanged -= OnWindowFocusChanged;
+                }
+                if (_inputMonitor != null)
+                {
+                    _inputMonitor.UserActivityDetected -= OnUserActivityDetected;
                 }
                 
                 _sha256.Dispose();

@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Diagnostics;
+using System.Threading;
 using RecordTime.Core.Models;
 using Serilog;
 
@@ -95,8 +96,12 @@ public class WindowMonitor : IWindowMonitor
         return GetWindowInfoFromHandle(hwnd);
     }
 
+    private int _isCallbackRunning = 0;
+
     private void MonitorCallback(object? state)
     {
+        if (Interlocked.CompareExchange(ref _isCallbackRunning, 1, 0) != 0)
+            return;
         try
         {
             var currentWindow = GetForegroundWindow();
@@ -142,6 +147,10 @@ public class WindowMonitor : IWindowMonitor
         catch (Exception ex)
         {
             Log.Error(ex, "WindowMonitor 监控过程中发生错误");
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _isCallbackRunning, 0);
         }
     }
 
@@ -216,11 +225,20 @@ public class WindowMonitor : IWindowMonitor
         {
             CleanupOldSwitchEvents();
             var now = DateTime.Now;
+            var cutoff1 = now.AddMinutes(-1);
+            var cutoff5 = now.AddMinutes(-5);
+            int count1 = 0, count5 = 0;
+
+            foreach (var e in _switchEvents)
+            {
+                if (e >= cutoff5) count5++;
+                if (e >= cutoff1) count1++;
+            }
 
             return new SwitchFrequencyStats
             {
-                SwitchesLast1Min = _switchEvents.Count(e => e >= now.AddMinutes(-1)),
-                SwitchesLast5Min = _switchEvents.Count(e => e >= now.AddMinutes(-5)),
+                SwitchesLast1Min = count1,
+                SwitchesLast5Min = count5,
                 SwitchesLast10Min = _switchEvents.Count
             };
         }
@@ -251,10 +269,9 @@ public class WindowMonitor : IWindowMonitor
         string processName = string.Empty;
         try
         {
-            var process = Process.GetProcessById((int)processId);
+            using var process = Process.GetProcessById((int)processId);
             processName = process.ProcessName;
 
-            // 如果窗口标题为空但有进程名,也接受
             if (string.IsNullOrEmpty(windowTitle))
             {
                 Log.Verbose("窗口标题为空,但进程名为: {ProcessName}", processName);
