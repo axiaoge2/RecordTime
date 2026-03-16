@@ -5,7 +5,6 @@ using RecordTime.Core.Services.AICoach;
 using RecordTime.Core.Models;
 using RecordTime.Core.Exceptions;
 using RecordTime.Data;
-using RecordTime.Data.Repositories;
 using RecordTime.Avalonia.Services;
 using RecordTime.Avalonia.Resources.Strings;
 using System;
@@ -14,8 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
-using Avalonia.Media;
-using System.Collections.Generic;
 
 namespace RecordTime.Avalonia.ViewModels;
 
@@ -543,99 +540,5 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         (_inputMonitor as IDisposable)?.Dispose();
-    }
-}
-
-// 分类统计项
-public partial class CategoryStatItem : ObservableObject
-{
-    [ObservableProperty]
-    private string _category = string.Empty;
-
-    [ObservableProperty]
-    private TimeSpan _duration;
-
-    [ObservableProperty]
-    private double _percentage;
-
-    public string DurationText => $"{(int)Duration.TotalHours:D2}:{Duration.Minutes:D2}:{Duration.Seconds:D2}";
-    public string PercentageText => $"{Percentage:F1}%";
-}
-
-// TOP 应用项
-public partial class TopAppItem : ObservableObject
-{
-    [ObservableProperty]
-    private int _rank;
-
-    [ObservableProperty]
-    private string _appName = string.Empty;
-
-    [ObservableProperty]
-    private TimeSpan _duration;
-
-    [ObservableProperty]
-    private int _sessionCount;
-
-    [ObservableProperty]
-    private global::Avalonia.Media.Imaging.Bitmap? _icon;
-
-    [ObservableProperty]
-    private double _percentage;
-
-    public string RankText => $"#{Rank}";
-    public string DurationText => $"{(int)Duration.TotalHours:D2}:{Duration.Minutes:D2}:{Duration.Seconds:D2}";
-    public string SessionCountText => $"{SessionCount}{StringResources.Current.UsageCountSuffix}";
-    public string PercentageText => $"{Percentage:F1}%";
-}
-
-/// <summary>
-/// Phase 4: 预算进度显示项 - 用于仪表盘显示
-/// </summary>
-public partial class BudgetProgressDisplayItem : ObservableObject
-{
-    [ObservableProperty]
-    private string _displayName = string.Empty;
-
-    [ObservableProperty]
-    private string _typeLabel = string.Empty;
-
-    [ObservableProperty]
-    private BudgetType _budgetType;
-
-    [ObservableProperty]
-    private double _progressPercentage;
-
-    [ObservableProperty]
-    private string _progressText = string.Empty;
-
-    [ObservableProperty]
-    private string _statusText = string.Empty;
-
-    [ObservableProperty]
-    private bool _isOverBudget;
-
-    [ObservableProperty]
-    private bool _isGoalMet;
-
-    [ObservableProperty]
-    private IBrush _progressColor = new SolidColorBrush(Color.Parse("#4ECDC4"));
-
-    public void UpdateProgressColor()
-    {
-        string colorHex;
-        if (BudgetType == BudgetType.Maximum)
-        {
-            if (IsOverBudget) colorHex = "#FF6B6B";
-            else if (ProgressPercentage >= 80) colorHex = "#FFB347";
-            else colorHex = "#4ECDC4";
-        }
-        else
-        {
-            if (IsGoalMet) colorHex = "#4ECDC4";
-            else if (ProgressPercentage >= 50) colorHex = "#FFB347";
-            else colorHex = "#8E8E93";
-        }
-        ProgressColor = new SolidColorBrush(Color.Parse(colorHex));
     }
 }

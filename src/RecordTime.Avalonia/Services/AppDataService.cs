@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using RecordTime.Core.Models;
 using RecordTime.Data;
+using Serilog;
 
 namespace RecordTime.Avalonia.Services;
 
@@ -61,12 +62,12 @@ public class AppDataService
                 var includesToday = normalizedStart <= DateTime.Today && normalizedEnd >= DateTime.Today;
                 if (!includesToday || (DateTime.Now - cached.LastUpdateTime).TotalSeconds <= 1)
                 {
-                    System.Diagnostics.Debug.WriteLine($"=== AppDataService: 使用缓存 [{cached.GetDebugInfo()}] ===");
+                    Log.Debug("AppDataService: 使用缓存 [{DebugInfo}]", cached.GetDebugInfo());
                     return cached;
                 }
             }
 
-            System.Diagnostics.Debug.WriteLine($"=== AppDataService: 加载 {normalizedStart:yyyy-MM-dd} ~ {normalizedEnd:yyyy-MM-dd} 的数据... ===");
+            Log.Debug("AppDataService: 加载 {Start} ~ {End} 的数据...", normalizedStart.ToString("yyyy-MM-dd"), normalizedEnd.ToString("yyyy-MM-dd"));
             var snapshot = await LoadSnapshotFromDatabaseAsync(normalizedStart, normalizedEnd).ConfigureAwait(false);
 
             _snapshotCache[cacheKey] = snapshot;
@@ -78,7 +79,7 @@ public class AppDataService
                 _snapshotCache.Remove(oldestKey);
             }
 
-            System.Diagnostics.Debug.WriteLine($"=== AppDataService: 加载完成 [{snapshot.GetDebugInfo()}] ===");
+            Log.Debug("AppDataService: 加载完成 [{DebugInfo}]", snapshot.GetDebugInfo());
             return snapshot;
         }
         finally
@@ -163,11 +164,7 @@ public class AppDataService
 
             var topApps = allApps.Take(10).ToList();
 
-            System.Diagnostics.Debug.WriteLine($"  查询到 {sessions.Count} 个会话，{allApps.Count} 个应用");
-            foreach (var (app, index) in topApps.Select((value, index) => (value, index)))
-            {
-                System.Diagnostics.Debug.WriteLine($"  #{index + 1}: {app.AppName} - {app.TotalDuration.TotalSeconds:F0}s");
-            }
+            Log.Debug("AppDataService: 查询到 {SessionCount} 个会话，{AppCount} 个应用", sessions.Count, allApps.Count);
 
             return new AppDataSnapshot
             {
@@ -182,7 +179,7 @@ public class AppDataService
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"AppDataService 加载失败: {ex.Message}");
+            Log.Error(ex, "AppDataService 加载失败");
             return new AppDataSnapshot
             {
                 StartDate = startDate,
@@ -193,6 +190,52 @@ public class AppDataService
                 TotalSeconds = 0,
                 SessionCount = 0
             };
+        }
+    }
+
+    /// <summary>
+    /// Get the last session end time for a given date (for "updated at" display).
+    /// </summary>
+    public async Task<DateTime?> GetLastSessionEndTimeAsync(DateTime date)
+    {
+        try
+        {
+            await using var db = new RecordTimeDbContext();
+            var dateStart = date.Date;
+            return await db.Sessions
+                .AsNoTracking()
+                .Where(s => s.StartTime >= dateStart && s.StartTime < dateStart.AddDays(1) && s.EndTime != null)
+                .OrderByDescending(s => s.EndTime)
+                .Select(s => s.EndTime)
+                .FirstOrDefaultAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "获取最后会话时间失败");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Get the count of distinct activity types for a given date.
+    /// </summary>
+    public async Task<int> GetActivityTypeCountAsync(DateTime date)
+    {
+        try
+        {
+            await using var db = new RecordTimeDbContext();
+            var targetDate = date.Date;
+            return await db.Sessions
+                .AsNoTracking()
+                .Where(s => s.StartTime >= targetDate && s.StartTime < targetDate.AddDays(1))
+                .Select(s => s.ActivityType)
+                .Distinct()
+                .CountAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "获取活动类型数量失败");
+            return 0;
         }
     }
 
@@ -225,7 +268,7 @@ public class AppDataItem
     public double TotalPercentage { get; set; }
 
     public string DurationText => $"{(int)TotalDuration.TotalHours:D2}:{TotalDuration.Minutes:D2}:{TotalDuration.Seconds:D2}";
-    public string SessionCountText => $"{SessionCount} 次";
+    public string SessionCountText => $"{SessionCount}{RecordTime.Avalonia.Resources.Strings.StringResources.Current.UsageCountSuffix}";
     public string PercentageText => $"{TotalPercentage:F1}%";
     public string FirstUsedText => FirstUsed.ToString("HH:mm:ss");
     public string LastUsedText => LastUsed.ToString("HH:mm:ss");

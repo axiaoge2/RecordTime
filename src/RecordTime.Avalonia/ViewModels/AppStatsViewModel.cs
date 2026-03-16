@@ -1,20 +1,18 @@
-using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RecordTime.Avalonia.Resources.Strings;
 using RecordTime.Avalonia.Services;
-using RecordTime.Core.Models;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace RecordTime.Avalonia.ViewModels;
 
-public partial class AppStatsViewModel : ViewModelBase
+public partial class AppStatsViewModel : ViewModelBase, IDisposable
 {
     [ObservableProperty]
     private DateTime _startDate = DateTime.Today;
@@ -175,7 +173,7 @@ public partial class AppStatsViewModel : ViewModelBase
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"=== AppStatsViewModel: 获取快照 [{snapshot.GetDebugInfo()}] ===");
+            Log.Debug("AppStats: 获取快照 [{DebugInfo}]", snapshot.GetDebugInfo());
 
             if (snapshot.AllApps.Count == 0)
             {
@@ -218,11 +216,11 @@ public partial class AppStatsViewModel : ViewModelBase
                 TotalAppCount = _allApps.Count;
                 TotalSessions = _allApps.Count;
 
-                var allCategories = new List<string> { "全部分类" };
+                var allCategories = new List<string> { StringResources.Current.AllCategories };
                 allCategories.AddRange(_allApps.Select(a => a.Category).Distinct().OrderBy(c => c));
                 Categories.ReplaceWith(allCategories);
 
-                System.Diagnostics.Debug.WriteLine($"=== AppStatsViewModel: 从快照获取了 {_allApps.Count} 个应用 ===");
+                Log.Debug("AppStats: 从快照获取了 {AppCount} 个应用", _allApps.Count);
 
                 // 应用过滤
                 FilterApps();
@@ -245,7 +243,7 @@ public partial class AppStatsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"加载数据失败: {ex.Message}");
+            Log.Error(ex, "AppStats: 加载数据失败");
         }
     }
 
@@ -265,6 +263,15 @@ public partial class AppStatsViewModel : ViewModelBase
         }
     }
 
+    public void Dispose()
+    {
+        _loadCancellationTokenSource?.Cancel();
+        _loadCancellationTokenSource?.Dispose();
+        _iconLoadCancellationTokenSource?.Cancel();
+        _iconLoadCancellationTokenSource?.Dispose();
+        _searchDebounceTimer?.Dispose();
+    }
+
     private void FilterApps()
     {
         if (!Dispatcher.UIThread.CheckAccess())
@@ -276,7 +283,7 @@ public partial class AppStatsViewModel : ViewModelBase
         var filtered = _allApps.AsEnumerable();
 
         // 分类过滤
-        if (!string.IsNullOrEmpty(SelectedCategory) && SelectedCategory != "全部分类")
+        if (!string.IsNullOrEmpty(SelectedCategory) && SelectedCategory != StringResources.Current.AllCategories)
         {
             filtered = filtered.Where(a => a.Category == SelectedCategory);
         }
@@ -296,41 +303,4 @@ public partial class AppStatsViewModel : ViewModelBase
         TotalSessions = filteredList.Count;
         HasNoApps = filteredList.Count == 0;
     }
-}
-
-// 应用详细项
-public partial class AppDetailItem : ObservableObject
-{
-    [ObservableProperty]
-    private string _appName = string.Empty;
-
-    [ObservableProperty]
-    private string _processName = string.Empty;
-
-    [ObservableProperty]
-    private string _category = string.Empty;
-
-    [ObservableProperty]
-    private TimeSpan _totalDuration;
-
-    [ObservableProperty]
-    private int _sessionCount;
-
-    [ObservableProperty]
-    private DateTime _firstUsed;
-
-    [ObservableProperty]
-    private DateTime _lastUsed;
-
-    [ObservableProperty]
-    private double _totalPercentage;
-
-    [ObservableProperty]
-    private Bitmap? _icon;
-
-    public string DurationText => $"{(int)TotalDuration.TotalHours:D2}:{TotalDuration.Minutes:D2}:{TotalDuration.Seconds:D2}";
-    public string SessionCountText => $"{SessionCount} 次";
-    public string PercentageText => $"{TotalPercentage:F1}%";
-    public string FirstUsedText => FirstUsed.ToString("HH:mm:ss");
-    public string LastUsedText => LastUsed.ToString("HH:mm:ss");
 }

@@ -23,7 +23,7 @@ using Serilog;
 
 namespace RecordTime.Avalonia.ViewModels;
 
-public partial class ReportViewModel : ViewModelBase
+public partial class ReportViewModel : ViewModelBase, IDisposable
 {
     [ObservableProperty]
     private DateTime _startDate = DateTime.Today.AddDays(-7);
@@ -389,27 +389,26 @@ public partial class ReportViewModel : ViewModelBase
                         Values = weeklyTrend.Select(d => d.TotalHours).ToArray(),
                         Name = StringResources.Current.DailyUsageSeriesName,
                         Fill = null,
-                        Stroke = new SolidColorPaint(new SKColor(0x1A, 0x1A, 0x1A)) { StrokeThickness = 3 },
-                        GeometryFill = new SolidColorPaint(new SKColor(0x1A, 0x1A, 0x1A)),
-                        GeometryStroke = new SolidColorPaint(new SKColor(0xF5, 0xF4, 0xF0)) { StrokeThickness = 2 },
+                        Stroke = new SolidColorPaint(ChartColorPalette.TextDark) { StrokeThickness = 3 },
+                        GeometryFill = new SolidColorPaint(ChartColorPalette.TextDark),
+                        GeometryStroke = new SolidColorPaint(ChartColorPalette.TextLight) { StrokeThickness = 2 },
                         GeometrySize = 8,
                         LineSmoothness = 0.65,
-                        DataLabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
+                        DataLabelsPaint = new SolidColorPaint(ChartColorPalette.TextMuted),
                         DataLabelsSize = 11,
                         DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
                         DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F1}h"
                     }
                 };
 
-                // 配置 X 轴（日期）
                 WeeklyTrendXAxes = new Axis[]
                 {
                     new Axis
                     {
                         Labels = weeklyTrend.Select(d => d.DateLabel).ToArray(),
                         LabelsRotation = 0,
-                        LabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
-                        SeparatorsPaint = new SolidColorPaint(new SKColor(0xE2, 0xDF, 0xD6)) { StrokeThickness = 1 }
+                        LabelsPaint = new SolidColorPaint(ChartColorPalette.TextMuted),
+                        SeparatorsPaint = new SolidColorPaint(ChartColorPalette.GridLine) { StrokeThickness = 1 }
                     }
                 };
 
@@ -418,9 +417,9 @@ public partial class ReportViewModel : ViewModelBase
                     new Axis
                     {
                         Name = StringResources.Current.HoursAxisLabel,
-                        NamePaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
-                        LabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
-                        SeparatorsPaint = new SolidColorPaint(new SKColor(0xE2, 0xDF, 0xD6)) { StrokeThickness = 1 },
+                        NamePaint = new SolidColorPaint(ChartColorPalette.TextMuted),
+                        LabelsPaint = new SolidColorPaint(ChartColorPalette.TextMuted),
+                        SeparatorsPaint = new SolidColorPaint(ChartColorPalette.GridLine) { StrokeThickness = 1 },
                         Labeler = value => $"{value:F0}h"
                     }
                 };
@@ -428,15 +427,16 @@ public partial class ReportViewModel : ViewModelBase
                 if (activityDistribution.Count > 0)
                 {
                     // 定义活动类型的颜色和名称映射
+                    var grays = ChartColorPalette.Grays8;
                     var activityColors = new Dictionary<ActivityType, SKColor>
                     {
-                        { ActivityType.Video, new SKColor(0x1A, 0x1A, 0x1A) },
-                        { ActivityType.Gaming, new SKColor(0x3D, 0x3D, 0x3D) },
-                        { ActivityType.Meeting, new SKColor(0x5C, 0x5C, 0x5C) },
-                        { ActivityType.ActiveTyping, new SKColor(0x4A, 0x4A, 0x4A) },
-                        { ActivityType.Reading, new SKColor(0x7A, 0x7A, 0x7A) },
-                        { ActivityType.PassiveBrowsing, new SKColor(0x99, 0x99, 0x99) },
-                        { ActivityType.Idle, new SKColor(0xD0, 0xCF, 0xCB) }
+                        { ActivityType.Video, grays[0] },
+                        { ActivityType.Gaming, grays[1] },
+                        { ActivityType.Meeting, grays[2] },
+                        { ActivityType.ActiveTyping, grays[3] },
+                        { ActivityType.Reading, grays[4] },
+                        { ActivityType.PassiveBrowsing, grays[5] },
+                        { ActivityType.Idle, ChartColorPalette.Grays5[4] }
                     };
 
                     var activityNames = new Dictionary<ActivityType, string>
@@ -456,8 +456,8 @@ public partial class ReportViewModel : ViewModelBase
                         {
                             Values = new[] { kv.Value.TotalHours },
                             Name = activityNames.GetValueOrDefault(kv.Key, kv.Key.ToString()),
-                            Fill = new SolidColorPaint(activityColors.GetValueOrDefault(kv.Key, new SKColor(0xB0, 0xB0, 0xB0))),
-                            DataLabelsPaint = new SolidColorPaint(new SKColor(0xF5, 0xF4, 0xF0)),
+                            Fill = new SolidColorPaint(activityColors.GetValueOrDefault(kv.Key, ChartColorPalette.Fallback)),
+                            DataLabelsPaint = new SolidColorPaint(ChartColorPalette.TextLight),
                             DataLabelsSize = 13,
                             DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
                             DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F1}h"
@@ -529,6 +529,19 @@ public partial class ReportViewModel : ViewModelBase
                 .Take(_distributionCache.Count - 10).Select(kv => kv.Key).ToList())
                 _distributionCache.TryRemove(key, out _);
         }
+    }
+
+    public void Dispose()
+    {
+        _aiCancellationTokenSource?.Cancel();
+        _aiCancellationTokenSource?.Dispose();
+        _chartLoadCancellationTokenSource?.Cancel();
+        _chartLoadCancellationTokenSource?.Dispose();
+        _chartLoadDebounceTimer?.Stop();
+        _chartLoadDebounceTimer?.Dispose();
+        _previewDebounceTimer?.Dispose();
+        _trendCache.Clear();
+        _distributionCache.Clear();
     }
 
     [RelayCommand]

@@ -8,14 +8,6 @@
              x:Class="RecordTime.Avalonia.Views.DashboardView"
              x:DataType="vm:DashboardViewModel">
 
-    <UserControl.Resources>
-        <!-- Lucide Icons for Dashboard -->
-        <StreamGeometry x:Key="IconPlay">M5 3l14 9-14 9V3z</StreamGeometry>
-        <StreamGeometry x:Key="IconPause">M6 4h4v16H6V4zm8 0h4v16h-4V4z</StreamGeometry>
-        <StreamGeometry x:Key="IconActivity">M22 12h-4l-3 9L9 3l-3 9H2</StreamGeometry>
-        <StreamGeometry x:Key="IconClock">M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 6v6l4 2</StreamGeometry>
-    </UserControl.Resources>
-
     <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                   VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="0" Margin="24,20,24,32">
