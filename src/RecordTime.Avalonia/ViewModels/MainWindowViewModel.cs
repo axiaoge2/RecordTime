@@ -519,6 +519,10 @@ public partial class MainWindowViewModel : ViewModelBase
         _sessionEventDebounceTimer?.Dispose();
 
         DashboardVM.Dispose();
+        (_reportViewModel as IDisposable)?.Dispose();
+        (_appStatsViewModel as IDisposable)?.Dispose();
+        (_timeBudgetViewModel as IDisposable)?.Dispose();
+
         _budgetTrackingService.Stop();
         _notificationService.Dispose();
 

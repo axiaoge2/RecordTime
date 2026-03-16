@@ -288,11 +288,18 @@ public class TimeBudgetRepository : ITimeBudgetRepository
         await _context.SaveChangesAsync();
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
+
         if (_ownsContext)
         {
             _context.Dispose();
         }
+
+        GC.SuppressFinalize(this);
     }
 }

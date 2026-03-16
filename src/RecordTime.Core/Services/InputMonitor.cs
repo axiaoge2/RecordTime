@@ -112,19 +112,37 @@ public class InputMonitor : IInputMonitor, IDisposable
         _keyboardProc = KeyboardHookCallback;
         _mouseProc = MouseHookCallback;
 
-        using var curProcess = Process.GetCurrentProcess();
-        using var curModule = curProcess.MainModule;
-
-        if (curModule != null)
+        try
         {
-            _keyboardHookId = SetWindowsHookEx(WH_KEYBOARD_LL, _keyboardProc,
-                GetModuleHandle(curModule.ModuleName), 0);
+            using var curProcess = Process.GetCurrentProcess();
+            using var curModule = curProcess.MainModule;
 
-            _mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, _mouseProc,
-                GetModuleHandle(curModule.ModuleName), 0);
+            if (curModule == null)
+            {
+                Log.Warning("InputMonitor: 无法获取 MainModule，钩子未安装");
+                return;
+            }
+
+            var moduleHandle = GetModuleHandle(curModule.ModuleName);
+
+            _keyboardHookId = SetWindowsHookEx(WH_KEYBOARD_LL, _keyboardProc, moduleHandle, 0);
+            if (_keyboardHookId == IntPtr.Zero)
+            {
+                Log.Error("InputMonitor: 键盘钩子安装失败，错误码={ErrorCode}", Marshal.GetLastWin32Error());
+            }
+
+            _mouseHookId = SetWindowsHookEx(WH_MOUSE_LL, _mouseProc, moduleHandle, 0);
+            if (_mouseHookId == IntPtr.Zero)
+            {
+                Log.Error("InputMonitor: 鼠标钩子安装失败，错误码={ErrorCode}", Marshal.GetLastWin32Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "InputMonitor: 安装输入钩子时发生异常");
         }
 
-        Debug.WriteLine("✅ InputMonitor started");
+        Log.Debug("InputMonitor started");
     }
 
     public void Stop()

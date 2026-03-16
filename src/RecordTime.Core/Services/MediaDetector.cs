@@ -94,9 +94,9 @@ public class MediaDetector : IMediaDetector
                         audioProcesses.Add(processName);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // 忽略无法访问的进程
+                    Log.Verbose(ex, "无法访问进程信息");
                 }
                 finally
                 {
@@ -150,15 +150,15 @@ public class MediaDetector : IMediaDetector
             return _videoPlayerProcesses.Contains(process.ProcessName) ||
                    _browserProcesses.Contains(process.ProcessName);
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Verbose(ex, "检查进程媒体播放状态失败");
             return false;
         }
     }
 
     public bool HasAudioActivity()
     {
-        // 性能优化: 使用缓存的音频进程列表
         try
         {
             lock (_cacheLock)
@@ -166,8 +166,9 @@ public class MediaDetector : IMediaDetector
                 return _cachedAudioProcesses.Count > 0;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Verbose(ex, "检查音频活动失败");
             return false;
         }
     }

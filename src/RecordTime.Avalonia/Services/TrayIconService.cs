@@ -118,10 +118,6 @@ public partial class TrayIconService : ObservableObject
     {
         Log.Information("从托盘菜单退出应用");
 
-        // 清理资源
-        _mainViewModel?.Dispose();
-
-        // 退出应用
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             desktop.Shutdown();

@@ -11,7 +11,7 @@ namespace RecordTime.Core.Services;
 /// Windows窗口监控实现 (性能优化版)
 /// 性能优化: 根据用户活跃度动态调整轮询间隔，活跃时快速响应，空闲时降低CPU占用
 /// </summary>
-public class WindowMonitor : IWindowMonitor
+public class WindowMonitor : IWindowMonitor, IDisposable
 {
     private Timer? _monitorTimer;
     private WindowInfo? _lastWindow;
@@ -85,6 +85,11 @@ public class WindowMonitor : IWindowMonitor
     {
         _monitorTimer?.Dispose();
         _monitorTimer = null;
+    }
+
+    public void Dispose()
+    {
+        Stop();
     }
 
     public WindowInfo? GetForegroundWindow()

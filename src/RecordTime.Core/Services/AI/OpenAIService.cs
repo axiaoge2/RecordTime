@@ -141,6 +141,10 @@ public class OpenAIService : IAIAnalysisService
                 return AIAnalysisResult.Failure("AI 响应为空");
             }
 
+            if (response.Value.Content == null || response.Value.Content.Count == 0)
+            {
+                return AIAnalysisResult.Failure("AI 响应内容为空");
+            }
             var content = response.Value.Content[0].Text;
             Log.Debug("AI 原始响应: {Content}", content);
 
@@ -187,9 +191,10 @@ public class OpenAIService : IAIAnalysisService
 
     private string BuildPrompt(AIAnalysisInput input)
     {
+        var totalHours = input.TotalActiveHours > 0 ? input.TotalActiveHours : 1.0;
         var categoryBreakdown = string.Join("\n", input.CategoryHours
             .OrderByDescending(kv => kv.Value)
-            .Select(kv => $"- {kv.Key}: {kv.Value:F1} 小时 ({kv.Value / input.TotalActiveHours * 100:F1}%)"));
+            .Select(kv => $"- {kv.Key}: {kv.Value:F1} 小时 ({kv.Value / totalHours * 100:F1}%)"));
 
         var activityBreakdown = string.Join("\n", input.ActivityHours
             .OrderByDescending(kv => kv.Value)

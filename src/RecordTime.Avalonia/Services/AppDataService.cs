@@ -152,7 +152,7 @@ public class AppDataService
                 {
                     AppName = g.Key,
                     ProcessName = g.First().session.ProcessName,
-                    Category = g.First().session.Category ?? "未分类",
+                    Category = g.First().session.Category ?? Resources.Strings.StringResources.Current.NoDataAvailable,
                     TotalDuration = TimeSpan.FromSeconds(g.Sum(x => x.effectiveDuration)),
                     SessionCount = g.Count(),
                     FirstUsed = g.Min(x => x.session.StartTime < rangeStart ? rangeStart : x.session.StartTime),

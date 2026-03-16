@@ -329,7 +329,17 @@ public class SessionManager : IDisposable
 
     private async Task UpdateSessionHeartbeatAsync()
     {
-        var sessionId = _currentSessionId;
+        int? sessionId;
+        await _sessionLock.WaitAsync();
+        try
+        {
+            sessionId = _currentSessionId;
+        }
+        finally
+        {
+            _sessionLock.Release();
+        }
+
         if (sessionId == null)
             return;
 
@@ -393,7 +403,11 @@ public class SessionManager : IDisposable
     /// </summary>
     private async Task PerformIdleCheckAsync()
     {
-        if (_currentSessionId == null || !_isRunning)
+        await _sessionLock.WaitAsync();
+        var hasSession = _currentSessionId != null;
+        _sessionLock.Release();
+
+        if (!hasSession || !_isRunning)
             return;
 
         try
@@ -587,6 +601,22 @@ public class SessionManager : IDisposable
 
             try
             {
+                if (_currentSessionId != null)
+                {
+                    try
+                    {
+                        using var repository = _repositoryFactory();
+                        repository.EndSessionAsync(_currentSessionId.Value, DateTime.Now)
+                            .GetAwaiter().GetResult();
+                        Log.Information("Dispose: 已结束活动会话 SessionId={SessionId}", _currentSessionId);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Dispose: 结束活动会话失败 SessionId={SessionId}", _currentSessionId);
+                    }
+                    _currentSessionId = null;
+                }
+
                 _windowMonitor?.Stop();
                 _inputMonitor?.Stop();
                 _mediaDetector?.Stop();
@@ -599,7 +629,7 @@ public class SessionManager : IDisposable
                 {
                     _inputMonitor.UserActivityDetected -= OnUserActivityDetected;
                 }
-                
+
                 _sha256.Dispose();
             }
             finally
