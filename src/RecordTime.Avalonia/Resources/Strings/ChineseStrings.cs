@@ -33,12 +33,13 @@ public class ChineseStrings : IStringProvider
     public string TotalActivityTime => "总活动时长";
     public string UpdatedAt => "更新于";
     public string SessionCount => "会话数量";
-    public string AppTypeDistribution => "📱 应用类型分布";
+    public string AppTypeDistribution => "应用类型分布";
     public string MonitoringStatus => "专注状态";
     public string MonitoringRunning => "专注进行中";
     public string MonitoringStopped => "专注未开始";
     public string StartMonitoring => "开始专注";
     public string StopMonitoring => "停止专注";
+    public string TodayFocusDuration => "今日专注时长";
     public string TopAppsTitle => "TOP 10 应用";
     public string CurrentDisplaying => "当前显示: {0} 个";
 

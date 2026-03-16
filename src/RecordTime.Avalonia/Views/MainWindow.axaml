@@ -16,7 +16,11 @@
         Height="700"
         MinWidth="900"
         MinHeight="580"
-        Background="{DynamicResource LinearBgPrimaryBrush}">
+        Background="{DynamicResource LinearBgPrimaryBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="32"
+        TransparencyLevelHint="None">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
@@ -33,8 +37,21 @@
     </Window.Resources>
 
     <Panel>
-        <!-- Main Layout - Linear Style -->
+        <!-- Title Bar Area -->
+        <Border Height="32"
+                VerticalAlignment="Top"
+                Background="{DynamicResource LinearBgPrimaryBrush}"
+                IsHitTestVisible="False">
+            <TextBlock Text="{Binding AppTitle, Source={x:Static strings:StringResources.Current}}"
+                       FontSize="12"
+                       Foreground="{DynamicResource LinearFgTertiaryBrush}"
+                       VerticalAlignment="Center"
+                       Margin="16,0,0,0"/>
+        </Border>
+
+        <!-- Main Layout -->
         <SplitView DisplayMode="CompactInline"
+                   Margin="0,32,0,0"
                    IsPaneOpen="True"
                    OpenPaneLength="240"
                    CompactPaneLength="56"

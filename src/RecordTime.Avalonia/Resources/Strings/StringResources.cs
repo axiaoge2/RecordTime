@@ -69,6 +69,7 @@ public class StringResources : INotifyPropertyChanged
     public string MonitoringStopped => _provider.MonitoringStopped;
     public string StartMonitoring => _provider.StartMonitoring;
     public string StopMonitoring => _provider.StopMonitoring;
+    public string TodayFocusDuration => _provider.TodayFocusDuration;
     public string TopAppsTitle => _provider.TopAppsTitle;
     public string CurrentDisplaying => _provider.CurrentDisplaying;
 
@@ -483,6 +484,7 @@ public interface IStringProvider
     string MonitoringStopped { get; }
     string StartMonitoring { get; }
     string StopMonitoring { get; }
+    string TodayFocusDuration { get; }
     string TopAppsTitle { get; }
     string CurrentDisplaying { get; }
 

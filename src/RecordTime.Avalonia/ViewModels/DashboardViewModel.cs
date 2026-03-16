@@ -285,32 +285,34 @@ public partial class DashboardViewModel : ViewModelBase
 
             var pieColors = new[]
             {
-                new SKColor(102, 126, 234), new SKColor(118, 75, 162),
-                new SKColor(237, 100, 166), new SKColor(255, 154, 0), new SKColor(52, 199, 89)
+                new SKColor(0x1A, 0x1A, 0x1A),
+                new SKColor(0x4A, 0x4A, 0x4A),
+                new SKColor(0x7A, 0x7A, 0x7A),
+                new SKColor(0xA8, 0xA8, 0xA8),
+                new SKColor(0xD0, 0xCF, 0xCB),
             };
             var pieChartData = top5Apps.Select((app, index) => new PieSeries<double>
             {
                 Values = new[] { app.TotalDuration.TotalMinutes },
                 Name = app.AppName,
                 Fill = new SolidColorPaint(pieColors[index % pieColors.Length]),
-                DataLabelsPaint = new SolidColorPaint(new SKColor(29, 29, 31)),
+                DataLabelsPaint = new SolidColorPaint(index == 0 ? new SKColor(0xF5, 0xF4, 0xF0) : new SKColor(0x1A, 0x1A, 0x1A)),
                 DataLabelsSize = 12,
                 DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
                 DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
             }).Cast<ISeries>().ToArray();
 
-            var categoryColorMap = new Dictionary<string, (SKColor Start, SKColor End)>
+            var barGrays = new SKColor[]
             {
-                { "开发工具", (new SKColor(0x3F, 0xA6, 0xFF), new SKColor(0x1E, 0x74, 0xD8)) },
-                { "办公软件", (new SKColor(0x35, 0xD0, 0xC8), new SKColor(0x1A, 0xA4, 0xA2)) },
-                { "视频娱乐", (new SKColor(0xFF, 0x7E, 0xB3), new SKColor(0xE8, 0x5A, 0x9C)) },
-                { "社交通讯", (new SKColor(0x6A, 0xD1, 0xFF), new SKColor(0x2A, 0x9B, 0xEA)) },
-                { "游戏", (new SKColor(0x7F, 0xD0, 0x6A), new SKColor(0x45, 0xA8, 0x4F)) },
-                { "浏览器", (new SKColor(0x9B, 0x7B, 0xFF), new SKColor(0x6B, 0x53, 0xE5)) },
-                { "系统工具", (new SKColor(0x55, 0xB5, 0xA0), new SKColor(0x2E, 0x8B, 0x79)) },
-                { "其他", (new SKColor(0xA1, 0xB7, 0xFF), new SKColor(0x6C, 0x7F, 0xD9)) },
+                new SKColor(0x1A, 0x1A, 0x1A),
+                new SKColor(0x3D, 0x3D, 0x3D),
+                new SKColor(0x5C, 0x5C, 0x5C),
+                new SKColor(0x7A, 0x7A, 0x7A),
+                new SKColor(0x99, 0x99, 0x99),
+                new SKColor(0xB0, 0xB0, 0xB0),
+                new SKColor(0xC8, 0xC8, 0xC8),
+                new SKColor(0xD8, 0xD8, 0xD8),
             };
-            var defaultColor = (Start: new SKColor(0xA1, 0xB7, 0xFF), End: new SKColor(0x6C, 0x7F, 0xD9));
 
             ISeries[] barChartData;
             Axis[] barXAxes;
@@ -318,16 +320,17 @@ public partial class DashboardViewModel : ViewModelBase
             {
                 var seriesList = new List<ISeries>();
                 var categoryNames = new List<string>();
-                foreach (var category in categoryGroups)
+                for (int ci = 0; ci < categoryGroups.Count; ci++)
                 {
-                    var cc = categoryColorMap.GetValueOrDefault(category.Category, defaultColor);
+                    var category = categoryGroups[ci];
+                    var barColor = barGrays[ci % barGrays.Length];
                     categoryNames.Add(category.Category);
                     seriesList.Add(new ColumnSeries<double>
                     {
                         Values = new[] { category.Duration.TotalMinutes },
                         Name = category.Category,
-                        Fill = new LinearGradientPaint(new[] { cc.Start, cc.End }, new SKPoint(0, 0), new SKPoint(0, 1)),
-                        DataLabelsPaint = new SolidColorPaint(new SKColor(29, 29, 31)),
+                        Fill = new SolidColorPaint(barColor),
+                        DataLabelsPaint = new SolidColorPaint(new SKColor(0x1A, 0x1A, 0x1A)),
                         DataLabelsSize = 11,
                         DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.End,
                         DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F0}m"
@@ -339,8 +342,8 @@ public partial class DashboardViewModel : ViewModelBase
                     new Axis
                     {
                         Labels = categoryNames.ToArray(), LabelsRotation = 15,
-                        LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
-                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234))
+                        LabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(0xE2, 0xDF, 0xD6))
                     }
                 };
             }
@@ -360,15 +363,18 @@ public partial class DashboardViewModel : ViewModelBase
             string topCatDuration;
             if (appTypeGroups.Count > 0)
             {
-                var donutColors = new[]
+                var donutGrays = new[]
                 {
-                    new SKColor(102, 126, 234), new SKColor(237, 100, 166),
-                    new SKColor(255, 154, 0), new SKColor(52, 199, 89), new SKColor(118, 75, 162)
+                    new SKColor(0x1A, 0x1A, 0x1A),
+                    new SKColor(0x4A, 0x4A, 0x4A),
+                    new SKColor(0x7A, 0x7A, 0x7A),
+                    new SKColor(0xA8, 0xA8, 0xA8),
+                    new SKColor(0xD0, 0xCF, 0xCB),
                 };
                 donutData = appTypeGroups.Select((group, index) => new PieSeries<double>
                 {
                     Values = new[] { group.TotalMinutes }, Name = group.Category,
-                    Fill = new SolidColorPaint(donutColors[index % donutColors.Length]),
+                    Fill = new SolidColorPaint(donutGrays[index % donutGrays.Length]),
                     InnerRadius = 80, HoverPushout = 8
                 }).Cast<ISeries>().ToArray();
 

@@ -33,12 +33,13 @@ public class EnglishStrings : IStringProvider
     public string TotalActivityTime => "Total Activity Time";
     public string UpdatedAt => "Updated at";
     public string SessionCount => "Session Count";
-    public string AppTypeDistribution => "📱 App Type Distribution";
+    public string AppTypeDistribution => "App Type Distribution";
     public string MonitoringStatus => "Monitoring Status";
     public string MonitoringRunning => "Monitoring Running";
     public string MonitoringStopped => "Monitoring Stopped";
     public string StartMonitoring => "Start Monitoring";
     public string StopMonitoring => "Stop Monitoring";
+    public string TodayFocusDuration => "Today's Focus";
     public string TopAppsTitle => "TOP 10 Apps";
     public string CurrentDisplaying => "Currently displaying: {0}";
 

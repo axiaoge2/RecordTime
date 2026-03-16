@@ -388,13 +388,13 @@ public partial class ReportViewModel : ViewModelBase
                     {
                         Values = weeklyTrend.Select(d => d.TotalHours).ToArray(),
                         Name = StringResources.Current.DailyUsageSeriesName,
-                        Fill = null, // 不填充区域
-                        Stroke = new SolidColorPaint(new SKColor(102, 126, 234)) { StrokeThickness = 3 },
-                        GeometryFill = new SolidColorPaint(new SKColor(102, 126, 234)),
-                        GeometryStroke = new SolidColorPaint(new SKColor(255, 255, 255)) { StrokeThickness = 2 },
+                        Fill = null,
+                        Stroke = new SolidColorPaint(new SKColor(0x1A, 0x1A, 0x1A)) { StrokeThickness = 3 },
+                        GeometryFill = new SolidColorPaint(new SKColor(0x1A, 0x1A, 0x1A)),
+                        GeometryStroke = new SolidColorPaint(new SKColor(0xF5, 0xF4, 0xF0)) { StrokeThickness = 2 },
                         GeometrySize = 8,
-                        LineSmoothness = 0.65, // 平滑曲线
-                        DataLabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
+                        LineSmoothness = 0.65,
+                        DataLabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
                         DataLabelsSize = 11,
                         DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
                         DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F1}h"
@@ -408,20 +408,19 @@ public partial class ReportViewModel : ViewModelBase
                     {
                         Labels = weeklyTrend.Select(d => d.DateLabel).ToArray(),
                         LabelsRotation = 0,
-                        LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
-                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234)) { StrokeThickness = 1 }
+                        LabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(0xE2, 0xDF, 0xD6)) { StrokeThickness = 1 }
                     }
                 };
 
-                // 配置 Y 轴（小时）
                 WeeklyTrendYAxes = new Axis[]
                 {
                     new Axis
                     {
                         Name = StringResources.Current.HoursAxisLabel,
-                        NamePaint = new SolidColorPaint(new SKColor(110, 110, 115)),
-                        LabelsPaint = new SolidColorPaint(new SKColor(110, 110, 115)),
-                        SeparatorsPaint = new SolidColorPaint(new SKColor(229, 229, 234)) { StrokeThickness = 1 },
+                        NamePaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
+                        LabelsPaint = new SolidColorPaint(new SKColor(0x6A, 0x6A, 0x6A)),
+                        SeparatorsPaint = new SolidColorPaint(new SKColor(0xE2, 0xDF, 0xD6)) { StrokeThickness = 1 },
                         Labeler = value => $"{value:F0}h"
                     }
                 };
@@ -431,13 +430,13 @@ public partial class ReportViewModel : ViewModelBase
                     // 定义活动类型的颜色和名称映射
                     var activityColors = new Dictionary<ActivityType, SKColor>
                     {
-                        { ActivityType.Video, new SKColor(255, 59, 48) },        // 红色 - 视频娱乐
-                        { ActivityType.Gaming, new SKColor(255, 149, 0) },        // 橙色 - 游戏
-                        { ActivityType.Meeting, new SKColor(88, 86, 214) },       // 紫色 - 在线会议
-                        { ActivityType.ActiveTyping, new SKColor(48, 209, 88) },  // 绿色 - 主动输入
-                        { ActivityType.Reading, new SKColor(90, 200, 250) },      // 青色 - 阅读浏览
-                        { ActivityType.PassiveBrowsing, new SKColor(0, 113, 227) }, // 蓝色 - 被动浏览
-                        { ActivityType.Idle, new SKColor(142, 142, 147) }         // 灰色 - 空闲
+                        { ActivityType.Video, new SKColor(0x1A, 0x1A, 0x1A) },
+                        { ActivityType.Gaming, new SKColor(0x3D, 0x3D, 0x3D) },
+                        { ActivityType.Meeting, new SKColor(0x5C, 0x5C, 0x5C) },
+                        { ActivityType.ActiveTyping, new SKColor(0x4A, 0x4A, 0x4A) },
+                        { ActivityType.Reading, new SKColor(0x7A, 0x7A, 0x7A) },
+                        { ActivityType.PassiveBrowsing, new SKColor(0x99, 0x99, 0x99) },
+                        { ActivityType.Idle, new SKColor(0xD0, 0xCF, 0xCB) }
                     };
 
                     var activityNames = new Dictionary<ActivityType, string>
@@ -457,8 +456,8 @@ public partial class ReportViewModel : ViewModelBase
                         {
                             Values = new[] { kv.Value.TotalHours },
                             Name = activityNames.GetValueOrDefault(kv.Key, kv.Key.ToString()),
-                            Fill = new SolidColorPaint(activityColors.GetValueOrDefault(kv.Key, new SKColor(142, 142, 147))),
-                            DataLabelsPaint = new SolidColorPaint(new SKColor(255, 255, 255)),
+                            Fill = new SolidColorPaint(activityColors.GetValueOrDefault(kv.Key, new SKColor(0xB0, 0xB0, 0xB0))),
+                            DataLabelsPaint = new SolidColorPaint(new SKColor(0xF5, 0xF4, 0xF0)),
                             DataLabelsSize = 13,
                             DataLabelsPosition = LiveChartsCore.Measure.PolarLabelsPosition.Middle,
                             DataLabelsFormatter = point => $"{point.Coordinate.PrimaryValue:F1}h"

@@ -2,6 +2,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using RecordTime.Avalonia.Resources.Strings;
 using RecordTime.Avalonia.Services;
 using RecordTime.Core.Models;
 using System;
@@ -22,7 +23,7 @@ public partial class AppStatsViewModel : ViewModelBase
     private DateTime _endDate = DateTime.Today;
 
     [ObservableProperty]
-    private string _dateRangeText = "今日";
+    private string _dateRangeText = "";
 
     [ObservableProperty]
     private string _totalDuration = "00h 00m";
@@ -60,6 +61,7 @@ public partial class AppStatsViewModel : ViewModelBase
     public AppStatsViewModel(AppDataService appDataService)
     {
         _appDataService = appDataService;
+        _dateRangeText = StringResources.Current.Today;
     }
 
     /// <summary>
@@ -102,7 +104,7 @@ public partial class AppStatsViewModel : ViewModelBase
         StartDate = DateTime.Today;
         EndDate = DateTime.Today;
         _suppressLoadOnDateChange = false;
-        DateRangeText = "今日";
+        DateRangeText = StringResources.Current.Today;
         await LoadDataAsync();
     }
 
@@ -113,7 +115,7 @@ public partial class AppStatsViewModel : ViewModelBase
         StartDate = DateTime.Today.AddDays(-1);
         EndDate = DateTime.Today.AddDays(-1);
         _suppressLoadOnDateChange = false;
-        DateRangeText = "昨日";
+        DateRangeText = StringResources.Current.Yesterday;
         await LoadDataAsync();
     }
 
@@ -128,7 +130,7 @@ public partial class AppStatsViewModel : ViewModelBase
         StartDate = startOfWeek;
         EndDate = today;
         _suppressLoadOnDateChange = false;
-        DateRangeText = "本周";
+        DateRangeText = StringResources.Current.ThisWeek;
         await LoadDataAsync();
     }
 
@@ -140,7 +142,7 @@ public partial class AppStatsViewModel : ViewModelBase
         StartDate = new DateTime(today.Year, today.Month, 1);
         EndDate = today;
         _suppressLoadOnDateChange = false;
-        DateRangeText = "本月";
+        DateRangeText = StringResources.Current.ThisMonth;
         await LoadDataAsync();
     }
 
