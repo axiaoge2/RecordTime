@@ -1,3 +1,54 @@
+import { appendFile, readFile } from "node:fs/promises";
+
+const mode = process.argv[2] ?? "api";
+
+if (mode === "codex") {
+  const [, , , eventsPath, messagePath] = process.argv;
+  if (!eventsPath || !messagePath) {
+    throw new Error("Codex event and final-message paths are required.");
+  }
+
+  const events = (await readFile(eventsPath, "utf8"))
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+  const message = (await readFile(messagePath, "utf8")).trim();
+  const usedShellTool = events.some(
+    (event) => event.item?.type === "command_execution",
+  );
+  const expectedMessage = "PROJECT_NAME=RecordTime";
+
+  if (!usedShellTool) {
+    throw new Error("Codex completed without a shell tool call.");
+  }
+  if (message !== expectedMessage) {
+    throw new Error(
+      `Unexpected Codex result: ${JSON.stringify(message)}; expected ${expectedMessage}.`,
+    );
+  }
+
+  const summary = [
+    "## Codex CLI tool test",
+    "",
+    "| Check | Result |",
+    "| --- | --- |",
+    "| DeepSeek custom provider | Connected |",
+    "| Read-only shell tool | Used successfully |",
+    `| Verified result | \`${expectedMessage}\` |`,
+    "",
+  ].join("\n");
+
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    await appendFile(process.env.GITHUB_STEP_SUMMARY, summary);
+  }
+  console.log("Codex custom-provider tool call succeeded.");
+  process.exit(0);
+}
+
+if (mode !== "api") {
+  throw new Error(`Unknown test mode: ${mode}`);
+}
+
 const apiKey = process.env.DEEPSEEK_API_KEY;
 const baseUrl = (process.env.DEEPSEEK_BASE_URL ?? "").replace(/\/$/, "");
 const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
@@ -69,7 +120,6 @@ const summary = [
 ].join("\n");
 
 if (process.env.GITHUB_STEP_SUMMARY) {
-  const { appendFile } = await import("node:fs/promises");
   await appendFile(process.env.GITHUB_STEP_SUMMARY, summary);
 }
 
@@ -77,6 +127,6 @@ console.log(`Models API: HTTP ${models.status}`);
 console.log(`Chat Completions: HTTP ${chat.status}`);
 console.log(`Responses API: HTTP ${responses.status}`);
 
-if (!models.ok || !chatShapeValid) {
-  throw new Error("DeepSeek authentication or Chat Completions compatibility test failed.");
+if (!models.ok || !chatShapeValid || !responsesShapeValid) {
+  throw new Error("DeepSeek authentication or API compatibility test failed.");
 }

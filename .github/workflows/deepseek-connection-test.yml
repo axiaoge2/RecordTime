@@ -12,13 +12,13 @@ concurrency:
 
 jobs:
   test:
-    name: Test DeepSeek API compatibility
+    name: Test DeepSeek with Codex CLI
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     env:
-      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
       DEEPSEEK_BASE_URL: https://api.deepseek.com
       DEEPSEEK_MODEL: deepseek-chat
+      CODEX_HOME: ${{ runner.temp }}/codex-home
 
     steps:
       - name: Check out repository
@@ -28,6 +28,8 @@ jobs:
 
       - name: Validate secret
         shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           if [ -z "$DEEPSEEK_API_KEY" ]; then
             echo "DEEPSEEK_API_KEY is not configured." >&2
@@ -35,5 +37,40 @@ jobs:
           fi
 
       - name: Test DeepSeek endpoints
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: node .github/scripts/test-deepseek-connection.mjs
 
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex@0.147.0
+
+      - name: Configure DeepSeek provider
+        shell: bash
+        run: |
+          mkdir -p "$CODEX_HOME"
+          cat > "$CODEX_HOME/config.toml" <<'EOF'
+          model = "deepseek-chat"
+          model_provider = "deepseek"
+          approval_policy = "never"
+          sandbox_mode = "read-only"
+
+          [model_providers.deepseek]
+          name = "DeepSeek"
+          base_url = "https://api.deepseek.com"
+          env_key = "DEEPSEEK_API_KEY"
+          wire_api = "responses"
+          EOF
+
+      - name: Test Codex read-only tool call
+        shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          codex exec --ephemeral --sandbox read-only --json \
+            --output-last-message "$RUNNER_TEMP/codex-last-message.txt" \
+            "Use the shell tool to read the first Markdown heading in README.en.md. Do not answer from prior knowledge and do not modify files. Reply with exactly PROJECT_NAME=<heading text without the # marker or surrounding whitespace>." \
+            > "$RUNNER_TEMP/codex-events.jsonl"
+
+          node .github/scripts/test-deepseek-connection.mjs codex \
+            "$RUNNER_TEMP/codex-events.jsonl" \
+            "$RUNNER_TEMP/codex-last-message.txt"
