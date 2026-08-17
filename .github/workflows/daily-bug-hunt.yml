@@ -20,7 +20,7 @@ jobs:
     permissions:
       contents: read
     env:
-      DEEPSEEK_MODEL: deepseek-chat
+      DEEPSEEK_MODEL: deepseek-v4-flash
 
     steps:
       - name: Check out repository

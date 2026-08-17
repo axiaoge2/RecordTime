@@ -2,6 +2,15 @@ name: DeepSeek connection test
 
 on:
   workflow_dispatch:
+    inputs:
+      model:
+        description: DeepSeek model to test
+        required: true
+        type: choice
+        default: deepseek-v4-flash
+        options:
+          - deepseek-v4-flash
+          - deepseek-v4-pro
 
 permissions:
   contents: read
@@ -17,7 +26,7 @@ jobs:
     timeout-minutes: 10
     env:
       DEEPSEEK_BASE_URL: https://api.deepseek.com
-      DEEPSEEK_MODEL: deepseek-chat
+      DEEPSEEK_MODEL: ${{ inputs.model }}
 
     steps:
       - name: Check out repository
@@ -45,29 +54,7 @@ jobs:
 
       - name: Configure DeepSeek provider
         shell: bash
-        run: |
-          CODEX_HOME="$RUNNER_TEMP/codex-home"
-          echo "CODEX_HOME=$CODEX_HOME" >> "$GITHUB_ENV"
-          mkdir -p "$CODEX_HOME"
-          cat > "$CODEX_HOME/config.toml" <<'EOF'
-          model = "deepseek-chat"
-          model_provider = "deepseek"
-          approval_policy = "never"
-          sandbox_mode = "danger-full-access"
-
-          [shell_environment_policy]
-          inherit = "core"
-          ignore_default_excludes = false
-
-          [shell_environment_policy.filters]
-          "DEEPSEEK_API_KEY" = "exclude"
-
-          [model_providers.deepseek]
-          name = "DeepSeek"
-          base_url = "https://api.deepseek.com"
-          env_key = "DEEPSEEK_API_KEY"
-          wire_api = "responses"
-          EOF
+        run: bash .github/scripts/configure-deepseek-codex.sh
 
       - name: Test Codex read-only tool call
         shell: bash

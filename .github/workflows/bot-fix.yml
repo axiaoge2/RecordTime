@@ -33,6 +33,7 @@ jobs:
       issues: read
     env:
       ISSUE_NUMBER: ${{ inputs.issue_number }}
+      DEEPSEEK_MODEL: deepseek-v4-pro
 
     steps:
       - name: Check out repository

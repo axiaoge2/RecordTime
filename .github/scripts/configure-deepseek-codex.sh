@@ -2,10 +2,20 @@
 set -euo pipefail
 
 codex_home="${1:-${RUNNER_TEMP:?RUNNER_TEMP is required}/codex-home}"
+model="${DEEPSEEK_MODEL:-deepseek-v4-flash}"
+
+case "$model" in
+  deepseek-v4-flash|deepseek-v4-pro) ;;
+  *)
+    echo "Unsupported DEEPSEEK_MODEL: $model" >&2
+    exit 1
+    ;;
+esac
+
 mkdir -p "$codex_home"
 
-cat > "$codex_home/config.toml" <<'EOF'
-model = "deepseek-chat"
+cat > "$codex_home/config.toml" <<EOF
+model = "$model"
 model_provider = "deepseek"
 approval_policy = "never"
 sandbox_mode = "danger-full-access"
