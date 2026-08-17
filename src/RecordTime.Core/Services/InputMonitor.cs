@@ -22,6 +22,7 @@ public class InputMonitor : IInputMonitor, IDisposable
     private int _mouseClickCount = 0;
     private int _scrollCount = 0; // 滚轮事件计数
     private const int CLEANUP_THRESHOLD = 1000; // 达到1000条记录时触发清理
+    private const int MAX_IDLE_TIME_SECONDS = 24 * 60 * 60; // 空闲时间钳制上限（24小时），防止异常值破坏会话记录
 
     // 性能优化: 滑动窗口计数器 (30秒窗口)
     private int _keyboard30sCount = 0;
@@ -70,9 +71,6 @@ public class InputMonitor : IInputMonitor, IDisposable
 
     [DllImport("user32.dll")]
     private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
-
-    [DllImport("kernel32.dll")]
-    private static extern ulong GetTickCount64();
 
     [StructLayout(LayoutKind.Sequential)]
     private struct LASTINPUTINFO
@@ -420,11 +418,23 @@ public class InputMonitor : IInputMonitor, IDisposable
 
         if (GetLastInputInfo(ref lastInputInfo))
         {
-            var idleTime = GetTickCount64() - lastInputInfo.dwTime;
-            return (int)(idleTime / 1000);
+            // LASTINPUTINFO.dwTime 是 32 位 tick（约 49.7 天回绕一次），
+            // 与 64 位 GetTickCount64 直接相减会在回绕后产生约 49.7 天的虚假空闲时间，
+            // 因此使用同宽度的 32 位 tick 计算，并钳制到合理上限。
+            return ComputeIdleTimeSeconds(lastInputInfo.dwTime, unchecked((uint)Environment.TickCount));
         }
 
         return 0;
+    }
+
+    /// <summary>
+    /// 根据 32 位 tick 计算空闲秒数，正确处理 tick 回绕，并将结果钳制到合理上限
+    /// </summary>
+    internal static int ComputeIdleTimeSeconds(uint lastInputTick, uint nowTick)
+    {
+        var idleMs = unchecked(nowTick - lastInputTick);
+        var idleSeconds = idleMs / 1000;
+        return (int)Math.Min(idleSeconds, MAX_IDLE_TIME_SECONDS);
     }
 
     public InputActivityStats GetInputStats(int seconds)
