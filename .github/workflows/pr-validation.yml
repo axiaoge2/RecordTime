@@ -1,0 +1,73 @@
+name: Validate and merge DeepSeek PR
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: validate-deepseek-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Windows build and tests
+    if: >-
+      startsWith(github.head_ref, 'bot/deepseek-') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      github.event.pull_request.draft == false
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v5
+
+      - name: Set up .NET 7
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 7.0.x
+
+      - name: Restore
+        run: dotnet restore RecordTime.sln
+
+      - name: Build
+        run: dotnet build RecordTime.sln --configuration Release --no-restore
+
+      - name: Test
+        run: >-
+          dotnet test tests/RecordTime.Tests/RecordTime.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger "trx;LogFileName=deepseek-validation.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-pr-${{ github.event.pull_request.number }}-test-results
+          path: tests/RecordTime.Tests/TestResults/**/*.trx
+          if-no-files-found: warn
+          retention-days: 7
+
+  merge:
+    name: Squash merge validated PR
+    needs: validate
+    if: needs.validate.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Merge pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge "$PR_URL" --squash --delete-branch

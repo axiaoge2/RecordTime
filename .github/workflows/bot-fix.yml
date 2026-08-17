@@ -1,0 +1,161 @@
+name: DeepSeek bot fix
+
+on:
+  workflow_call:
+    inputs:
+      issue_number:
+        description: Verified Issue number to fix
+        required: true
+        type: number
+    secrets:
+      DEEPSEEK_API_KEY:
+        required: true
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Verified Issue number to fix
+        required: true
+        type: number
+
+permissions: {}
+
+concurrency:
+  group: deepseek-fix-issue-${{ inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  generate_patch:
+    name: Generate bounded patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: read
+    env:
+      ISSUE_NUMBER: ${{ inputs.issue_number }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Load and validate Issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" > "$RUNNER_TEMP/issue.json"
+          jq -e '
+            .state == "open" and
+            any(.labels[]; .name == "deepseek-bug")
+          ' "$RUNNER_TEMP/issue.json" > /dev/null
+
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex@0.147.0
+
+      - name: Configure DeepSeek provider
+        shell: bash
+        run: bash .github/scripts/configure-deepseek-codex.sh
+
+      - name: Generate fix
+        shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          set -o pipefail
+          {
+            cat .github/codex/prompts/fix-bug.md
+            printf '\n\n# Issue JSON\n'
+            cat "$RUNNER_TEMP/issue.json"
+          } | codex exec --ephemeral --sandbox danger-full-access --json - \
+              | tee "$RUNNER_TEMP/codex-events.jsonl"
+
+          node .github/scripts/codex-automation.mjs validate-events \
+            "$RUNNER_TEMP/codex-events.jsonl"
+          node .github/scripts/codex-automation.mjs validate-patch 8 300
+          git diff --binary HEAD > "$RUNNER_TEMP/fix.patch"
+
+      - name: Upload patch only
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-fix-${{ inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/fix.patch
+          if-no-files-found: error
+          retention-days: 1
+
+  publish_pr:
+    name: Create pull request
+    needs: generate_patch
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      ISSUE_NUMBER: ${{ inputs.issue_number }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out trusted main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download generated patch
+        uses: actions/download-artifact@v4
+        with:
+          name: deepseek-fix-${{ inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/patch
+
+      - name: Revalidate and apply patch
+        shell: bash
+        run: |
+          git apply --index "$RUNNER_TEMP/patch/fix.patch"
+          node .github/scripts/codex-automation.mjs validate-patch 8 300
+
+      - name: Create branch and pull request
+        shell: bash
+        run: |
+          existing="$(gh pr list --state open --search "Fixes #$ISSUE_NUMBER in:body" --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Issue #$ISSUE_NUMBER already has open PR #$existing; skipping duplicate." >&2
+            exit 0
+          fi
+
+          issue_title="$(gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" --jq .title)"
+          clean_title="${issue_title#\[DeepSeek\] }"
+          branch="bot/deepseek-issue-$ISSUE_NUMBER-$GITHUB_RUN_ID"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -m "fix: $clean_title"
+          git push origin "$branch"
+
+          body_file="$RUNNER_TEMP/pr-body.md"
+          printf '%s\n' \
+            "## Summary" \
+            "Automated bounded fix for Issue #$ISSUE_NUMBER." \
+            "" \
+            "Fixes #$ISSUE_NUMBER" \
+            "" \
+            "## Validation" \
+            "Windows restore, build, and tests run in the PR validation workflow." \
+            "The PR is merged only if all machine checks pass." \
+            > "$body_file"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "fix: $clean_title" \
+            --body-file "$body_file"
+
+          gh label create deepseek-fixing \
+            --color d4c5f9 \
+            --description "An automated fix PR is open" \
+            --force
+          gh issue edit "$ISSUE_NUMBER" --add-label deepseek-fixing

@@ -1,0 +1,126 @@
+name: Daily DeepSeek bug hunt
+
+on:
+  schedule:
+    # 03:30 Asia/Shanghai (UTC+8)
+    - cron: "30 19 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: daily-deepseek-bug-hunt
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: Analyze repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      DEEPSEEK_MODEL: deepseek-chat
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex@0.147.0
+
+      - name: Configure DeepSeek provider
+        shell: bash
+        run: bash .github/scripts/configure-deepseek-codex.sh
+
+      - name: Find verified bugs
+        shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          set -o pipefail
+          codex exec --ephemeral --sandbox danger-full-access --json \
+            --output-last-message "$RUNNER_TEMP/findings.json" - \
+            < .github/codex/prompts/find-bugs.md \
+            | tee "$RUNNER_TEMP/codex-events.jsonl"
+
+          node .github/scripts/codex-automation.mjs validate-events \
+            "$RUNNER_TEMP/codex-events.jsonl"
+          node .github/scripts/codex-automation.mjs validate-findings \
+            "$RUNNER_TEMP/findings.json"
+
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "Read-only analysis changed tracked or untracked repository files." >&2
+            git status --short >&2
+            exit 1
+          fi
+
+      - name: Upload validated findings
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-deepseek-findings
+          path: ${{ runner.temp }}/findings.json
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish deduplicated Issues
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      fix_issue_1: ${{ steps.publish.outputs.fix_issue_1 }}
+      fix_issue_2: ${{ steps.publish.outputs.fix_issue_2 }}
+
+    steps:
+      - name: Check out trusted automation code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Download validated findings
+        uses: actions/download-artifact@v4
+        with:
+          name: daily-deepseek-findings
+          path: ${{ runner.temp }}/findings
+
+      - name: Create new Issues
+        id: publish
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          node .github/scripts/codex-automation.mjs publish-findings
+          "${{ runner.temp }}/findings/findings.json"
+
+  fix_issue_1:
+    name: Fix first Issue
+    needs: publish
+    if: needs.publish.outputs.fix_issue_1 != ''
+    uses: ./.github/workflows/bot-fix.yml
+    with:
+      issue_number: ${{ fromJSON(needs.publish.outputs.fix_issue_1) }}
+    secrets:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+  fix_issue_2:
+    name: Fix second Issue
+    needs: publish
+    if: needs.publish.outputs.fix_issue_2 != ''
+    uses: ./.github/workflows/bot-fix.yml
+    with:
+      issue_number: ${{ fromJSON(needs.publish.outputs.fix_issue_2) }}
+    secrets:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
