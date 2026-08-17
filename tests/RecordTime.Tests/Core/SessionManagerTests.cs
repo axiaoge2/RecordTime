@@ -14,10 +14,11 @@ public class StubWindowMonitor : IWindowMonitor
 {
     public event EventHandler<WindowInfo>? WindowFocusChanged;
     public bool IsStarted { get; private set; }
+    public WindowInfo? CurrentWindow { get; set; }
 
     public void Start() => IsStarted = true;
     public void Stop() => IsStarted = false;
-    public WindowInfo? GetForegroundWindow() => null;
+    public WindowInfo? GetForegroundWindow() => CurrentWindow;
     public int GetSwitchCount(int minutes) => 0;
     public SwitchFrequencyStats GetSwitchStats() => new();
 
@@ -124,7 +125,7 @@ public class SessionManagerTests
     private readonly ActivityDetector _activityDetector = new();
     private readonly InMemorySessionRepository _repository = new();
 
-    private SessionManager CreateManager(int idleTimeoutSeconds = 300)
+    private SessionManager CreateManager(int idleTimeoutSeconds = 300, int idleCheckIntervalSeconds = 120)
     {
         return new SessionManager(
             _windowMonitor,
@@ -132,7 +133,19 @@ public class SessionManagerTests
             _mediaDetector,
             _activityDetector,
             () => _repository,
-            idleTimeoutSeconds);
+            idleTimeoutSeconds,
+            idleCheckIntervalSeconds);
+    }
+
+    private async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 10000)
+    {
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline)
+        {
+            if (condition())
+                return;
+            await Task.Delay(50);
+        }
     }
 
     private static WindowInfo MakeWindow(string processName = "notepad.exe") => new()
@@ -219,6 +232,38 @@ public class SessionManagerTests
         Assert.NotNull(sessions[0].EndTime);
         // Second session should be active
         Assert.Null(sessions[1].EndTime);
+
+        await manager.StopAsync();
+    }
+
+    [Fact]
+    public async Task UserActivityAfterIdlePause_RestartsSession()
+    {
+        var manager = CreateManager(idleTimeoutSeconds: 5, idleCheckIntervalSeconds: 1);
+        manager.Start();
+
+        _windowMonitor.CurrentWindow = MakeWindow("notepad.exe");
+        _windowMonitor.SimulateFocusChange(MakeWindow("notepad.exe"));
+        await Task.Delay(100);
+
+        Assert.Single(_repository.GetAllSessions());
+
+        // 超过空闲阈值，等待空闲检查暂停会话
+        _inputMonitor.SetIdleTime(30);
+        await WaitUntilAsync(() => _repository.GetAllSessions().FirstOrDefault()?.EndTime != null);
+
+        var sessions = _repository.GetAllSessions();
+        Assert.Single(sessions);
+        Assert.NotNull(sessions[0].EndTime);
+
+        // 同一窗口内恢复活动：应重新开始记录，无需切换前台窗口
+        _inputMonitor.SetIdleTime(0);
+        _inputMonitor.SimulateUserActivity();
+        await WaitUntilAsync(() => _repository.GetAllSessions().Count == 2);
+
+        sessions = _repository.GetAllSessions();
+        Assert.Null(sessions[1].EndTime);
+        Assert.Equal("notepad.exe", sessions[1].ProcessName);
 
         await manager.StopAsync();
     }

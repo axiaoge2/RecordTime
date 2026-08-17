@@ -15,6 +15,7 @@ public class SessionManager : IDisposable
     private readonly IActivityDetector _activityDetector;
     private readonly Func<ISessionRepository> _repositoryFactory;
     private readonly int _idleTimeoutSeconds;
+    private readonly int _idleCheckIntervalSeconds;
 
     private int? _currentSessionId;
     private readonly SemaphoreSlim _sessionLock = new(1, 1);
@@ -29,7 +30,6 @@ public class SessionManager : IDisposable
 
     // 空闲检查机制
     private System.Threading.Timer? _idleCheckTimer;
-    private readonly int _idleCheckIntervalSeconds = 120; // 默认 2 分钟检查一次
     private volatile bool _sessionPausedDueToIdle = false;
 
     public event EventHandler<AppSession>? SessionStarted;
@@ -41,7 +41,8 @@ public class SessionManager : IDisposable
         IMediaDetector mediaDetector,
         IActivityDetector activityDetector,
         Func<ISessionRepository> repositoryFactory,
-        int idleTimeoutSeconds = 300) // 默认 5 分钟
+        int idleTimeoutSeconds = 300, // 默认 5 分钟
+        int idleCheckIntervalSeconds = 120) // 默认 2 分钟检查一次
     {
         _windowMonitor = windowMonitor;
         _inputMonitor = inputMonitor;
@@ -49,6 +50,7 @@ public class SessionManager : IDisposable
         _activityDetector = activityDetector;
         _repositoryFactory = repositoryFactory;
         _idleTimeoutSeconds = idleTimeoutSeconds;
+        _idleCheckIntervalSeconds = idleCheckIntervalSeconds;
     }
 
     /// <summary>
@@ -554,41 +556,41 @@ public class SessionManager : IDisposable
     private async void OnUserActivityDetected(object? sender, EventArgs e)
     {
         // volatile 快速路径：未处于空闲暂停状态时直接返回
-        if (!_sessionPausedDueToIdle)
+        if (!_sessionPausedDueToIdle || !_isRunning)
             return;
 
         // 获取锁后再次检查，避免 TOCTOU 竞态
         await _sessionLock.WaitAsync();
         try
         {
-            if (_sessionPausedDueToIdle && _currentSessionId == null)
+            if (!_sessionPausedDueToIdle || _currentSessionId != null)
+                return;
+
+            // 获取当前前台窗口并恢复会话记录
+            var window = _windowMonitor.GetForegroundWindow();
+            if (window == null)
             {
-                _sessionPausedDueToIdle = false;
-                Log.Debug("检测到用户活动，会话暂停标记已重置");
+                Log.Debug("检测到用户活动，但无法获取当前前台窗口，等待下一次活动");
+                return;
             }
+
+            var systemState = CollectSystemState(window);
+            var activityType = _activityDetector.DetermineActivity(window, systemState);
+            var category = _activityDetector.GetAppCategory(window.ProcessName);
+
+            Log.Debug("检测到用户活动，恢复会话: ProcessName={ProcessName}", window.ProcessName);
+            await StartNewSessionAsync(window, activityType, category);
+
+            _sessionPausedDueToIdle = false;
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "恢复会话时发生错误");
         }
         finally
         {
             _sessionLock.Release();
         }
-    }
-
-    /// <summary>
-    /// 检查并恢复会话
-    /// </summary>
-    private Task CheckAndResumeSessionAsync()
-    {
-        try
-        {
-            _sessionPausedDueToIdle = false;
-            Log.Debug("检测到用户活动，会话暂停标记已重置");
-        }
-        catch (Exception ex)
-        {
-            Log.Error(ex, "检查并恢复会话时发生错误");
-        }
-
-        return Task.CompletedTask;
     }
 
     #endregion
