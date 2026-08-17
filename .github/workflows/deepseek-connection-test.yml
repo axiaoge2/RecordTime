@@ -53,7 +53,14 @@ jobs:
           model = "deepseek-chat"
           model_provider = "deepseek"
           approval_policy = "never"
-          sandbox_mode = "read-only"
+          sandbox_mode = "danger-full-access"
+
+          [shell_environment_policy]
+          inherit = "core"
+          ignore_default_excludes = false
+
+          [shell_environment_policy.filters]
+          "DEEPSEEK_API_KEY" = "exclude"
 
           [model_providers.deepseek]
           name = "DeepSeek"
@@ -73,11 +80,19 @@ jobs:
 
           printf '%s\n' \
             'Use the shell tool to run `cat .codex-tool-probe.txt`. Do not guess, do not modify files, and reply with exactly the single line printed by that command.' \
-            | codex exec --ephemeral --sandbox read-only --json \
+            | codex exec --ephemeral --sandbox danger-full-access --json \
                 --output-last-message "$RUNNER_TEMP/codex-last-message.txt" - \
             | tee "$RUNNER_TEMP/codex-events.jsonl"
 
-          node .github/scripts/test-deepseek-connection.mjs codex \
+          CODEX_EXPECTED_MESSAGE="PROJECT_PROBE=$probe" \
+            node .github/scripts/test-deepseek-connection.mjs codex \
             "$RUNNER_TEMP/codex-events.jsonl" \
-            "$RUNNER_TEMP/codex-last-message.txt" \
-            .codex-tool-probe.txt
+            "$RUNNER_TEMP/codex-last-message.txt"
+
+          changes="$(git status --porcelain --untracked-files=all)"
+          if [ "$changes" != "?? .codex-tool-probe.txt" ]; then
+            echo "Codex changed repository files unexpectedly:" >&2
+            printf '%s\n' "$changes" >&2
+            exit 1
+          fi
+          rm .codex-tool-probe.txt

@@ -3,10 +3,11 @@ import { appendFile, readFile } from "node:fs/promises";
 const mode = process.argv[2] ?? "api";
 
 if (mode === "codex") {
-  const [, , , eventsPath, messagePath, expectedPath] = process.argv;
-  if (!eventsPath || !messagePath || !expectedPath) {
+  const [, , , eventsPath, messagePath] = process.argv;
+  const expectedMessage = process.env.CODEX_EXPECTED_MESSAGE;
+  if (!eventsPath || !messagePath || !expectedMessage) {
     throw new Error(
-      "Codex event, final-message, and expected-result paths are required.",
+      "Codex event path, final-message path, and expected result are required.",
     );
   }
 
@@ -15,7 +16,6 @@ if (mode === "codex") {
     .filter(Boolean)
     .map((line) => JSON.parse(line));
   const message = (await readFile(messagePath, "utf8")).trim();
-  const expectedMessage = (await readFile(expectedPath, "utf8")).trim();
   const itemTypes = events
     .map((event) => event.item?.type)
     .filter((type) => typeof type === "string");
