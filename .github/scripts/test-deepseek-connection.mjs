@@ -3,9 +3,11 @@ import { appendFile, readFile } from "node:fs/promises";
 const mode = process.argv[2] ?? "api";
 
 if (mode === "codex") {
-  const [, , , eventsPath, messagePath] = process.argv;
-  if (!eventsPath || !messagePath) {
-    throw new Error("Codex event and final-message paths are required.");
+  const [, , , eventsPath, messagePath, expectedPath] = process.argv;
+  if (!eventsPath || !messagePath || !expectedPath) {
+    throw new Error(
+      "Codex event, final-message, and expected-result paths are required.",
+    );
   }
 
   const events = (await readFile(eventsPath, "utf8"))
@@ -13,13 +15,18 @@ if (mode === "codex") {
     .filter(Boolean)
     .map((line) => JSON.parse(line));
   const message = (await readFile(messagePath, "utf8")).trim();
+  const expectedMessage = (await readFile(expectedPath, "utf8")).trim();
+  const itemTypes = events
+    .map((event) => event.item?.type)
+    .filter((type) => typeof type === "string");
   const usedShellTool = events.some(
     (event) => event.item?.type === "command_execution",
   );
-  const expectedMessage = "PROJECT_NAME=RecordTime";
 
   if (!usedShellTool) {
-    throw new Error("Codex completed without a shell tool call.");
+    throw new Error(
+      `Codex completed without a shell tool call. Observed item types: ${JSON.stringify(itemTypes)}. Final message: ${JSON.stringify(message)}.`,
+    );
   }
   if (message !== expectedMessage) {
     throw new Error(
