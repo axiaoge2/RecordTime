@@ -78,6 +78,8 @@ public partial class App : Application
         });
 
         // --- Avalonia 层：应用服务 ---
+        services.AddSingleton<AppSettingsService>();
+        services.AddSingleton<TrayIconService>(sp => TrayIconService.Instance);
         services.AddSingleton<AppDataService>();
         services.AddSingleton<BudgetTrackingService>();
         services.AddSingleton<NotificationService>();
@@ -111,6 +113,9 @@ public partial class App : Application
 
         services.AddTransient<TimeBudgetViewModel>();
         services.AddSingleton<Func<TimeBudgetViewModel>>(sp => () => sp.GetRequiredService<TimeBudgetViewModel>());
+
+        services.AddTransient<SettingsViewModel>();
+        services.AddSingleton<Func<SettingsViewModel>>(sp => () => sp.GetRequiredService<SettingsViewModel>());
 
         // AI Coach ViewModel 工厂
         services.AddSingleton<Func<AICoachViewModel>>(sp => () =>

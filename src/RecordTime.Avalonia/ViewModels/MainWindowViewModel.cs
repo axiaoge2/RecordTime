@@ -45,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private AICoachViewModel? _aiCoachViewModel;
     private readonly Func<AICoachViewModel>? _aiCoachViewModelFactory;
+    private readonly Func<SettingsViewModel> _settingsViewModelFactory;
 
     // 监控状态
     [ObservableProperty]
@@ -102,6 +103,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Func<AppStatsViewModel> appStatsViewModelFactory,
         Func<ReportViewModel> reportViewModelFactory,
         Func<TimeBudgetViewModel> timeBudgetViewModelFactory,
+        Func<SettingsViewModel> settingsViewModelFactory,
         Func<AICoachViewModel>? aiCoachViewModelFactory = null)
     {
         _windowMonitor = windowMonitor;
@@ -116,6 +118,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _appStatsViewModelFactory = appStatsViewModelFactory;
         _reportViewModelFactory = reportViewModelFactory;
         _timeBudgetViewModelFactory = timeBudgetViewModelFactory;
+        _settingsViewModelFactory = settingsViewModelFactory;
         _aiCoachViewModelFactory = aiCoachViewModelFactory;
 
         DashboardVM = dashboardViewModel;
@@ -168,7 +171,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToSettings()
     {
-        _settingsViewModel ??= new SettingsViewModel();
+        _settingsViewModel ??= _settingsViewModelFactory();
         CurrentPageViewModel = _settingsViewModel;
     }
 
@@ -522,6 +525,7 @@ public partial class MainWindowViewModel : ViewModelBase
         (_reportViewModel as IDisposable)?.Dispose();
         (_appStatsViewModel as IDisposable)?.Dispose();
         (_timeBudgetViewModel as IDisposable)?.Dispose();
+        (_aiCoachViewModel as IDisposable)?.Dispose();
 
         _budgetTrackingService.Stop();
         _notificationService.Dispose();

@@ -403,9 +403,16 @@ public class SessionManager : IDisposable
     /// </summary>
     private async Task PerformIdleCheckAsync()
     {
+        bool hasSession;
         await _sessionLock.WaitAsync();
-        var hasSession = _currentSessionId != null;
-        _sessionLock.Release();
+        try
+        {
+            hasSession = _currentSessionId != null;
+        }
+        finally
+        {
+            _sessionLock.Release();
+        }
 
         if (!hasSession || !_isRunning)
             return;
@@ -502,14 +509,13 @@ public class SessionManager : IDisposable
     /// </summary>
     private async Task PauseSessionDueToIdleAsync(int idleSeconds)
     {
-        if (_currentSessionId == null)
-            return;
-
         try
         {
             await _sessionLock.WaitAsync();
             try
             {
+                if (_currentSessionId == null)
+                    return;
                 // 结束时间 = 当前时间 - 空闲时长
                 var endTime = DateTime.Now.AddSeconds(-idleSeconds);
 
@@ -545,12 +551,25 @@ public class SessionManager : IDisposable
     /// <summary>
     /// 用户活动检测事件处理（用于会话恢复）
     /// </summary>
-    private void OnUserActivityDetected(object? sender, EventArgs e)
+    private async void OnUserActivityDetected(object? sender, EventArgs e)
     {
-        // 仅当会话因空闲而暂停时才响应
-        if (_sessionPausedDueToIdle && _currentSessionId == null)
+        // volatile 快速路径：未处于空闲暂停状态时直接返回
+        if (!_sessionPausedDueToIdle)
+            return;
+
+        // 获取锁后再次检查，避免 TOCTOU 竞态
+        await _sessionLock.WaitAsync();
+        try
         {
-            _ = CheckAndResumeSessionAsync();
+            if (_sessionPausedDueToIdle && _currentSessionId == null)
+            {
+                _sessionPausedDueToIdle = false;
+                Log.Debug("检测到用户活动，会话暂停标记已重置");
+            }
+        }
+        finally
+        {
+            _sessionLock.Release();
         }
     }
 
@@ -561,10 +580,6 @@ public class SessionManager : IDisposable
     {
         try
         {
-            // 获取当前窗口信息（需要 WindowMonitor 提供此方法）
-            // 注意：这里假设有获取当前窗口的方法，实际可能需要修改 WindowMonitor
-            // 暂时通过窗口焦点变化来恢复，用户操作会自然触发
-
             _sessionPausedDueToIdle = false;
             Log.Debug("检测到用户活动，会话暂停标记已重置");
         }

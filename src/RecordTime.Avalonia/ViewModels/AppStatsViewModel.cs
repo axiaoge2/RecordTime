@@ -50,15 +50,16 @@ public partial class AppStatsViewModel : ViewModelBase, IDisposable
     // 分类列表
     public BulkObservableCollection<string> Categories { get; } = new();
 
-    private readonly IIconExtractor _iconExtractor = new IconExtractor();
+    private readonly IIconExtractor _iconExtractor;
     private readonly AppDataService _appDataService;
 
     private CancellationTokenSource? _loadCancellationTokenSource;
     private CancellationTokenSource? _iconLoadCancellationTokenSource;
 
-    public AppStatsViewModel(AppDataService appDataService)
+    public AppStatsViewModel(AppDataService appDataService, IIconExtractor iconExtractor)
     {
         _appDataService = appDataService;
+        _iconExtractor = iconExtractor;
         _dateRangeText = StringResources.Current.Today;
     }
 

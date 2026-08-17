@@ -91,10 +91,10 @@ public partial class SettingsViewModel : ViewModelBase
         new ThemeOption { Mode = ThemeService.ThemeMode.Auto, NameZh = "跟随系统", NameEn = "System" }
     };
 
-    public SettingsViewModel()
+    public SettingsViewModel(AppSettingsService settingsService, TrayIconService trayService)
     {
-        _settingsService = new AppSettingsService();
-        _trayService = TrayIconService.Instance;
+        _settingsService = settingsService;
+        _trayService = trayService;
 
         // 订阅托盘服务的 AutoStart 变化
         _trayService.PropertyChanged += (s, e) =>
@@ -105,7 +105,8 @@ public partial class SettingsViewModel : ViewModelBase
             }
         };
 
-        _ = LoadSettingsAsync();
+        _ = LoadSettingsAsync().ContinueWith(t =>
+            Log.Error(t.Exception, "Settings 初始化加载失败"), TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private async Task LoadSettingsAsync()
@@ -313,14 +314,9 @@ public partial class SettingsViewModel : ViewModelBase
             await using var dbContext = new RecordTimeDbContext();
             var thirtyDaysAgo = DateTime.Now.AddDays(-30);
 
-            // 删除 30 天前的数据
-            var oldSessions = await dbContext.Sessions
+            var deletedCount = await dbContext.Sessions
                 .Where(s => s.StartTime < thirtyDaysAgo)
-                .ToListAsync();
-
-            var deletedCount = oldSessions.Count;
-            dbContext.Sessions.RemoveRange(oldSessions);
-            await dbContext.SaveChangesAsync();
+                .ExecuteDeleteAsync();
 
             StatusText = string.Format(StringResources.Current.OldDataCleared, deletedCount);
             Log.Information("已清除 {Count} 条旧数据", deletedCount);
@@ -378,19 +374,4 @@ public partial class SettingsViewModel : ViewModelBase
 
         return $"{len:0.##} {sizes[order]}";
     }
-}
-
-// 语言选项模型
-public class LanguageOption
-{
-    public string Code { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
-
-// 主题选项模型
-public class ThemeOption
-{
-    public ThemeService.ThemeMode Mode { get; set; }
-    public string NameZh { get; set; } = string.Empty;
-    public string NameEn { get; set; } = string.Empty;
 }

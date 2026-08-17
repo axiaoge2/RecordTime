@@ -109,8 +109,10 @@ public partial class DashboardViewModel : ViewModelBase
 
         _budgetTrackingService.ProgressUpdated += OnBudgetProgressUpdated;
 
-        _ = LoadDataForDateAsync(SelectedDate);
-        _ = LoadBudgetProgressAsync();
+        _ = LoadDataForDateAsync(SelectedDate).ContinueWith(t =>
+            Log.Error(t.Exception, "Dashboard 初始化加载数据失败"), TaskContinuationOptions.OnlyOnFaulted);
+        _ = LoadBudgetProgressAsync().ContinueWith(t =>
+            Log.Error(t.Exception, "Dashboard 初始化加载预算进度失败"), TaskContinuationOptions.OnlyOnFaulted);
     }
 
     [RelayCommand]
@@ -158,7 +160,7 @@ public partial class DashboardViewModel : ViewModelBase
 
             Log.Debug("Dashboard: 获取快照 [{DebugInfo}]", snapshot.GetDebugInfo());
 
-            var currentFingerprint = $"{snapshot.SessionCount}_{snapshot.TotalSeconds}";
+            var currentFingerprint = $"{snapshot.SessionCount}_{snapshot.TotalSeconds}_{snapshot.AllApps.Count}_{snapshot.AllApps.FirstOrDefault()?.TotalDuration}";
             if (currentFingerprint == _lastDataFingerprint)
             {
                 Log.Debug("数据未变化,跳过UI更新");
