@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   analyze:
-    name: Analyze repository
+    name: Discover bug candidates with Flash
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -35,16 +35,78 @@ jobs:
         shell: bash
         run: bash .github/scripts/configure-deepseek-codex.sh
 
-      - name: Find verified bugs
+      - name: Find bug candidates
         shell: bash
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           set -o pipefail
           codex exec --ephemeral --sandbox danger-full-access --json \
-            --output-last-message "$RUNNER_TEMP/findings.json" - \
+            --output-last-message "$RUNNER_TEMP/candidates.json" - \
             < .github/codex/prompts/find-bugs.md \
             | tee "$RUNNER_TEMP/codex-events.jsonl"
+
+          node .github/scripts/codex-automation.mjs validate-events \
+            "$RUNNER_TEMP/codex-events.jsonl"
+          node .github/scripts/codex-automation.mjs validate-findings \
+            "$RUNNER_TEMP/candidates.json"
+
+          if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+            echo "Read-only analysis changed repository files." >&2
+            git status --short >&2
+            exit 1
+          fi
+
+      - name: Upload candidate findings
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-deepseek-candidates
+          path: ${{ runner.temp }}/candidates.json
+          if-no-files-found: error
+          retention-days: 1
+
+  verify:
+    name: Independently verify candidates with Pro
+    needs: analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      DEEPSEEK_MODEL: deepseek-v4-pro
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Download candidate findings
+        uses: actions/download-artifact@v4
+        with:
+          name: daily-deepseek-candidates
+          path: ${{ runner.temp }}/candidates
+
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex@0.147.0
+
+      - name: Configure DeepSeek provider
+        shell: bash
+        run: bash .github/scripts/configure-deepseek-codex.sh
+
+      - name: Verify candidates
+        shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          set -o pipefail
+          {
+            cat .github/codex/prompts/verify-bugs.md
+            printf '\n\n# Untrusted candidate JSON\n'
+            cat "$RUNNER_TEMP/candidates/candidates.json"
+          } | codex exec --ephemeral --sandbox danger-full-access --json \
+              --output-last-message "$RUNNER_TEMP/findings.json" - \
+              | tee "$RUNNER_TEMP/codex-events.jsonl"
 
           node .github/scripts/codex-automation.mjs validate-events \
             "$RUNNER_TEMP/codex-events.jsonl"
@@ -52,12 +114,12 @@ jobs:
             "$RUNNER_TEMP/findings.json"
 
           if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
-            echo "Read-only analysis changed tracked or untracked repository files." >&2
+            echo "Read-only verification changed repository files." >&2
             git status --short >&2
             exit 1
           fi
 
-      - name: Upload validated findings
+      - name: Upload verified findings
         uses: actions/upload-artifact@v4
         with:
           name: daily-deepseek-findings
@@ -66,16 +128,16 @@ jobs:
           retention-days: 1
 
   publish:
-    name: Publish deduplicated Issues
-    needs: analyze
+    name: Publish Issues and build fix queue
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       issues: write
     outputs:
-      fix_issue_1: ${{ steps.publish.outputs.fix_issue_1 }}
-      fix_issue_2: ${{ steps.publish.outputs.fix_issue_2 }}
+      has_queue: ${{ steps.publish.outputs.has_queue }}
+      queue: ${{ steps.publish.outputs.queue }}
 
     steps:
       - name: Check out trusted automation code
@@ -83,13 +145,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download validated findings
+      - name: Download verified findings
         uses: actions/download-artifact@v4
         with:
           name: daily-deepseek-findings
           path: ${{ runner.temp }}/findings
 
-      - name: Create new Issues
+      - name: Create verified Issues and collect queue
         id: publish
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -97,27 +159,18 @@ jobs:
           node .github/scripts/codex-automation.mjs publish-findings
           "${{ runner.temp }}/findings/findings.json"
 
-  fix_issue_1:
-    name: Fix first Issue
+  fix_queue:
+    name: Fix Issue ${{ matrix.issue.issue_number }}
     needs: publish
-    if: needs.publish.outputs.fix_issue_1 != ''
+    if: needs.publish.outputs.has_queue == 'true'
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        issue: ${{ fromJSON(needs.publish.outputs.queue) }}
     uses: ./.github/workflows/bot-fix.yml
     with:
-      issue_number: ${{ fromJSON(needs.publish.outputs.fix_issue_1) }}
-    secrets:
-      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-
-  fix_issue_2:
-    name: Fix second Issue
-    needs: publish
-    if: needs.publish.outputs.fix_issue_2 != ''
-    uses: ./.github/workflows/bot-fix.yml
-    with:
-      issue_number: ${{ fromJSON(needs.publish.outputs.fix_issue_2) }}
+      issue_number: ${{ matrix.issue.issue_number }}
     secrets:
       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
     permissions:

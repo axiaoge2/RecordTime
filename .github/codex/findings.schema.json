@@ -6,7 +6,7 @@
   "properties": {
     "findings": {
       "type": "array",
-      "maxItems": 10,
+      "maxItems": 30,
       "items": {
         "type": "object",
         "additionalProperties": false,

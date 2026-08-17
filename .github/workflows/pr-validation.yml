@@ -1,32 +1,72 @@
 name: Validate and merge DeepSeek PR
 
 on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened, ready_for_review]
+  repository_dispatch:
+    types: [deepseek-pr-ready]
 
 permissions: {}
 
 concurrency:
-  group: validate-deepseek-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: validate-deepseek-pr-${{ github.event.client_payload.pr_number }}
+  cancel-in-progress: false
 
 jobs:
+  inspect:
+    name: Validate dispatch metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      branch: ${{ steps.inspect.outputs.branch }}
+      issue_number: ${{ steps.inspect.outputs.issue_number }}
+      pr_url: ${{ steps.inspect.outputs.pr_url }}
+      head_sha: ${{ steps.inspect.outputs.head_sha }}
+
+    steps:
+      - name: Verify bot pull request
+        id: inspect
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.client_payload.pr_number }}
+          EXPECTED_ISSUE: ${{ github.event.client_payload.issue_number }}
+          EXPECTED_BRANCH: ${{ github.event.client_payload.branch }}
+        run: |
+          [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]
+          [[ "$EXPECTED_ISSUE" =~ ^[0-9]+$ ]]
+          [[ "$EXPECTED_BRANCH" =~ ^bot/deepseek-issue-${EXPECTED_ISSUE}-[0-9]+$ ]]
+
+          pr="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          jq -e --arg branch "$EXPECTED_BRANCH" --arg repository "$GITHUB_REPOSITORY" '
+            .state == "open" and
+            .draft == false and
+            .user.login == "github-actions[bot]" and
+            .head.ref == $branch and
+            .head.repo.full_name == $repository and
+            .base.ref == "main"
+          ' <<< "$pr" > /dev/null
+
+          echo "branch=$EXPECTED_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "issue_number=$EXPECTED_ISSUE" >> "$GITHUB_OUTPUT"
+          echo "pr_url=$(jq -r .html_url <<< "$pr")" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(jq -r .head.sha <<< "$pr")" >> "$GITHUB_OUTPUT"
+
   validate:
     name: Windows build and tests
-    if: >-
-      startsWith(github.head_ref, 'bot/deepseek-') &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.user.login == 'github-actions[bot]' &&
-      github.event.pull_request.draft == false
+    needs: inspect
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
       contents: read
 
     steps:
-      - name: Check out pull request
+      - name: Check out pull request branch
         uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.inspect.outputs.head_sha }}
+          persist-credentials: false
 
       - name: Set up .NET 7
         uses: actions/setup-dotnet@v4
@@ -50,24 +90,73 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: deepseek-pr-${{ github.event.pull_request.number }}-test-results
+          name: deepseek-pr-${{ github.event.client_payload.pr_number }}-test-results
           path: tests/RecordTime.Tests/TestResults/**/*.trx
           if-no-files-found: warn
           retention-days: 7
 
   merge:
     name: Squash merge validated PR
-    needs: validate
+    needs: [inspect, validate]
     if: needs.validate.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
+      issues: write
       pull-requests: write
 
     steps:
-      - name: Merge pull request
+      - name: Merge and clear queue label
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge "$PR_URL" --squash --delete-branch
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ needs.inspect.outputs.pr_url }}
+          ISSUE_NUMBER: ${{ needs.inspect.outputs.issue_number }}
+          VALIDATED_SHA: ${{ needs.inspect.outputs.head_sha }}
+        run: |
+          current_sha="$(gh pr view "$PR_URL" --json headRefOid --jq .headRefOid)"
+          test "$current_sha" = "$VALIDATED_SHA"
+          gh pr merge "$PR_URL" --squash --delete-branch
+          gh issue edit "$ISSUE_NUMBER" --remove-label deepseek-fixing || true
+
+  recover:
+    name: Close failed PR and recover Issue
+    needs: [inspect, validate]
+    if: always() && needs.inspect.result == 'success' && needs.validate.result == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Close PR and return Issue to queue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_URL: ${{ needs.inspect.outputs.pr_url }}
+          ISSUE_NUMBER: ${{ needs.inspect.outputs.issue_number }}
+        run: |
+          gh pr comment "$PR_URL" --body "Windows restore, build, or tests failed. This automated PR is closed."
+          gh pr close "$PR_URL" --delete-branch
+
+          attempts="$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER/comments?per_page=100" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | .body | capture("<!-- deepseek-fix-attempt: (?<n>[0-9]+) -->")? | select(.)] | length' \
+            | awk '{ total += $1 } END { print total + 0 }')"
+
+          if [ "$attempts" -ge 2 ]; then
+            gh label create deepseek-needs-review --color b60205 \
+              --description "Automatic repair limit reached; human review required" --force
+            gh issue edit "$ISSUE_NUMBER" --add-label deepseek-needs-review \
+              --remove-label deepseek-fixing
+            gh issue comment "$ISSUE_NUMBER" \
+              --body "Automatic repair stopped after two failed Windows CI attempts. Human review is required."
+          else
+            gh issue edit "$ISSUE_NUMBER" --remove-label deepseek-fixing
+            gh issue comment "$ISSUE_NUMBER" \
+              --body "The automated PR failed Windows CI. The Issue returned to the fix queue."
+          fi

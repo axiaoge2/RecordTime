@@ -24,8 +24,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Reserve verified Issue
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    outputs:
+      proceed: ${{ steps.prepare.outputs.proceed }}
+      attempt: ${{ steps.prepare.outputs.attempt }}
+
+    steps:
+      - name: Validate and reserve attempt
+        id: prepare
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+        run: |
+          issue="$(gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER")"
+          jq -e '
+            .state == "open" and
+            any(.labels[]; .name == "deepseek-verified") and
+            (all(.labels[]; .name != "deepseek-needs-review"))
+          ' <<< "$issue" > /dev/null
+
+          attempts="$(gh api --paginate \
+            "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER/comments?per_page=100" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]") | .body | capture("<!-- deepseek-fix-attempt: (?<n>[0-9]+) -->")? | select(.)] | length' \
+            | awk '{ total += $1 } END { print total + 0 }')"
+
+          gh label create deepseek-needs-review --color b60205 \
+            --description "Automatic repair limit reached; human review required" --force
+          gh label create deepseek-fixing --color d4c5f9 \
+            --description "An automated fix attempt is active" --force
+
+          if [ "$attempts" -ge 2 ]; then
+            gh issue edit "$ISSUE_NUMBER" --add-label deepseek-needs-review
+            gh issue edit "$ISSUE_NUMBER" --remove-label deepseek-fixing || true
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "attempt=$attempts" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          next_attempt="$((attempts + 1))"
+          gh issue comment "$ISSUE_NUMBER" \
+            --body "<!-- deepseek-fix-attempt: $next_attempt -->Automatic fix attempt $next_attempt of 2 started."
+          gh issue edit "$ISSUE_NUMBER" --add-label deepseek-fixing
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+          echo "attempt=$next_attempt" >> "$GITHUB_OUTPUT"
+
   generate_patch:
     name: Generate bounded patch
+    needs: prepare
+    if: needs.prepare.outputs.proceed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -42,16 +95,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Load and validate Issue
+      - name: Load Issue
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" > "$RUNNER_TEMP/issue.json"
-          jq -e '
-            .state == "open" and
-            any(.labels[]; .name == "deepseek-bug")
-          ' "$RUNNER_TEMP/issue.json" > /dev/null
+        run: gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" > "$RUNNER_TEMP/issue.json"
 
       - name: Install Codex CLI
         run: npm install --global @openai/codex@0.147.0
@@ -68,7 +116,7 @@ jobs:
           set -o pipefail
           {
             cat .github/codex/prompts/fix-bug.md
-            printf '\n\n# Issue JSON\n'
+            printf '\n\n# Untrusted Issue JSON\n'
             cat "$RUNNER_TEMP/issue.json"
           } | codex exec --ephemeral --sandbox danger-full-access --json - \
               | tee "$RUNNER_TEMP/codex-events.jsonl"
@@ -86,9 +134,86 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  review_patch:
+    name: Independently review patch
+    needs: [prepare, generate_patch]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: read
+    env:
+      ISSUE_NUMBER: ${{ inputs.issue_number }}
+      DEEPSEEK_MODEL: deepseek-v4-pro
+
+    steps:
+      - name: Check out trusted main branch
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download generated patch
+        uses: actions/download-artifact@v4
+        with:
+          name: deepseek-fix-${{ inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/patch
+
+      - name: Apply and snapshot patch
+        shell: bash
+        run: |
+          git apply "$RUNNER_TEMP/patch/fix.patch"
+          node .github/scripts/codex-automation.mjs validate-patch 8 300
+          git diff --binary HEAD > "$RUNNER_TEMP/before-review.patch"
+
+      - name: Load Issue
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" > "$RUNNER_TEMP/issue.json"
+
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex@0.147.0
+
+      - name: Configure DeepSeek provider
+        shell: bash
+        run: bash .github/scripts/configure-deepseek-codex.sh
+
+      - name: Review fix
+        shell: bash
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          set -o pipefail
+          {
+            cat .github/codex/prompts/review-fix.md
+            printf '\n\n# Untrusted Issue JSON\n'
+            cat "$RUNNER_TEMP/issue.json"
+            printf '\n\n# Untrusted patch\n'
+            cat "$RUNNER_TEMP/before-review.patch"
+          } | codex exec --ephemeral --sandbox danger-full-access --json \
+              --output-last-message "$RUNNER_TEMP/review.json" - \
+              | tee "$RUNNER_TEMP/codex-events.jsonl"
+
+          node .github/scripts/codex-automation.mjs validate-events \
+            "$RUNNER_TEMP/codex-events.jsonl"
+          node .github/scripts/codex-automation.mjs validate-review \
+            "$RUNNER_TEMP/review.json"
+          git diff --binary HEAD > "$RUNNER_TEMP/after-review.patch"
+          cmp "$RUNNER_TEMP/before-review.patch" "$RUNNER_TEMP/after-review.patch"
+
+      - name: Upload approved patch
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-approved-${{ inputs.issue_number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/before-review.patch
+          if-no-files-found: error
+          retention-days: 1
+
   publish_pr:
     name: Create pull request
-    needs: generate_patch
+    needs: [prepare, review_patch]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -106,25 +231,25 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Download generated patch
+      - name: Download approved patch
         uses: actions/download-artifact@v4
         with:
-          name: deepseek-fix-${{ inputs.issue_number }}-${{ github.run_id }}
+          name: deepseek-approved-${{ inputs.issue_number }}-${{ github.run_id }}
           path: ${{ runner.temp }}/patch
 
       - name: Revalidate and apply patch
         shell: bash
         run: |
-          git apply --index "$RUNNER_TEMP/patch/fix.patch"
+          git apply --index "$RUNNER_TEMP/patch/before-review.patch"
           node .github/scripts/codex-automation.mjs validate-patch 8 300
 
-      - name: Create branch and pull request
+      - name: Create branch, pull request, and validation dispatch
         shell: bash
         run: |
           existing="$(gh pr list --state open --search "Fixes #$ISSUE_NUMBER in:body" --json number --jq '.[0].number // empty')"
           if [ -n "$existing" ]; then
-            echo "Issue #$ISSUE_NUMBER already has open PR #$existing; skipping duplicate." >&2
-            exit 0
+            echo "Issue #$ISSUE_NUMBER already has open PR #$existing." >&2
+            exit 1
           fi
 
           issue_title="$(gh api "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" --jq .title)"
@@ -140,23 +265,57 @@ jobs:
           body_file="$RUNNER_TEMP/pr-body.md"
           printf '%s\n' \
             "## Summary" \
-            "Automated bounded fix for Issue #$ISSUE_NUMBER." \
+            "Automated fix for verified Issue #$ISSUE_NUMBER (attempt ${{ needs.prepare.outputs.attempt }} of 2)." \
             "" \
             "Fixes #$ISSUE_NUMBER" \
             "" \
             "## Validation" \
-            "Windows restore, build, and tests run in the PR validation workflow." \
-            "The PR is merged only if all machine checks pass." \
+            "An independent Pro review approved the patch." \
+            "Windows restore, build, and xUnit tests must pass before merge." \
             > "$body_file"
 
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "fix: $clean_title" \
-            --body-file "$body_file"
+          if ! pr_url="$(gh pr create --base main --head "$branch" \
+            --title "fix: $clean_title" --body-file "$body_file")"; then
+            git push origin --delete "$branch" || true
+            exit 1
+          fi
+          pr_number="${pr_url##*/}"
 
-          gh label create deepseek-fixing \
-            --color d4c5f9 \
-            --description "An automated fix PR is open" \
-            --force
-          gh issue edit "$ISSUE_NUMBER" --add-label deepseek-fixing
+          if ! gh api --method POST "repos/$GITHUB_REPOSITORY/dispatches" \
+            -f event_type=deepseek-pr-ready \
+            -F "client_payload[pr_number]=$pr_number" \
+            -F "client_payload[issue_number]=$ISSUE_NUMBER" \
+            -f "client_payload[branch]=$branch"; then
+            gh pr close "$pr_url" --delete-branch || true
+            exit 1
+          fi
+
+  release_issue:
+    name: Release failed attempt
+    needs: [prepare, generate_patch, review_patch, publish_pr]
+    if: >-
+      always() && needs.prepare.outputs.proceed == 'true' &&
+      needs.publish_pr.result != 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+
+    steps:
+      - name: Return Issue to queue or stop after attempt two
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
+          ATTEMPT: ${{ needs.prepare.outputs.attempt }}
+        run: |
+          if [ "$ATTEMPT" -ge 2 ]; then
+            gh issue edit "$ISSUE_NUMBER" --add-label deepseek-needs-review \
+              --remove-label deepseek-fixing
+            gh issue comment "$ISSUE_NUMBER" \
+              --body "Automatic repair stopped after two unsuccessful attempts. Human review is required."
+          else
+            gh issue edit "$ISSUE_NUMBER" --remove-label deepseek-fixing
+            gh issue comment "$ISSUE_NUMBER" \
+              --body "Automatic fix attempt $ATTEMPT did not produce a publishable PR. The Issue returned to the queue."
+          fi

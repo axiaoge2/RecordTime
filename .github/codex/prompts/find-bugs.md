@@ -1,4 +1,4 @@
-# Daily verified bug hunt
+# Daily bug candidate hunt
 
 Inspect this repository for real, user-impacting defects. This is a proactive
 health check, not a style review.
@@ -22,8 +22,10 @@ Rules:
 
 - Do not modify any file.
 - Report zero findings when evidence is insufficient.
-- Report at most 10 findings, ordered by severity and confidence.
-- Only report high-confidence, independently actionable bugs.
+- Return every high-confidence candidate found in this scan, ordered by severity.
+- A technical payload boundary of 30 candidates applies to one scan; this is not
+  a limit on the number of Issues the project may resolve over time.
+- Only report high-confidence, independently actionable bug candidates.
 - Do not report style, naming, missing comments, broad refactors, feature
   requests, speculative risks, or duplicate manifestations of one root cause.
 - Every finding must cite an existing repository-relative file and exact line.

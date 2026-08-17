@@ -42,7 +42,7 @@ async function loadFindings(file) {
   if (Object.keys(parsed).join(",") !== "findings" || !Array.isArray(parsed.findings)) {
     fail("Findings root must contain only a findings array.");
   }
-  if (parsed.findings.length > 10) fail("Daily finding limit is 10.");
+  if (parsed.findings.length > 30) fail("A single scan may return at most 30 findings.");
 
   const required = [
     "title", "severity", "confidence", "path", "line", "symbol",
@@ -128,6 +128,17 @@ async function githubApi(endpoint, init = {}) {
   return response.status === 204 ? null : response.json();
 }
 
+async function githubApiPages(endpoint) {
+  const separator = endpoint.includes("?") ? "&" : "?";
+  const items = [];
+  for (let page = 1; ; page += 1) {
+    const batch = await githubApi(`${endpoint}${separator}per_page=100&page=${page}`);
+    if (!Array.isArray(batch)) fail(`Paginated endpoint did not return an array: ${endpoint}`);
+    items.push(...batch);
+    if (batch.length < 100) return items;
+  }
+}
+
 async function ensureLabel(name, color, description) {
   const encoded = encodeURIComponent(name);
   const response = await fetch(
@@ -153,10 +164,13 @@ async function ensureLabel(name, color, description) {
 
 async function publishFindings(file) {
   const findings = await loadFindings(file);
-  await ensureLabel("deepseek-bug", "b60205", "Verified by the daily DeepSeek bug hunt");
+  await ensureLabel("deepseek-bug", "b60205", "Bug found by DeepSeek automation");
+  await ensureLabel("deepseek-verified", "0e8a16", "Independently verified by DeepSeek Pro");
+  await ensureLabel("deepseek-fixing", "d4c5f9", "An automated fix attempt is active");
+  await ensureLabel("deepseek-needs-review", "b60205", "Automatic repair limit reached; human review required");
   await ensureLabel("automated", "6f42c1", "Created by repository automation");
 
-  const existing = await githubApi("/issues?state=all&labels=deepseek-bug&per_page=100");
+  const existing = await githubApiPages("/issues?state=all&labels=deepseek-bug");
   const existingFingerprints = new Set();
   for (const issue of existing) {
     const match = issue.body?.match(/deepseek-fingerprint:\s*([a-f0-9]+)/i);
@@ -181,24 +195,54 @@ async function publishFindings(file) {
       body: JSON.stringify({
         title: `[DeepSeek] ${finding.title}`.slice(0, 256),
         body,
-        labels: ["deepseek-bug", "automated"],
+        labels: ["deepseek-bug", "deepseek-verified", "automated"],
       }),
     });
     created.push(issue.number);
     existingFingerprints.add(hash);
   }
 
+  const openVerified = await githubApiPages("/issues?state=open&labels=deepseek-verified");
+  const eligible = openVerified
+    .filter((issue) => !issue.pull_request)
+    .filter((issue) => {
+      const labels = new Set(issue.labels.map((label) => label.name));
+      return !labels.has("deepseek-fixing") && !labels.has("deepseek-needs-review");
+    })
+    .map((issue) => ({ issue_number: issue.number }))
+    .slice(0, 256);
+  const queue = eligible.length > 0 ? eligible : [{ issue_number: 0 }];
+
   if (process.env.GITHUB_OUTPUT) {
-    const first = created[0]?.toString() ?? "";
-    const second = created[1]?.toString() ?? "";
-    await appendFile(process.env.GITHUB_OUTPUT, `created_count=${created.length}\nfix_issue_1=${first}\nfix_issue_2=${second}\n`);
+    await appendFile(
+      process.env.GITHUB_OUTPUT,
+      `created_count=${created.length}\nhas_queue=${eligible.length > 0}\nqueue=${JSON.stringify(queue)}\n`,
+    );
   }
   if (process.env.GITHUB_STEP_SUMMARY) {
     await appendFile(
       process.env.GITHUB_STEP_SUMMARY,
-      `## Daily bug hunt\n\nValidated findings: ${findings.length}\n\nNew Issues: ${created.length}\n`,
+      `## Daily bug hunt\n\nVerified findings: ${findings.length}\n\nNew Issues: ${created.length}\n\nQueued fixes: ${eligible.length}\n`,
     );
   }
+}
+
+async function validateReview(file) {
+  let review;
+  try {
+    review = JSON.parse(await readFile(file, "utf8"));
+  } catch (error) {
+    fail(`Review is not valid JSON: ${error.message}`);
+  }
+  if (!review || typeof review !== "object" || Array.isArray(review)) {
+    fail("Review root must be an object.");
+  }
+  if (Object.keys(review).sort().join(",") !== "approved,summary") {
+    fail("Review must contain only approved and summary.");
+  }
+  if (review.approved !== true) fail(`Independent review rejected the patch: ${review.summary}`);
+  text(review.summary, "review summary", 10, 1000);
+  console.log("Independent review approved the patch.");
 }
 
 async function validatePatch(maxFiles, maxLines) {
@@ -239,6 +283,9 @@ switch (mode) {
     break;
   case "validate-patch":
     await validatePatch(Number(process.argv[3] ?? 8), Number(process.argv[4] ?? 300));
+    break;
+  case "validate-review":
+    await validateReview(process.argv[3]);
     break;
   default:
     fail(`Unknown mode: ${mode}`);
