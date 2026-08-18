@@ -77,6 +77,8 @@ public class WindowMonitor : IWindowMonitor, IDisposable
         if (_monitorTimer != null)
             return;
 
+        _lastWindow = null;
+        _lastWindowChange = DateTime.Now;
         _monitorTimer = new Timer(MonitorCallback, null, 0, _monitorIntervalMs);
         Log.Debug("WindowMonitor 已启动，轮询间隔: {IntervalMs}ms", _monitorIntervalMs);
     }
