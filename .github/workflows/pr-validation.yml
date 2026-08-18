@@ -107,7 +107,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Merge and clear queue label
+      - name: Merge PR and close Issue
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -115,9 +115,15 @@ jobs:
           ISSUE_NUMBER: ${{ needs.inspect.outputs.issue_number }}
           VALIDATED_SHA: ${{ needs.inspect.outputs.head_sha }}
         run: |
+          set -o pipefail
           current_sha="$(gh pr view "$PR_URL" --json headRefOid --jq .headRefOid)"
           test "$current_sha" = "$VALIDATED_SHA"
           gh pr merge "$PR_URL" --squash --delete-branch
+          gh api --method PATCH \
+            "repos/$GITHUB_REPOSITORY/issues/$ISSUE_NUMBER" \
+            -f state=closed \
+            -f state_reason=completed \
+            | jq -e '.state == "closed" and .state_reason == "completed"' > /dev/null
           gh issue edit "$ISSUE_NUMBER" --remove-label deepseek-fixing || true
 
   recover:
