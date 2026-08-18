@@ -87,7 +87,7 @@ public partial class App : Application
         // SessionManager 工厂（每次启动监控时创建新实例）
         services.AddSingleton<Func<SessionManager>>(sp => () =>
         {
-            var config = sp.GetRequiredService<ConfigurationService>().Current;
+            var settingsService = sp.GetRequiredService<AppSettingsService>();
             return new SessionManager(
                 sp.GetRequiredService<IWindowMonitor>(),
                 sp.GetRequiredService<IInputMonitor>(),
@@ -98,7 +98,7 @@ public partial class App : Application
                     var dbContext = new RecordTimeDbContext();
                     return new SessionRepository(dbContext, ownsContext: true);
                 },
-                config.Monitoring.IdleTimeoutSeconds
+                settingsService.GetIdleTimeoutSeconds()
             );
         });
 

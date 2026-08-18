@@ -52,6 +52,14 @@ public class AppSettingsService
     }
 
     /// <summary>
+    /// 获取会话空闲超时时间（秒）
+    /// </summary>
+    public int GetIdleTimeoutSeconds()
+    {
+        return GetSettings().Monitoring.IdleTimeoutMinutes * 60;
+    }
+
+    /// <summary>
     /// 加载设置
     /// </summary>
     private AppSettings LoadSettings()
