@@ -143,6 +143,17 @@ public class SessionManagerTests
         IsFocused = true
     };
 
+    private static async Task InvokePauseSessionDueToIdleAsync(SessionManager manager, int idleSeconds)
+    {
+        var method = typeof(SessionManager).GetMethod(
+            "PauseSessionDueToIdleAsync",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.NotNull(method);
+
+        var task = (Task)method!.Invoke(manager, new object[] { idleSeconds })!;
+        await task;
+    }
+
     [Fact]
     public void Start_SubscribesEventsAndStartsMonitors()
     {
@@ -306,6 +317,25 @@ public class SessionManagerTests
         Assert.Single(sessions);
         // Title should be hashed, not the original
         Assert.NotEqual("Secret Document.txt", sessions[0].WindowTitleHash);
+
+        await manager.StopAsync();
+    }
+
+    [Fact]
+    public async Task PauseSessionDueToIdleAsync_IdleLongerThanSession_DoesNotSaveNegativeDuration()
+    {
+        var manager = CreateManager();
+        manager.Start();
+
+        _windowMonitor.SimulateFocusChange(MakeWindow("notepad.exe"));
+        await Task.Delay(100);
+
+        await InvokePauseSessionDueToIdleAsync(manager, 600);
+
+        var session = Assert.Single(_repository.GetAllSessions());
+        Assert.NotNull(session.EndTime);
+        Assert.Equal(0, session.DurationSeconds);
+        Assert.True(session.EndTime!.Value >= session.StartTime);
 
         await manager.StopAsync();
     }

@@ -516,13 +516,20 @@ public class SessionManager : IDisposable
             {
                 if (_currentSessionId == null)
                     return;
-                // 结束时间 = 当前时间 - 空闲时长
-                var endTime = DateTime.Now.AddSeconds(-idleSeconds);
 
                 // 停止心跳定时器
                 StopHeartbeatTimer();
 
                 using var repository = _repositoryFactory();
+
+                // 结束时间 = 当前时间 - 空闲时长；空闲发生在会话开始之前时，以会话开始时间为准
+                var currentSession = await repository.GetSessionByIdAsync(_currentSessionId.Value);
+                var endTime = DateTime.Now.AddSeconds(-idleSeconds);
+                if (currentSession != null && endTime < currentSession.StartTime)
+                {
+                    endTime = currentSession.StartTime;
+                }
+
                 await repository.EndSessionAsync(_currentSessionId.Value, endTime);
 
                 var session = await repository.GetSessionByIdAsync(_currentSessionId.Value);
