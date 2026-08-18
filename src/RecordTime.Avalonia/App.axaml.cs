@@ -157,11 +157,12 @@ public partial class App : Application
 
             SetupTrayIcon(mainViewModel, mainWindow);
 
+            var settingsService = Services.GetRequiredService<AppSettingsService>();
             var isShuttingDown = false;
 
             mainWindow.Closing += (s, e) =>
             {
-                if (!isShuttingDown)
+                if (!isShuttingDown && settingsService.GetSettings().General.MinimizeToTray)
                 {
                     e.Cancel = true;
                     mainWindow.Hide();
