@@ -1,9 +1,9 @@
-name: Daily DeepSeek bug hunt
+name: DeepSeek bug hunt every 8 hours
 
 on:
   schedule:
-    # 03:30 Asia/Shanghai (UTC+8)
-    - cron: "30 19 * * *"
+    # Every 8 hours: 03:30, 11:30, and 19:30 Asia/Shanghai (UTC+8)
+    - cron: "30 3,11,19 * * *"
   workflow_dispatch:
 
 permissions: {}

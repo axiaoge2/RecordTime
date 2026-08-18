@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 import { appendFile, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
+import { parseModelJson } from "./model-json.mjs";
+
 const mode = process.argv[2];
 const root = process.cwd();
 
@@ -32,7 +34,7 @@ function safePath(value) {
 async function loadFindings(file) {
   let parsed;
   try {
-    parsed = JSON.parse(await readFile(file, "utf8"));
+    parsed = parseModelJson(await readFile(file, "utf8"));
   } catch (error) {
     fail(`Findings are not valid JSON: ${error.message}`);
   }
@@ -230,7 +232,7 @@ async function publishFindings(file) {
 async function validateReview(file) {
   let review;
   try {
-    review = JSON.parse(await readFile(file, "utf8"));
+    review = parseModelJson(await readFile(file, "utf8"));
   } catch (error) {
     fail(`Review is not valid JSON: ${error.message}`);
   }
