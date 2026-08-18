@@ -86,12 +86,23 @@ public class SessionManager : IDisposable
         if (!_isRunning)
             return;
 
-        _isRunning = false;
-
-        // 结束当前会话
-        if (_currentSessionId != null)
+        await _sessionLock.WaitAsync();
+        try
         {
-            await EndCurrentSessionAsync();
+            if (!_isRunning)
+                return;
+
+            _isRunning = false;
+
+            // 结束当前会话
+            if (_currentSessionId != null)
+            {
+                await EndCurrentSessionAsync();
+            }
+        }
+        finally
+        {
+            _sessionLock.Release();
         }
 
         // 停止所有定时器
@@ -130,6 +141,12 @@ public class SessionManager : IDisposable
             await _sessionLock.WaitAsync();
             try
             {
+                if (!_isRunning)
+                {
+                    Log.Debug("SessionManager 未运行,忽略窗口焦点变化事件");
+                    return;
+                }
+
                 Log.Debug("已获取会话锁,开始处理会话");
 
                 // 收集系统状态

@@ -1,6 +1,8 @@
 using RecordTime.Core.Models;
 using RecordTime.Core.Services;
 using RecordTime.Core.Repositories;
+using System.Reflection;
+using System.Threading;
 using Xunit;
 
 namespace RecordTime.Tests.Core;
@@ -237,6 +239,39 @@ public class SessionManagerTests
         var sessions = _repository.GetAllSessions();
         Assert.Single(sessions);
         Assert.NotNull(sessions[0].EndTime);
+    }
+
+    [Fact]
+    public async Task StopAsync_WhileFocusChangeWaitingForLock_DoesNotLeaveSessionRunning()
+    {
+        var manager = CreateManager();
+        manager.Start();
+
+        var lockField = typeof(SessionManager).GetField("_sessionLock", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(lockField);
+        var sessionLock = (SemaphoreSlim)lockField!.GetValue(manager)!;
+
+        Task? stopTask = null;
+        await sessionLock.WaitAsync();
+        try
+        {
+            _windowMonitor.SimulateFocusChange(MakeWindow("notepad.exe"));
+            stopTask = manager.StopAsync();
+
+            await Task.Delay(50);
+            Assert.False(stopTask.IsCompleted);
+        }
+        finally
+        {
+            sessionLock.Release();
+        }
+
+        var completedTask = await Task.WhenAny(stopTask, Task.Delay(TimeSpan.FromSeconds(5)));
+        Assert.Same(stopTask, completedTask);
+        await stopTask;
+
+        var activeSessions = _repository.GetAllSessions().Where(s => s.EndTime == null);
+        Assert.Empty(activeSessions);
     }
 
     [Fact]
