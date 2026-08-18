@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { appendFile, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
-import { parseModelJson } from "./model-json.mjs";
+import { parseModelJson, truncateModelText } from "./model-json.mjs";
 
 const mode = process.argv[2];
 const root = process.cwd();
@@ -17,6 +17,15 @@ function text(value, name, min, max) {
     fail(`${name} must be a string between ${min} and ${max} characters.`);
   }
   return value.trim();
+}
+
+function findingTitle(value) {
+  const normalized = text(value, "title", 10, 1000);
+  const truncated = truncateModelText(normalized, 120);
+  if (truncated !== normalized) {
+    console.warn(`Truncated finding title from ${normalized.length} to ${truncated.length} characters.`);
+  }
+  return truncated;
 }
 
 function safePath(value) {
@@ -60,7 +69,7 @@ async function loadFindings(file) {
       fail(`Finding ${index + 1} has missing or unsupported fields.`);
     }
     const finding = {
-      title: text(item.title, "title", 10, 120),
+      title: findingTitle(item.title),
       severity: item.severity,
       confidence: item.confidence,
       path: safePath(item.path),
