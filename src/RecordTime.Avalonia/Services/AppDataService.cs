@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using RecordTime.Core.Models;
+using RecordTime.Core.Services;
 using RecordTime.Data;
 using Serilog;
 
@@ -97,9 +98,11 @@ public class AppDataService
             var rangeStart = startDate.Date;
             var rangeEnd = endDate.Date.AddDays(1); // 包含结束日期当天
 
+            var now = DateTime.Now;
+
             var sessions = await dbContext.Sessions
                 .AsNoTracking()
-                .Where(s => s.EndTime != null && s.StartTime < rangeEnd && s.EndTime >= rangeStart)
+                .Where(s => s.StartTime < rangeEnd && (s.EndTime == null || s.EndTime >= rangeStart))
                 .Select(s => new AppSession
                 {
                     Id = s.Id,
@@ -131,12 +134,9 @@ public class AppDataService
 
             foreach (var session in sessions)
             {
-                // 计算会话在日期范围内的实际开始和结束时间
-                var effectiveStart = session.StartTime < rangeStart ? rangeStart : session.StartTime;
-                var effectiveEnd = session.EndTime!.Value > rangeEnd ? rangeEnd : session.EndTime.Value;
-
                 // 计算在范围内的时长(秒)
-                var durationInRange = (int)(effectiveEnd - effectiveStart).TotalSeconds;
+                var durationInRange = SessionDurationCalculator.GetDurationSeconds(
+                    session.StartTime, session.EndTime, rangeStart, rangeEnd, now);
 
                 if (durationInRange > 0)
                 {
@@ -156,7 +156,7 @@ public class AppDataService
                     TotalDuration = TimeSpan.FromSeconds(g.Sum(x => x.effectiveDuration)),
                     SessionCount = g.Count(),
                     FirstUsed = g.Min(x => x.session.StartTime < rangeStart ? rangeStart : x.session.StartTime),
-                    LastUsed = g.Max(x => x.session.EndTime > rangeEnd ? rangeEnd : x.session.EndTime!.Value),
+                    LastUsed = g.Max(x => SessionDurationCalculator.GetClampedEndTime(x.session.EndTime, rangeEnd, now)),
                     TotalPercentage = totalSeconds == 0 ? 0 : (double)g.Sum(x => x.effectiveDuration) / totalSeconds * 100
                 })
                 .OrderByDescending(x => x.TotalDuration)

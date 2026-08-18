@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RecordTime.Core.Models;
+using RecordTime.Core.Services;
 using RecordTime.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -203,17 +204,7 @@ public class BudgetTrackingService : IDisposable
             .ToDictionaryAsync(p => p.TimeBudgetId);
 
         // 批量获取今日使用时间（按 ProcessName 和 Category 聚合）
-        var usageByProcess = await context.Sessions.AsNoTracking()
-            .Where(s => s.StartTime >= today && s.StartTime < tomorrow)
-            .GroupBy(s => s.ProcessName)
-            .Select(g => new { ProcessName = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
-            .ToDictionaryAsync(x => x.ProcessName, x => x.TotalSeconds);
-
-        var usageByCategory = await context.Sessions.AsNoTracking()
-            .Where(s => s.StartTime >= today && s.StartTime < tomorrow && s.Category != null)
-            .GroupBy(s => s.Category!)
-            .Select(g => new { Category = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
-            .ToDictionaryAsync(x => x.Category, x => x.TotalSeconds);
+        var (usageByProcess, usageByCategory) = await GetTodayUsageAsync(context, today, tomorrow);
 
         var progressItems = new List<BudgetProgressItem>();
 
@@ -255,7 +246,7 @@ public class BudgetTrackingService : IDisposable
 
         IQueryable<AppSession> query = context.Sessions
             .AsNoTracking()
-            .Where(s => s.StartTime >= today && s.StartTime < tomorrow);
+            .Where(s => s.StartTime < tomorrow && (s.EndTime == null || s.EndTime >= today));
 
         if (!string.IsNullOrEmpty(budget.ProcessName))
         {
@@ -272,8 +263,37 @@ public class BudgetTrackingService : IDisposable
             return 0;
         }
 
-        var totalSeconds = await query.SumAsync(s => s.DurationSeconds);
+        var sessions = await query.ToListAsync();
+        var now = DateTime.Now;
+        var totalSeconds = sessions.Sum(s =>
+            SessionDurationCalculator.GetDurationSeconds(s.StartTime, s.EndTime, today, tomorrow, now));
         return totalSeconds / 60;
+    }
+
+    /// <summary>
+    /// 批量计算今日按进程和分类聚合的有效使用秒数。
+    /// </summary>
+    private static async Task<(Dictionary<string, int> ByProcess, Dictionary<string, int> ByCategory)>
+        GetTodayUsageAsync(RecordTimeDbContext context, DateTime today, DateTime tomorrow)
+    {
+        var now = DateTime.Now;
+        var sessions = await context.Sessions.AsNoTracking()
+            .Where(s => s.StartTime < tomorrow && (s.EndTime == null || s.EndTime >= today))
+            .ToListAsync();
+
+        int GetEffectiveSeconds(AppSession session) =>
+            SessionDurationCalculator.GetDurationSeconds(session.StartTime, session.EndTime, today, tomorrow, now);
+
+        var usageByProcess = sessions
+            .GroupBy(s => s.ProcessName)
+            .ToDictionary(g => g.Key, g => g.Sum(GetEffectiveSeconds));
+
+        var usageByCategory = sessions
+            .Where(s => s.Category != null)
+            .GroupBy(s => s.Category!)
+            .ToDictionary(g => g.Key, g => g.Sum(GetEffectiveSeconds));
+
+        return (usageByProcess, usageByCategory);
     }
 
     /// <summary>
@@ -303,17 +323,7 @@ public class BudgetTrackingService : IDisposable
             var tomorrow = today.AddDays(1);
 
             // 批量查询今日使用数据
-            var usageByProcess = await context.Sessions.AsNoTracking()
-                .Where(s => s.StartTime >= today && s.StartTime < tomorrow)
-                .GroupBy(s => s.ProcessName)
-                .Select(g => new { ProcessName = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
-                .ToDictionaryAsync(x => x.ProcessName, x => x.TotalSeconds);
-
-            var usageByCategory = await context.Sessions.AsNoTracking()
-                .Where(s => s.StartTime >= today && s.StartTime < tomorrow && s.Category != null)
-                .GroupBy(s => s.Category!)
-                .Select(g => new { Category = g.Key, TotalSeconds = g.Sum(s => s.DurationSeconds) })
-                .ToDictionaryAsync(x => x.Category, x => x.TotalSeconds);
+            var (usageByProcess, usageByCategory) = await GetTodayUsageAsync(context, today, tomorrow);
 
             // 批量获取今日进度
             var allProgress = await context.DailyBudgetProgresses
