@@ -215,7 +215,7 @@ public partial class AppStatsViewModel : ViewModelBase, IDisposable
                 TotalDuration = durationText;
                 _allApps = appItems;
                 TotalAppCount = _allApps.Count;
-                TotalSessions = _allApps.Count;
+                TotalSessions = snapshot.SessionCount;
 
                 var allCategories = new List<string> { StringResources.Current.AllCategories };
                 allCategories.AddRange(_allApps.Select(a => a.Category).Distinct().OrderBy(c => c));
@@ -301,7 +301,6 @@ public partial class AppStatsViewModel : ViewModelBase, IDisposable
 
         Apps.ReplaceWith(filteredList);
 
-        TotalSessions = filteredList.Count;
         HasNoApps = filteredList.Count == 0;
     }
 }
