@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace RecordTime.Data.Reports;
@@ -471,8 +472,8 @@ public class HtmlReportGenerator
             var hours = app.TotalSeconds / 3600.0;
             sb.AppendLine("                <tr>");
             sb.AppendLine($"                    <td>#{rank++}</td>");
-            sb.AppendLine($"                    <td>{app.AppName}</td>");
-            sb.AppendLine($"                    <td><span class=\"chip\">{app.Category}</span></td>");
+            sb.AppendLine($"                    <td>{EscapeHtml(app.AppName)}</td>");
+            sb.AppendLine($"                    <td><span class=\"chip\">{EscapeHtml(app.Category)}</span></td>");
             sb.AppendLine($"                    <td>{hours:F2}h</td>");
             sb.AppendLine($"                    <td>{app.Percentage:F1}%</td>");
             sb.AppendLine($"                    <td>{app.SessionCount}</td>");
@@ -503,7 +504,7 @@ public class HtmlReportGenerator
         sb.AppendLine("        const appLabels = [");
         foreach (var app in appStats)
         {
-            sb.AppendLine($"            '{app.AppName}',");
+            sb.AppendLine($"            {EscapeJavaScriptString(app.AppName)},");
         }
         sb.AppendLine("        ];");
 
@@ -518,7 +519,7 @@ public class HtmlReportGenerator
         sb.AppendLine("        const categoryLabels = [");
         foreach (var cat in categoryStats)
         {
-            sb.AppendLine($"            '{cat.Category}',");
+            sb.AppendLine($"            {EscapeJavaScriptString(cat.Category)},");
         }
         sb.AppendLine("        ];");
 
@@ -743,5 +744,13 @@ public class HtmlReportGenerator
             .Replace(">", "&gt;")
             .Replace("\"", "&quot;")
             .Replace("'", "&#39;");
+    }
+
+    /// <summary>
+    /// JSON 字符串转义
+    /// </summary>
+    private string EscapeJavaScriptString(string text)
+    {
+        return JsonSerializer.Serialize(text);
     }
 }

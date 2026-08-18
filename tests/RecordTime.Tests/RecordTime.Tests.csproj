@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\RecordTime.Core\RecordTime.Core.csproj" />
+    <ProjectReference Include="..\..\src\RecordTime.Data\RecordTime.Data.csproj" />
   </ItemGroup>
 
 </Project>
