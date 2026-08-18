@@ -24,6 +24,8 @@ public class NotificationService : IDisposable
     /// </summary>
     public void Initialize(BudgetTrackingService trackingService)
     {
+        DetachEventHandlers();
+
         _trackingService = trackingService;
         _trackingService.ReminderTriggered += OnReminderTriggered;
 
@@ -33,6 +35,19 @@ public class NotificationService : IDisposable
         _summaryService.Start();
 
         Log.Information("通知服务已初始化");
+    }
+
+    private void DetachEventHandlers()
+    {
+        if (_trackingService != null)
+        {
+            _trackingService.ReminderTriggered -= OnReminderTriggered;
+        }
+
+        if (_summaryService != null)
+        {
+            _summaryService.DailySummaryGenerated -= OnDailySummaryGenerated;
+        }
     }
 
     /// <summary>
@@ -271,14 +286,10 @@ $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
 
     public void Dispose()
     {
-        if (_trackingService != null)
-        {
-            _trackingService.ReminderTriggered -= OnReminderTriggered;
-        }
+        DetachEventHandlers();
 
         if (_summaryService != null)
         {
-            _summaryService.DailySummaryGenerated -= OnDailySummaryGenerated;
             _summaryService.Stop();
         }
     }
