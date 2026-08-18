@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using RecordTime.Core.Models;
+using RecordTime.Core.Services;
 using Serilog;
 
 namespace RecordTime.Avalonia.Services;
@@ -11,8 +12,14 @@ namespace RecordTime.Avalonia.Services;
 /// </summary>
 public class NotificationService : IDisposable
 {
+    private readonly AppSettingsService _settingsService;
     private BudgetTrackingService? _trackingService;
     private DailySummaryService? _summaryService;
+
+    public NotificationService(AppSettingsService settingsService)
+    {
+        _settingsService = settingsService;
+    }
 
     /// <summary>
     /// 通知显示事件 (可用于UI显示通知)
@@ -151,6 +158,12 @@ public class NotificationService : IDisposable
     {
         try
         {
+            if (!_settingsService.GetSettings().General.ShowNotifications)
+            {
+                Log.Debug("通知已禁用，跳过系统通知: {Title}", title);
+                return;
+            }
+
             // 使用Windows原生通知API
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
