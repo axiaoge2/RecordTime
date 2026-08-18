@@ -64,12 +64,20 @@ public class InMemorySessionRepository : ISessionRepository
 {
     private readonly List<AppSession> _sessions = new();
     private int _nextId = 1;
+    public TaskCompletionSource<bool>? AddSessionStarted { get; set; }
+    public TaskCompletionSource<bool>? AddSessionGate { get; set; }
 
-    public Task<int> AddSessionAsync(AppSession session)
+    public async Task<int> AddSessionAsync(AppSession session)
     {
+        AddSessionStarted?.TrySetResult(true);
+        if (AddSessionGate != null)
+        {
+            await AddSessionGate.Task;
+        }
+
         session.Id = _nextId++;
         _sessions.Add(session);
-        return Task.FromResult(session.Id);
+        return session.Id;
     }
 
     public Task UpdateSessionAsync(AppSession session) => Task.CompletedTask;
@@ -236,6 +244,39 @@ public class SessionManagerTests
 
         var sessions = _repository.GetAllSessions();
         Assert.Single(sessions);
+        Assert.NotNull(sessions[0].EndTime);
+    }
+
+    [Fact]
+    public async Task StopAsync_WithPendingFocusChange_DoesNotLeaveActiveSession()
+    {
+        var manager = CreateManager();
+        manager.Start();
+
+        _repository.AddSessionStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        _repository.AddSessionGate = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // 第一个焦点事件持有 _sessionLock，并在添加会话前阻塞。
+        _windowMonitor.SimulateFocusChange(MakeWindow("first.exe"));
+        await _repository.AddSessionStarted.Task;
+
+        // 第二个焦点事件已通过初始 _isRunning 检查，正在等待会话锁。
+        _windowMonitor.SimulateFocusChange(MakeWindow("second.exe"));
+        await Task.Delay(50);
+
+        var stopTask = manager.StopAsync();
+        Assert.False(stopTask.IsCompleted);
+
+        _repository.AddSessionGate.TrySetResult(true);
+        await stopTask;
+
+        // 等待第二个 fire-and-forget 焦点处理任务结束。
+        await Task.Delay(100);
+
+        Assert.Null(await _repository.GetActiveSessionAsync());
+        var sessions = _repository.GetAllSessions();
+        Assert.Single(sessions);
+        Assert.Equal("first.exe", sessions[0].ProcessName);
         Assert.NotNull(sessions[0].EndTime);
     }
 
